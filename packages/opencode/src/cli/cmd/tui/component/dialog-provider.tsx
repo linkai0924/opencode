@@ -15,11 +15,12 @@ import { Clipboard } from "@tui/util/clipboard"
 import { useToast } from "../ui/toast"
 
 const PROVIDER_PRIORITY: Record<string, number> = {
-  opencode: 0,
+  costrict: 0,
   anthropic: 1,
   "github-copilot": 2,
   openai: 3,
   google: 4,
+  opencode: 5,
 }
 
 export function createDialogProviderOptions() {
@@ -37,7 +38,7 @@ export function createDialogProviderOptions() {
           title: provider.name,
           value: provider.id,
           description: {
-            opencode: "(Recommended)",
+            costrict: "(Recommended)",
             anthropic: "(Claude Max or API key)",
             openai: "(ChatGPT Plus/Pro or API key)",
           }[provider.id],
@@ -227,13 +228,13 @@ function ApiMethod(props: ApiMethodProps) {
       title={props.title}
       placeholder="API key"
       description={
-        props.providerID === "opencode" ? (
+        props.providerID === "costrict" ? (
           <box gap={1}>
             <text fg={theme.textMuted}>
-              OpenCode Zen gives you access to all the best coding models at the cheapest prices with a single API key.
+              CoStrict provides enterprise-grade AI models with advanced security and compliance features.
             </text>
             <text fg={theme.text}>
-              Go to <span style={{ fg: theme.primary }}>https://opencode.ai/zen</span> to get a key
+              Go to <span style={{ fg: theme.primary }}>https://zgsm.sangfor.com</span> to get a key
             </text>
           </box>
         ) : undefined

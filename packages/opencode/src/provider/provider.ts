@@ -71,9 +71,15 @@ export namespace Provider {
     autoload: boolean
     getModel?: CustomModelLoader
     options?: Record<string, any>
+    models?: Record<string, any>
   }>
 
   const CUSTOM_LOADERS: Record<string, CustomLoader> = {
+    // CoStrict 供应商 - 动态导入
+    async costrict(provider: Info) {
+      const { createCoStrictCustomLoader } = await import("../costrict/provider")
+      return createCoStrictCustomLoader(provider)
+    },
     async anthropic() {
       return {
         autoload: false,
@@ -702,6 +708,43 @@ export namespace Provider {
       }
     }
 
+    // Add CoStrict provider (built-in)
+    // Models will be loaded dynamically by CUSTOM_LOADER from /ai-gateway/api/v1/models
+    database["costrict"] = {
+      id: "costrict",
+      name: "CoStrict",
+      source: "custom",
+      env: ["COSTRICT_API_KEY"],
+      options: {},
+      models: {
+        Auto: {
+          id: "Auto",
+          name: "Auto",
+          providerID: "costrict",
+          status: "active",
+          api: {
+            id: "Auto",
+            url: "https://zgsm.sangfor.com/chat-rag/api/v1",
+            npm: "@ai-sdk/openai-compatible",
+          },
+          capabilities: {
+            temperature: true,
+            reasoning: false,
+            attachment: false,
+            toolcall: true,
+            input: { text: true, audio: false, image: false, video: false, pdf: false },
+            output: { text: true, audio: false, image: false, video: false, pdf: false },
+            interleaved: false,
+          },
+          limit: { context: 128000, output: 8192 },
+          cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
+          options: {},
+          headers: {},
+          release_date: new Date().toISOString(),
+        },
+      },
+    }
+
     function mergeProvider(providerID: string, provider: Partial<Info>) {
       const existing = providers[providerID]
       if (existing) {
@@ -878,10 +921,15 @@ export namespace Provider {
       const result = await fn(data)
       if (result && (result.autoload || providers[providerID])) {
         if (result.getModel) modelLoaders[providerID] = result.getModel
-        mergeProvider(providerID, {
+        const partial: any = {
           source: "custom",
           options: result.options,
-        })
+        }
+        // 只在 result.models 存在时才传递，避免覆盖 database 中的 models
+        if (result.models) {
+          partial.models = result.models
+        }
+        mergeProvider(providerID, partial)
       }
     }
 
@@ -911,6 +959,9 @@ export namespace Provider {
       }
 
       const configProvider = config.provider?.[providerID]
+
+      // 跳过没有 models 字段的 provider
+      if (!provider.models) continue
 
       for (const [modelID, model] of Object.entries(provider.models)) {
         model.api.id = model.api.id ?? model.id ?? modelID

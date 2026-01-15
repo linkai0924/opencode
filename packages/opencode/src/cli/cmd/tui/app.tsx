@@ -321,7 +321,8 @@ function App() {
       suggested: true,
       category: "Agent",
       onSelect: () => {
-        dialog.replace(() => <DialogModel />)
+        const currentModel = local.model.current()
+        dialog.replace(() => <DialogModel providerID={currentModel?.providerID} />)
       },
     },
     {

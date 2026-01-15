@@ -237,7 +237,7 @@ const createPlatform = (password: Accessor<string | null>): Platform => ({
       .then(() => {
         const notification = new Notification(title, {
           body: description ?? "",
-          icon: "https://opencode.ai/favicon-96x96.png",
+          icon: "https://costrict.ai/favicon-96x96.png",
         })
         notification.onclick = () => {
           const win = getCurrentWindow()
@@ -305,8 +305,8 @@ render(() => {
         <ServerGate>
           {(data) => {
             setServerPassword(data().password)
-            window.__OPENCODE__ ??= {}
-            window.__OPENCODE__.serverPassword = data().password ?? undefined
+            window.__COSTRICT__ ??= {}
+            window.__COSTRICT__.serverPassword = data().password ?? undefined
 
             return <AppInterface defaultUrl={data().url} />
           }}

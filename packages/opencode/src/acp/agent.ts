@@ -351,8 +351,8 @@ export namespace ACP {
       log.info("initialize", { protocolVersion: params.protocolVersion })
 
       const authMethod: AuthMethod = {
-        description: "Run `opencode auth login` in the terminal",
-        name: "Login with opencode",
+        description: "Run `costrict-cli auth login` in the terminal",
+        name: "Login with costrict",
         id: "opencode-login",
       }
 
@@ -360,9 +360,9 @@ export namespace ACP {
       if (params.clientCapabilities?._meta?.["terminal-auth"] === true) {
         authMethod._meta = {
           "terminal-auth": {
-            command: "opencode",
+            command: "costrict-cli",
             args: ["auth", "login"],
-            label: "OpenCode Login",
+            label: "CoStrict Login",
           },
         }
       }
@@ -382,7 +382,7 @@ export namespace ACP {
         },
         authMethods: [authMethod],
         agentInfo: {
-          name: "OpenCode",
+          name: "CoStrict",
           version: Installation.VERSION,
         },
       }

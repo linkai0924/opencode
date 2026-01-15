@@ -1571,7 +1571,7 @@ export type Config = {
   }
   server?: ServerConfig
   /**
-   * Command configuration, see https://opencode.ai/docs/commands
+   * Command configuration, see https://costrict.ai/docs/commands
    */
   command?: {
     [key: string]: {
@@ -1632,7 +1632,7 @@ export type Config = {
     [key: string]: AgentConfig | undefined
   }
   /**
-   * Agent configuration, see https://opencode.ai/docs/agent
+   * Agent configuration, see https://costrict.ai/docs/agent
    */
   agent?: {
     plan?: AgentConfig

@@ -35,7 +35,7 @@ export default function Black() {
 
   return (
     <>
-      <Title>opencode</Title>
+      <Title>costrict</Title>
       <section data-slot="cta">
         <div data-slot="pricing">
           <For each={plans}>

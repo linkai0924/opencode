@@ -27,7 +27,7 @@ const TOOL: Record<string, [string, string]> = {
 
 export const RunCommand = cmd({
   command: "run [message..]",
-  describe: "run opencode with a message",
+  describe: "run costrict-cli with a message",
   builder: (yargs: Argv) => {
     return yargs
       .positional("message", {
@@ -81,7 +81,7 @@ export const RunCommand = cmd({
       })
       .option("attach", {
         type: "string",
-        describe: "attach to a running opencode server (e.g., http://localhost:4096)",
+        describe: "attach to a running costrict-cli server (e.g., http://localhost:4096)",
       })
       .option("port", {
         type: "number",
@@ -323,7 +323,7 @@ export const RunCommand = cmd({
       }
 
       const cfgResult = await sdk.config.get()
-      if (cfgResult.data && (cfgResult.data.share === "auto" || Flag.OPENCODE_AUTO_SHARE || args.share)) {
+      if (cfgResult.data && (cfgResult.data.share === "auto" || Flag.COSTRICT_AUTO_SHARE || args.share)) {
         const shareResult = await sdk.session.share({ sessionID }).catch((error) => {
           if (error instanceof Error && error.message.includes("disabled")) {
             UI.println(UI.Style.TEXT_DANGER_BOLD + "!  " + error.message)
@@ -377,7 +377,7 @@ export const RunCommand = cmd({
       }
 
       const cfgResult = await sdk.config.get()
-      if (cfgResult.data && (cfgResult.data.share === "auto" || Flag.OPENCODE_AUTO_SHARE || args.share)) {
+      if (cfgResult.data && (cfgResult.data.share === "auto" || Flag.COSTRICT_AUTO_SHARE || args.share)) {
         const shareResult = await sdk.session.share({ sessionID }).catch((error) => {
           if (error instanceof Error && error.message.includes("disabled")) {
             UI.println(UI.Style.TEXT_DANGER_BOLD + "!  " + error.message)

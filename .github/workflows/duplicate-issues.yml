@@ -23,9 +23,9 @@ jobs:
 
       - name: Check for duplicate issues
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          COSTRICT_API_KEY: ${{ secrets.COSTRICT_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENCODE_PERMISSION: |
+          COSTRICT_PERMISSION: |
             {
               "bash": {
                 "*": "deny",

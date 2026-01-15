@@ -38,15 +38,15 @@ export default function Home() {
 
   return (
     <main data-page="home">
-      <Title>opencode | AI coding agent built for the terminal</Title>
+      <Title>costrict | AI coding agent built for the terminal</Title>
 
       <div data-component="content">
         <section data-component="top">
-          <img data-slot="logo light" src={logoLight} alt="opencode logo light" />
-          <img data-slot="logo dark" src={logoDark} alt="opencode logo dark" />
+          <img data-slot="logo light" src={logoLight} alt="costrict logo light" />
+          <img data-slot="logo dark" src={logoDark} alt="costrict logo dark" />
           <h1 data-slot="title">The AI coding agent built for the terminal</h1>
           <div data-slot="login">
-            <a href="/auth">opencode zen</a>
+            <a href="/auth">costrict zen</a>
           </div>
         </section>
 
@@ -55,14 +55,14 @@ export default function Home() {
             <a href="/docs">Get Started</a>
           </div>
           <div data-slot="center">
-            <a href="/auth">opencode zen</a>
+            <a href="/auth">costrict zen</a>
           </div>
           <div data-slot="right">
             <button data-copy data-slot="command">
               <span>
                 <span>curl -fsSL </span>
                 <span data-slot="protocol">https://</span>
-                <span data-slot="highlight">opencode.ai/install</span>
+                <span data-slot="highlight">costrict.ai/install</span>
                 <span> | bash</span>
               </span>
               <CopyStatus />
@@ -79,7 +79,7 @@ export default function Home() {
               <strong>LSP enabled</strong> Automatically loads the right LSPs for the LLM
             </li>
             <li>
-              <strong>opencode zen</strong> A <a href="/docs/zen">curated list of models</a> provided by opencode{" "}
+              <strong>costrict zen</strong> A <a href="/docs/zen">curated list of models</a> provided by costrict{" "}
               <label>New</label>
             </li>
             <li>
@@ -133,7 +133,7 @@ export default function Home() {
             <h3 data-component="title">paru</h3>
             <button data-copy data-slot="button">
               <span>
-                paru -S <strong>opencode-bin</strong>
+                paru -S <strong>costrict-cli-bin</strong>
               </span>
               <CopyStatus />
             </button>
@@ -142,9 +142,9 @@ export default function Home() {
 
         <section data-component="screenshots">
           <figure>
-            <figcaption>opencode TUI with the tokyonight theme</figcaption>
+            <figcaption>costrict TUI with the tokyonight theme</figcaption>
             <a href="/docs/cli">
-              <img src={IMG_SPLASH} alt="opencode TUI with tokyonight theme" />
+              <img src={IMG_SPLASH} alt="costrict TUI with tokyonight theme" />
             </a>
           </figure>
         </section>
@@ -154,10 +154,10 @@ export default function Home() {
             <a href="https://x.com/opencode">X.com</a>
           </div>
           <div data-slot="cell">
-            <a href="https://github.com/anomalyco/opencode">GitHub</a>
+            <a href="https://github.com/zgsm-ai/costrict-cli">GitHub</a>
           </div>
           <div data-slot="cell">
-            <a href="https://opencode.ai/discord">Discord</a>
+            <a href="https://costrict.ai/discord">Discord</a>
           </div>
         </footer>
       </div>

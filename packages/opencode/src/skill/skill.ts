@@ -35,7 +35,7 @@ export namespace Skill {
     }),
   )
 
-  const OPENCODE_SKILL_GLOB = new Bun.Glob("{skill,skills}/**/SKILL.md")
+  const COSTRICT_SKILL_GLOB = new Bun.Glob("{skill,skills}/**/SKILL.md")
   const CLAUDE_SKILL_GLOB = new Bun.Glob("skills/**/SKILL.md")
 
   export const state = Instance.state(async () => {
@@ -80,7 +80,7 @@ export namespace Skill {
       claudeDirs.push(globalClaude)
     }
 
-    if (!Flag.OPENCODE_DISABLE_CLAUDE_CODE_SKILLS) {
+    if (!Flag.COSTRICT_DISABLE_CLAUDE_CODE_SKILLS) {
       for (const dir of claudeDirs) {
         const matches = await Array.fromAsync(
           CLAUDE_SKILL_GLOB.scan({
@@ -101,9 +101,9 @@ export namespace Skill {
       }
     }
 
-    // Scan .opencode/skill/ directories
+    // Scan .costrict/skill/ directories
     for (const dir of await Config.directories()) {
-      for await (const match of OPENCODE_SKILL_GLOB.scan({
+      for await (const match of COSTRICT_SKILL_GLOB.scan({
         cwd: dir,
         absolute: true,
         onlyFiles: true,

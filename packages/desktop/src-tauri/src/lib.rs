@@ -136,9 +136,9 @@ async fn set_default_server_url(app: AppHandle, url: Option<String>) -> Result<(
 }
 
 fn get_sidecar_port() -> u32 {
-    option_env!("OPENCODE_PORT")
+    option_env!("COSTRICT_PORT")
         .map(|s| s.to_string())
-        .or_else(|| std::env::var("OPENCODE_PORT").ok())
+        .or_else(|| std::env::var("COSTRICT_PORT").ok())
         .and_then(|port_str| port_str.parse().ok())
         .unwrap_or_else(|| {
             TcpListener::bind("127.0.0.1:0")
@@ -156,7 +156,7 @@ fn spawn_sidecar(app: &AppHandle, port: u32, password: &str) -> CommandChild {
     println!("spawning sidecar on port {port}");
 
     let (mut rx, child) = cli::create_command(app, format!("serve --port {port}").as_str())
-        .env("OPENCODE_SERVER_PASSWORD", password)
+        .env("COSTRICT_SERVER_PASSWORD", password)
         .spawn()
         .expect("Failed to spawn opencode");
 
@@ -271,15 +271,15 @@ pub fn run() {
             #[allow(unused_mut)]
             let mut window_builder =
                 WebviewWindow::builder(&app, "main", WebviewUrl::App("/".into()))
-                    .title("OpenCode")
+                    .title("CoStrict")
                     .inner_size(size.width as f64, size.height as f64)
                     .decorations(true)
                     .zoom_hotkeys_enabled(true)
                     .disable_drag_drop_handler()
                     .initialization_script(format!(
                         r#"
-                      window.__OPENCODE__ ??= {{}};
-                      window.__OPENCODE__.updaterEnabled = {updater_enabled};
+                      window.__COSTRICT__ ??= {{}};
+                      window.__COSTRICT__.updaterEnabled = {updater_enabled};
                     "#
                     ));
 
@@ -448,7 +448,7 @@ async fn spawn_local_server(
     loop {
         if timestamp.elapsed() > Duration::from_secs(30) {
             break Err(format!(
-                "Failed to spawn OpenCode Server. Logs:\n{}",
+                "Failed to spawn CoStrict Server. Logs:\n{}",
                 get_logs(app.clone()).await.unwrap()
             ));
         }

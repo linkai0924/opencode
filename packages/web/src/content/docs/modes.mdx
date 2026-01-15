@@ -4,14 +4,14 @@ description: Different modes for different use cases.
 ---
 
 :::caution
-Modes are now configured through the `agent` option in the opencode config. The
+Modes are now configured through the `agent` option in the costrict-cli config. The
 `mode` option is now deprecated. [Learn more](/docs/agents).
 :::
 
-Modes in opencode allow you to customize the behavior, tools, and prompts for different use cases.
+Modes in costrict-cli allow you to customize the behavior, tools, and prompts for different use cases.
 
 It comes with two built-in modes: **build** and **plan**. You can customize
-these or configure your own through the opencode config.
+these or configure your own through the costrict-cli config.
 
 You can switch between modes during a session or configure them in your config file.
 
@@ -19,7 +19,7 @@ You can switch between modes during a session or configure them in your config f
 
 ## Built-in
 
-opencode comes with two built-in modes.
+costrict-cli comes with two built-in modes.
 
 ---
 
@@ -34,7 +34,7 @@ Build is the **default** mode with all tools enabled. This is the standard mode 
 A restricted mode designed for planning and analysis. In plan mode, the following tools are disabled by default:
 
 - `write` - Cannot create new files
-- `edit` - Cannot modify existing files, except for files located at `.opencode/plans/*.md` to detail the plan itself
+- `edit` - Cannot modify existing files, except for files located at `.costrict-cli/plans/*.md` to detail the plan itself
 - `patch` - Cannot apply patches
 - `bash` - Cannot execute shell commands
 
@@ -60,7 +60,7 @@ Configure modes in your `opencode.json` config file:
 
 ```json title="opencode.json"
 {
-  "$schema": "https://opencode.ai/config.json",
+  "$schema": "https://costrict.ai/config.json",
   "mode": {
     "build": {
       "model": "anthropic/claude-sonnet-4-20250514",
@@ -87,10 +87,10 @@ Configure modes in your `opencode.json` config file:
 
 You can also define modes using markdown files. Place them in:
 
-- Global: `~/.config/opencode/mode/`
-- Project: `.opencode/mode/`
+- Global: `~/.config/costrict-cli/mode/`
+- Project: `.costrict-cli/mode/`
 
-```markdown title="~/.config/opencode/mode/review.md"
+```markdown title="~/.config/costrict-cli/mode/review.md"
 ---
 model: anthropic/claude-sonnet-4-20250514
 temperature: 0.1
@@ -173,7 +173,7 @@ Temperature values typically range from 0.0 to 1.0:
 }
 ```
 
-If no temperature is specified, opencode uses model-specific defaults (typically 0 for most models, 0.55 for Qwen models).
+If no temperature is specified, costrict-cli uses model-specific defaults (typically 0 for most models, 0.55 for Qwen models).
 
 ---
 
@@ -192,7 +192,7 @@ Specify a custom system prompt file for this mode with the `prompt` config. The 
 ```
 
 This path is relative to where the config file is located. So this works for
-both the global opencode config and the project specific config.
+both the global costrict-cli config and the project specific config.
 
 ---
 
@@ -249,7 +249,7 @@ You can create your own custom modes by adding them to the configuration. Here a
 
 ```json title="opencode.json" {4-14}
 {
-  "$schema": "https://opencode.ai/config.json",
+  "$schema": "https://costrict.ai/config.json",
   "mode": {
     "docs": {
       "prompt": "{file:./prompts/documentation.txt}",
@@ -268,9 +268,9 @@ You can create your own custom modes by adding them to the configuration. Here a
 
 ### Using markdown files
 
-Create mode files in `.opencode/mode/` for project-specific modes or `~/.config/opencode/mode/` for global modes:
+Create mode files in `.costrict-cli/mode/` for project-specific modes or `~/.config/costrict-cli/mode/` for global modes:
 
-```markdown title=".opencode/mode/debug.md"
+```markdown title=".costrict-cli/mode/debug.md"
 ---
 temperature: 0.1
 tools:
@@ -294,7 +294,7 @@ Focus on:
 Do not make any changes to files. Only investigate and report.
 ```
 
-```markdown title="~/.config/opencode/mode/refactor.md"
+```markdown title="~/.config/costrict-cli/mode/refactor.md"
 ---
 model: anthropic/claude-sonnet-4-20250514
 temperature: 0.2

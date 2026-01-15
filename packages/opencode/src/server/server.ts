@@ -98,9 +98,9 @@ export namespace Server {
           })
         })
         .use((c, next) => {
-          const password = Flag.OPENCODE_SERVER_PASSWORD
+          const password = Flag.COSTRICT_SERVER_PASSWORD
           if (!password) return next()
-          const username = Flag.OPENCODE_SERVER_USERNAME ?? "opencode"
+          const username = Flag.COSTRICT_SERVER_USERNAME ?? "opencode"
           return basicAuth({ username, password })(c, next)
         })
         .use(async (c, next) => {
@@ -129,7 +129,7 @@ export namespace Server {
               if (input.startsWith("http://127.0.0.1:")) return input
               if (input === "tauri://localhost" || input === "http://tauri.localhost") return input
 
-              // *.opencode.ai (https only, adjust if needed)
+              // *.costrict.ai (https only, adjust if needed)
               if (/^https:\/\/([a-z0-9-]+\.)*opencode\.ai$/.test(input)) {
                 return input
               }
@@ -145,7 +145,7 @@ export namespace Server {
           "/global/health",
           describeRoute({
             summary: "Get health",
-            description: "Get health information about the OpenCode server.",
+            description: "Get health information about the CoStrict server.",
             operationId: "global.health",
             responses: {
               200: {
@@ -166,7 +166,7 @@ export namespace Server {
           "/global/event",
           describeRoute({
             summary: "Get global events",
-            description: "Subscribe to global events from the OpenCode system using server-sent events.",
+            description: "Subscribe to global events from the CoStrict system using server-sent events.",
             operationId: "global.event",
             responses: {
               200: {
@@ -233,7 +233,7 @@ export namespace Server {
           "/global/dispose",
           describeRoute({
             summary: "Dispose instance",
-            description: "Clean up and dispose all OpenCode instances, releasing all resources.",
+            description: "Clean up and dispose all CoStrict instances, releasing all resources.",
             operationId: "global.dispose",
             responses: {
               200: {
@@ -278,9 +278,9 @@ export namespace Server {
           openAPIRouteHandler(app, {
             documentation: {
               info: {
-                title: "opencode",
+                title: "costrict",
                 version: "0.0.3",
-                description: "opencode api",
+                description: "costrict-cli api",
               },
               openapi: "3.1.1",
             },
@@ -294,7 +294,7 @@ export namespace Server {
           "/pty",
           describeRoute({
             summary: "List PTY sessions",
-            description: "Get a list of all active pseudo-terminal (PTY) sessions managed by OpenCode.",
+            description: "Get a list of all active pseudo-terminal (PTY) sessions managed by CoStrict.",
             operationId: "pty.list",
             responses: {
               200: {
@@ -453,7 +453,7 @@ export namespace Server {
           "/config",
           describeRoute({
             summary: "Get configuration",
-            description: "Retrieve the current OpenCode configuration settings and preferences.",
+            description: "Retrieve the current CoStrict configuration settings and preferences.",
             operationId: "config.get",
             responses: {
               200: {
@@ -475,7 +475,7 @@ export namespace Server {
           "/config",
           describeRoute({
             summary: "Update configuration",
-            description: "Update OpenCode configuration settings and preferences.",
+            description: "Update CoStrict configuration settings and preferences.",
             operationId: "config.update",
             responses: {
               200: {
@@ -574,7 +574,7 @@ export namespace Server {
           "/instance/dispose",
           describeRoute({
             summary: "Dispose instance",
-            description: "Clean up and dispose the current OpenCode instance, releasing all resources.",
+            description: "Clean up and dispose the current CoStrict instance, releasing all resources.",
             operationId: "instance.dispose",
             responses: {
               200: {
@@ -597,7 +597,7 @@ export namespace Server {
           describeRoute({
             summary: "Get paths",
             description:
-              "Retrieve the current working directory and related path information for the OpenCode instance.",
+              "Retrieve the current working directory and related path information for the CoStrict instance.",
             operationId: "path.get",
             responses: {
               200: {
@@ -708,7 +708,7 @@ export namespace Server {
           "/session",
           describeRoute({
             summary: "List sessions",
-            description: "Get a list of all OpenCode sessions, sorted by most recently updated.",
+            description: "Get a list of all CoStrict sessions, sorted by most recently updated.",
             operationId: "session.list",
             responses: {
               200: {
@@ -776,7 +776,7 @@ export namespace Server {
           "/session/:sessionID",
           describeRoute({
             summary: "Get session",
-            description: "Retrieve detailed information about a specific OpenCode session.",
+            description: "Retrieve detailed information about a specific CoStrict session.",
             tags: ["Session"],
             operationId: "session.get",
             responses: {
@@ -869,7 +869,7 @@ export namespace Server {
           "/session",
           describeRoute({
             summary: "Create session",
-            description: "Create a new OpenCode session for interacting with AI assistants and managing conversations.",
+            description: "Create a new CoStrict session for interacting with AI assistants and managing conversations.",
             operationId: "session.create",
             responses: {
               ...errors(400),
@@ -1713,7 +1713,7 @@ export namespace Server {
           "/command",
           describeRoute({
             summary: "List commands",
-            description: "Get a list of all available commands in the OpenCode system.",
+            description: "Get a list of all available commands in the CoStrict system.",
             operationId: "command.list",
             responses: {
               200: {
@@ -2154,7 +2154,7 @@ export namespace Server {
           "/agent",
           describeRoute({
             summary: "List agents",
-            description: "Get a list of all available AI agents in the OpenCode system.",
+            description: "Get a list of all available AI agents in the CoStrict system.",
             operationId: "app.agents",
             responses: {
               200: {
@@ -2834,11 +2834,11 @@ export namespace Server {
         )
         .all("/*", async (c) => {
           const path = c.req.path
-          const response = await proxy(`https://app.opencode.ai${path}`, {
+          const response = await proxy(`https://app.costrict.ai${path}`, {
             ...c.req,
             headers: {
               ...c.req.raw.headers,
-              host: "app.opencode.ai",
+              host: "app.costrict.ai",
             },
           })
           response.headers.set(
@@ -2854,9 +2854,9 @@ export namespace Server {
     const result = await generateSpecs(App() as Hono, {
       documentation: {
         info: {
-          title: "opencode",
+          title: "costrict",
           version: "1.0.0",
-          description: "opencode api",
+          description: "costrict-cli api",
         },
         openapi: "3.1.1",
       },

@@ -156,8 +156,8 @@ export const CallGraphTool = Tool.define('call-graph', async (ctx) => {
         const output = formatAnalysisResult(result, analysis_type);
 
         const resultCount = analysis_type === 'call_chain'
-          ? (result as CallChainResult).chains?.length || 0
-          : (result as InheritanceChainResult).chains?.length || 0;
+          ? (result as CallChainResult).matches?.length || 0
+          : (result as InheritanceChainResult).matches?.length || 0;
 
         log.info('Analysis completed', {
           filesAnalyzed: files.length,

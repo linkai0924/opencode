@@ -668,6 +668,12 @@ export namespace ProviderTransform {
 
   export function error(providerID: string, error: APICallError) {
     let message = error.message
+
+    // CoStrict: 统一处理认证错误
+    if (providerID === "costrict" && error.statusCode === 401) {
+      return "Authentication required. Please run /connect to select a provider and login."
+    }
+
     if (providerID === "github-copilot" && message.includes("The requested model is not supported")) {
       return (
         message +

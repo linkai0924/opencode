@@ -16,6 +16,7 @@ import {
 import { fetchCoStrictModels } from "./models"
 import { getCoStrictBaseURL } from "./auth"
 import { Log } from "../../util/log"
+import { Installation } from "../../installation"
 
 const log = Log.create({ service: "costrict-loader" })
 
@@ -115,7 +116,7 @@ export async function createCoStrictCustomLoader(provider: any) {
         headers.set("Authorization", `Bearer ${creds.access_token}`)
         headers.set("HTTP-Referer", "https://github.com/zgsm-ai/costrict-cli")
         headers.set("X-Title", "CoStrict-CLI")
-        headers.set("X-Costrict-Version", "costrict-cli-1.0.0") // TODO 这里取项目版本号
+        headers.set("X-Costrict-Version", `costrict-cli-${Installation.VERSION}`)
         headers.set("X-Request-ID", uuidv7())  // 每次请求生成新 UUID
 
         // ========== 步骤 4: 发起请求 ==========

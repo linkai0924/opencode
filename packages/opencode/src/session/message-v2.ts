@@ -661,6 +661,11 @@ export namespace MessageV2 {
             }
           } catch {}
 
+          // csotrict: 对于CoStrict的401认证错误，返回友好提示
+          if (e.statusCode === 401 && ctx.providerID === 'costrict') {
+            return "Authentication required. Please run /connect to select a provider and login."
+          }
+
           return `${msg}: ${e.responseBody}`
         }).trim()
 

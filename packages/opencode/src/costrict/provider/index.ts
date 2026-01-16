@@ -75,7 +75,7 @@ export async function createCoStrictCustomLoader(provider: any) {
 
         if (!creds) {
           throw new Error(
-            "CoStrict credentials not found. Please run: opencode auth login",
+            "CoStrict credentials not found. Please login",
           )
         }
 
@@ -105,7 +105,7 @@ export async function createCoStrictCustomLoader(provider: any) {
           } catch (refreshError: any) {
             log.error("Token refresh failed", { error: refreshError.message })
             throw new Error(
-              "Token refresh failed. Please re-login: opencode auth login",
+              "Token refresh failed. Please re-login",
             )
           }
         }
@@ -113,9 +113,9 @@ export async function createCoStrictCustomLoader(provider: any) {
         // ========== 步骤 3: 构建 headers ==========
         const headers = new Headers(init?.headers)
         headers.set("Authorization", `Bearer ${creds.access_token}`)
-        headers.set("HTTP-Referer", "https://github.com/anomalyco/opencode")
-        headers.set("X-Title", "OpenCode")
-        headers.set("X-Costrict-Version", "opencode-1.0.0")
+        headers.set("HTTP-Referer", "https://github.com/zgsm-ai/costrict-cli")
+        headers.set("X-Title", "CoStrict-CLI")
+        headers.set("X-Costrict-Version", "costrict-cli-1.0.0") // TODO 这里取项目版本号
         headers.set("X-Request-ID", uuidv7())  // 每次请求生成新 UUID
 
         // ========== 步骤 4: 发起请求 ==========
@@ -150,7 +150,7 @@ export async function createCoStrictCustomLoader(provider: any) {
           } catch (retryError: any) {
             log.error("401 recovery failed", { error: retryError.message })
             throw new Error(
-              "Authentication failed. Please re-login: opencode auth login",
+              "Authentication failed. Please re-login",
             )
           }
         }

@@ -265,17 +265,29 @@ export const AuthLoginCommand = cmd({
               filtered[key] = value
             }
           }
+
+          // COSTRICT: 手动添加 CoStrict provider（如果不存在）
+          if (!filtered["costrict"] && !disabled.has("costrict") && (enabled ? enabled.has("costrict") : true)) {
+            filtered["costrict"] = {
+              id: "costrict",
+              name: "CoStrict",
+              env: ["COSTRICT_API_KEY"],
+              models: {},
+            }
+          }
+
           return filtered
         })
 
         const priority: Record<string, number> = {
-          opencode: 0,
+          costrict: 0,
           anthropic: 1,
           "github-copilot": 2,
           openai: 3,
           google: 4,
-          openrouter: 5,
-          vercel: 6,
+          opencode: 5,
+          openrouter: 6,
+          vercel: 7,
         }
         let provider = await prompts.autocomplete({
           message: "Select provider",
@@ -292,7 +304,7 @@ export const AuthLoginCommand = cmd({
                 label: x.name,
                 value: x.id,
                 hint: {
-                  opencode: "recommended",
+                  costrict: "recommended",
                   anthropic: "Claude Max or API key",
                   openai: "ChatGPT Plus/Pro or API key",
                 }[x.id],

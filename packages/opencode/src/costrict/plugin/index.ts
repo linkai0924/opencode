@@ -78,9 +78,15 @@ export async function CoStrictAuthPlugin(input: PluginInput): Promise<Hooks> {
               log.warn("Failed to open browser", { error: error.message, url: loginUrl })
             }
 
+            // 根据平台生成不同的提示文本
+            const platform = process.platform
+            const instructions = platform === "linux"
+              ? "Please copy the URL above and open it in your browser to login."
+              : "Complete authorization in your browser. This window will close automatically."
+
             return {
               url: loginUrl,
-              instructions: "Complete authorization in your browser. This window will close automatically.",
+              instructions,
               method: "auto" as const,
               callback: async () => {
                 // 浏览器已打开，现在轮询 token

@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { glob } from 'glob';
 import { existsSync, statSync } from 'fs';
 import { resolve } from 'path';
-import type { CallChainResult, InheritanceChainResult } from '../call-graph/chain-analyzer';
+import type { CallChainResult, InheritanceChainResult } from './call-graph/chain-analyzer';
 import { Log } from '@/util/log';
 
 const log = Log.create({ service: 'call-graph' });
@@ -240,7 +240,7 @@ async function runAnalysisInWorker(input: {
     // 使用全局常量路径，如果未定义则回退到相对路径
     const workerPath = typeof COSTRICT_CALL_GRAPH_WORKER_PATH !== 'undefined'
       ? COSTRICT_CALL_GRAPH_WORKER_PATH
-      : new URL('../call-graph/worker.ts', import.meta.url);
+      : new URL('./call-graph/worker.ts', import.meta.url);
 
     const worker = new Worker(workerPath);
 

@@ -16,8 +16,8 @@ import { existsSync, statSync } from 'fs';
 import { resolve } from 'path';
 import { Log } from '@/util/log';
 import { Truncate } from '@/tool/truncation';
-import { DEFAULT_WEIGHTS } from '../file-importance/types';
-import type { FileScore, AnalysisStats } from '../file-importance/types';
+import { DEFAULT_WEIGHTS } from './file-importance/types';
+import type { FileScore, AnalysisStats } from './file-importance/types';
 
 const log = Log.create({ tool: 'file-importance' });
 
@@ -99,7 +99,7 @@ async function runAnalysisInWorker(input: {
     // Worker 路径处理
     const workerPath = typeof COSTRICT_FILE_IMPORTANCE_WORKER_PATH !== 'undefined'
       ? COSTRICT_FILE_IMPORTANCE_WORKER_PATH
-      : new URL('../file-importance/worker.ts', import.meta.url);
+      : new URL('./file-importance/worker.ts', import.meta.url);
 
     log.debug('Creating worker', { workerPath });
     const worker = new Worker(workerPath);

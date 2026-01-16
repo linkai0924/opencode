@@ -117,8 +117,8 @@ for (const item of targets) {
 
   const parserWorker = fs.realpathSync(path.resolve(dir, "./node_modules/@opentui/core/parser.worker.js"))
   const workerPath = "./src/cli/cmd/tui/worker.ts"
-  const callGraphWorkerPath = "./src/costrict/call-graph/worker.ts"
-  const fileImportanceWorkerPath = "./src/costrict/file-importance/worker.ts"
+  const callGraphWorkerPath = "./src/costrict/tool/call-graph/worker.ts"
+  const fileImportanceWorkerPath = "./src/costrict/tool/file-importance/worker.ts"
 
   // Use platform-specific bunfs root path based on target OS
   const bunfsRoot = item.os === "win32" ? "B:/~BUN/root/" : "/$bunfs/root/"

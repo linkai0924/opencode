@@ -6,8 +6,8 @@
 import { Tool } from '@/tool/tool';
 import { z } from 'zod';
 import { readFileSync } from 'fs';
-import { treeSitterService } from '../service/tree-sitter';
-import { loadScmQuery, detectLanguageFromFilename } from '../util/scm-loader';
+import { treeSitterService } from './service/tree-sitter';
+import { loadScmQuery, detectLanguageFromFilename } from './util/scm-loader';
 import { Query } from 'web-tree-sitter';
 import { Log } from '@/util/log';
 

@@ -7,6 +7,9 @@ import { promises as fs } from "node:fs"
 import { join } from "node:path"
 import { homedir } from "node:os"
 import { createHash } from "node:crypto"
+import { Log } from "../../util/log"
+
+const log = Log.create({ service: "costrict-credentials" })
 
 /**
  * CoStrict 凭证格式 (与 IDE 插件兼容)
@@ -66,7 +69,7 @@ export async function loadCoStrictCredentials(): Promise<CoStrictCredentials | n
       !credentials.state ||
       !credentials.base_url
     ) {
-      console.warn("[CoStrict] Credentials file is missing required fields")
+      log.warn("Credentials file is missing required fields")
       return null
     }
 
@@ -78,11 +81,11 @@ export async function loadCoStrictCredentials(): Promise<CoStrictCredentials | n
     }
 
     if (error instanceof SyntaxError) {
-      console.error("[CoStrict] Credentials file is corrupted (invalid JSON)")
+      log.error("Credentials file is corrupted", { error: "invalid JSON" })
       return null
     }
 
-    console.error("[CoStrict] Failed to load credentials:", error.message)
+    log.error("Failed to load credentials", { error: error.message })
     return null
   }
 }
@@ -105,9 +108,9 @@ export async function saveCoStrictCredentials(
     const content = JSON.stringify(credentials, null, 2)
     await fs.writeFile(filepath, content, { encoding: "utf-8", mode: 0o600 })
 
-    console.log("[CoStrict] Credentials saved successfully")
+    log.info("Credentials saved successfully", { path: filepath })
   } catch (error: any) {
-    console.error("[CoStrict] Failed to save credentials:", error.message)
+    log.error("Failed to save credentials", { error: error.message })
     throw new Error(`Failed to save CoStrict credentials: ${error.message}`)
   }
 }
@@ -119,13 +122,13 @@ export async function deleteCoStrictCredentials(): Promise<void> {
   try {
     const filepath = getCoStrictCredentialsPath()
     await fs.unlink(filepath)
-    console.log("[CoStrict] Credentials deleted successfully")
+    log.info("Credentials deleted successfully", { path: filepath })
   } catch (error: any) {
     if (error.code === "ENOENT") {
       // 文件不存在是正常情况
       return
     }
-    console.error("[CoStrict] Failed to delete credentials:", error.message)
+    log.error("Failed to delete credentials", { error: error.message })
     throw new Error(`Failed to delete CoStrict credentials: ${error.message}`)
   }
 }

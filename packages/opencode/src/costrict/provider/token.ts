@@ -4,6 +4,9 @@
  */
 
 import type { CoStrictCredentials } from "./credentials"
+import { Log } from "../../util/log"
+
+const log = Log.create({ service: "costrict-token" })
 
 /**
  * JWT Payload 结构
@@ -70,7 +73,12 @@ export function isCoStrictTokenValid(credentials: CoStrictCredentials): boolean 
   // 策略 1: expiry_date (30 分钟缓冲)
   if (credentials.expiry_date) {
     const bufferMs = 30 * 60 * 1000  // 30 分钟
-    return now < credentials.expiry_date - bufferMs
+    const isValid = now < credentials.expiry_date - bufferMs
+    log.debug("Token validation via expiry_date", {
+      isValid,
+      expiresIn: Math.floor((credentials.expiry_date - now) / 1000)
+    })
+    return isValid
   }
 
   // 策略 2: refresh_token JWT
@@ -126,6 +134,8 @@ export interface RefreshTokenResponse {
 export async function refreshCoStrictToken(
   params: RefreshTokenParams,
 ): Promise<RefreshTokenResponse> {
+  log.info("Token refresh started", { baseUrl: params.baseUrl })
+
   // 构建查询参数 (排除 machine_code)
   const queryParams = [
     ["state", params.state],
@@ -151,6 +161,7 @@ export async function refreshCoStrictToken(
     })
 
     if (!response.ok) {
+      log.error("Token refresh failed", { status: response.status })
       if (response.status === 400 || response.status === 401) {
         throw new Error(
           "Refresh token is invalid or expired. Please re-login: opencode auth login",
@@ -163,12 +174,14 @@ export async function refreshCoStrictToken(
     const data = (await response.json()) as RefreshTokenResponse
 
     if (!data.access_token || !data.refresh_token) {
+      log.error("Token refresh response missing fields")
       throw new Error("Token refresh response is missing required fields")
     }
 
+    log.info("Token refresh completed successfully")
     return data
   } catch (error: any) {
-    console.error("[CoStrict] Token refresh failed:", error.message)
+    log.error("Token refresh error", { error: error.message })
     throw new Error(`Failed to refresh CoStrict token: ${error.message}`)
   }
 }

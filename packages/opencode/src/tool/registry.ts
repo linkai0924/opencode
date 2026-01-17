@@ -26,6 +26,10 @@ import { Log } from "@/util/log"
 import { LspTool } from "./lsp"
 import { Truncate } from "./truncation"
 import { PlanExitTool, PlanEnterTool } from "./plan"
+import { SequentialThinkingTool } from "../costrict/tool/sequential-thinking"
+import { FileOutlineTool } from "../costrict/tool/file-outline"
+import { CallGraphTool } from "../costrict/tool/call-graph"
+import { FileImportanceTool } from "../costrict/tool/file-importance"
 
 export namespace ToolRegistry {
   const log = Log.create({ service: "tool.registry" })
@@ -108,6 +112,10 @@ export namespace ToolRegistry {
       WebSearchTool,
       CodeSearchTool,
       SkillTool,
+      SequentialThinkingTool,
+      FileOutlineTool,
+      CallGraphTool,
+      FileImportanceTool,
       ...(Flag.COSTRICT_EXPERIMENTAL_LSP_TOOL ? [LspTool] : []),
       ...(config.experimental?.batch_tool === true ? [BatchTool] : []),
       ...(Flag.COSTRICT_EXPERIMENTAL_PLAN_MODE && Flag.COSTRICT_CLIENT === "cli" ? [PlanExitTool, PlanEnterTool] : []),

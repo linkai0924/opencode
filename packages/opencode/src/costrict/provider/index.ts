@@ -4,6 +4,7 @@
  */
 
 import { v7 as uuidv7 } from "uuid"
+import { APICallError } from "ai"
 import {
   loadCoStrictCredentials,
   saveCoStrictCredentials,
@@ -75,9 +76,13 @@ export async function createCoStrictCustomLoader(provider: any) {
         let creds = await loadCoStrictCredentials()
 
         if (!creds) {
-          throw new Error(
-            "CoStrict credentials not found. Please login",
-          )
+          throw new APICallError({
+            message: "CoStrict credentials not found",
+            url: "",
+            requestBodyValues: undefined,
+            statusCode: 401,
+            isRetryable: false,
+          })
         }
 
         // ========== 步骤 2: Token 验证和刷新 (预防性) ==========
@@ -105,9 +110,8 @@ export async function createCoStrictCustomLoader(provider: any) {
             creds.access_token = refreshed.access_token
           } catch (refreshError: any) {
             log.error("Token refresh failed", { error: refreshError.message })
-            throw new Error(
-              "Token refresh failed. Please re-login",
-            )
+            // 重新抛出原始错误，保留 statusCode 等元数据
+            throw refreshError
           }
         }
 
@@ -150,9 +154,8 @@ export async function createCoStrictCustomLoader(provider: any) {
             return fetch(input, { ...init, headers })
           } catch (retryError: any) {
             log.error("401 recovery failed", { error: retryError.message })
-            throw new Error(
-              "Authentication failed. Please re-login",
-            )
+            // 重新抛出原始错误，保留 statusCode 等元数据
+            throw retryError
           }
         }
 

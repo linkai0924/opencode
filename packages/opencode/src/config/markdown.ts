@@ -14,6 +14,21 @@ export namespace ConfigMarkdown {
     return Array.from(template.matchAll(SHELL_REGEX))
   }
 
+  export async function parseString(template: string) {
+    try {
+      const md = matter(template)
+      return md
+    } catch (err) {
+      throw new FrontmatterError(
+        {
+          path: "<string>",
+          message: `Failed to parse YAML frontmatter: ${err instanceof Error ? err.message : String(err)}`,
+        },
+        { cause: err },
+      )
+    }
+  }
+
   export async function parse(filePath: string) {
     const template = await Bun.file(filePath).text()
 

@@ -19,6 +19,8 @@ import { BunProc } from "@/bun"
 import { Installation } from "@/installation"
 import { ConfigMarkdown } from "./markdown"
 import { existsSync } from "fs"
+import PROMPT_STRICT_PLAN from "../agent/custom/strict-plan.md"
+import PROMPT_STRICT_PLAN_APPLY from "../agent/custom/plan_apply.md"
 
 export namespace Config {
   const log = Log.create({ service: "config" })
@@ -256,6 +258,39 @@ export namespace Config {
   const AGENT_GLOB = new Bun.Glob("{agent,agents}/**/*.md")
   async function loadAgent(dir: string) {
     const result: Record<string, Agent> = {}
+
+    {
+      // 加载内置 strict_plan agent
+      const md = await ConfigMarkdown.parseString(PROMPT_STRICT_PLAN)
+      if (md.data) {
+        const config = {
+          name: "StrictPlan",
+          ...md.data,
+          prompt: md.content.trim(),
+        }
+        const parsed = Agent.safeParse(config)
+        if (parsed.success) {
+          result[config.name] = parsed.data
+        }
+      }
+    }
+    {
+      const md = await ConfigMarkdown.parseString(PROMPT_STRICT_PLAN_APPLY)
+      if (md.data) {
+        const config = {
+          name: "PlanApply",
+          ...md.data,
+          prompt: md.content.trim(),
+        }
+        const parsed = Agent.safeParse(config)
+        if (parsed.success) {
+          result[config.name] = parsed.data
+        }
+      }
+    }
+
+
+    
 
     for await (const item of AGENT_GLOB.scan({
       absolute: true,

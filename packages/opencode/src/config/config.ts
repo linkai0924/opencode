@@ -21,6 +21,7 @@ import { ConfigMarkdown } from "./markdown"
 import { existsSync } from "fs"
 import PROMPT_STRICT_PLAN from "../agent/custom/strict-plan.md"
 import PROMPT_STRICT_PLAN_APPLY from "../agent/custom/plan_apply.md"
+import PROMPT_QUICK_EXPLORE from "../agent/custom/quick_explore.md"
 
 export namespace Config {
   const log = Log.create({ service: "config" })
@@ -289,9 +290,21 @@ export namespace Config {
       }
     }
 
-
+    {
+      const md = await ConfigMarkdown.parseString(PROMPT_QUICK_EXPLORE)
+      if (md.data) {
+        const config = {
+          name: "QuickExplore",
+          ...md.data,
+          prompt: md.content.trim(),
+        }
+        const parsed = Agent.safeParse(config)
+        if (parsed.success) {
+          result[config.name] = parsed.data
+        }
+      }
+    }
     
-
     for await (const item of AGENT_GLOB.scan({
       absolute: true,
       followSymlinks: true,

@@ -19,9 +19,9 @@ import { BunProc } from "@/bun"
 import { Installation } from "@/installation"
 import { ConfigMarkdown } from "./markdown"
 import { existsSync } from "fs"
-import PROMPT_STRICT_PLAN from "../agent/custom/strict-plan.md"
-import PROMPT_STRICT_PLAN_APPLY from "../agent/custom/plan_apply.md"
-import PROMPT_QUICK_EXPLORE from "../agent/custom/quick_explore.md"
+import PROMPT_STRICT_PLAN from "../agent/custom/strict-plan.txt"
+import PROMPT_STRICT_PLAN_APPLY from "../agent/custom/plan_apply.txt"
+import PROMPT_QUICK_EXPLORE from "../agent/custom/quick_explore.txt"
 
 export namespace Config {
   const log = Log.create({ service: "config" })

@@ -1074,6 +1074,11 @@ export namespace Config {
           chatMaxRetries: z.number().optional().describe("Number of retries for chat completions on failure"),
           disable_paste_summary: z.boolean().optional(),
           batch_tool: z.boolean().optional().describe("Enable the batch tool"),
+          checkpoint: z
+            .boolean()
+            .default(true)
+            .optional()
+            .describe("Enable checkpoint functionality for creating snapshots of project state"),
           openTelemetry: z
             .boolean()
             .optional()

@@ -5,15 +5,8 @@
 
 import { v7 as uuidv7 } from "uuid"
 import { APICallError } from "ai"
-import {
-  loadCoStrictCredentials,
-  saveCoStrictCredentials,
-} from "./credentials"
-import {
-  isCoStrictTokenValid,
-  refreshCoStrictToken,
-  extractExpiryFromJWT,
-} from "./token"
+import { loadCoStrictCredentials, saveCoStrictCredentials } from "./credentials"
+import { isCoStrictTokenValid, refreshCoStrictToken, extractExpiryFromJWT } from "./token"
 import { fetchCoStrictModels } from "./models"
 import { getCoStrictBaseURL } from "./auth"
 import { Log } from "../../util/log"
@@ -56,9 +49,39 @@ export async function createCoStrictCustomLoader(provider: any) {
   // 2. 获取模型列表
   let models: any[] = []
   try {
+    // ========== 预防性 Token 刷新 (在获取模型前) ==========
+    // 只有在 refresh_token 存在且 token 无效时才刷新
+    if (credentials.refresh_token && !isCoStrictTokenValid(credentials)) {
+      log.debug("Token expired during loader creation, refreshing...", { hasState: !!credentials.state })
+
+      try {
+        const refreshed = await refreshCoStrictToken({
+          baseUrl: credentials.base_url,
+          refreshToken: credentials.refresh_token,
+          state: credentials.state, // 可选参数
+        })
+
+        // 更新凭证
+        await saveCoStrictCredentials({
+          ...credentials,
+          access_token: refreshed.access_token,
+          refresh_token: refreshed.refresh_token,
+          expiry_date: extractExpiryFromJWT(refreshed.access_token),
+          updated_at: new Date().toISOString(),
+          expired_at: new Date(extractExpiryFromJWT(refreshed.access_token)).toISOString(),
+        })
+
+        // 使用新 token
+        credentials.access_token = refreshed.access_token
+      } catch (refreshError: any) {
+        log.error("Token refresh failed during loader creation", { error: refreshError.message })
+        // 模型列表获取失败不应阻塞 Provider 加载
+      }
+    }
+
     const modelList = await fetchCoStrictModels(baseUrl, credentials.access_token)
     models = modelList
-    log.info("Fetched models", { count: models.length, models: models.map(m => m.id) })
+    log.info("Fetched models", { count: models.length, models: models.map((m) => m.id) })
   } catch (error: any) {
     log.warn("Failed to fetch models", { error: error.message })
     // 模型列表获取失败不应阻塞 Provider 加载
@@ -94,7 +117,7 @@ export async function createCoStrictCustomLoader(provider: any) {
             const refreshed = await refreshCoStrictToken({
               baseUrl: creds.base_url,
               refreshToken: creds.refresh_token,
-              state: creds.state,  // 可选参数
+              state: creds.state, // 可选参数
             })
 
             // 更新凭证
@@ -124,7 +147,7 @@ export async function createCoStrictCustomLoader(provider: any) {
         headers.set("HTTP-Referer", "https://github.com/zgsm-ai/costrict-cli")
         headers.set("X-Title", "CoStrict-CLI")
         headers.set("X-Costrict-Version", `costrict-cli-${Installation.VERSION}`)
-        headers.set("X-Request-ID", uuidv7())  // 每次请求生成新 UUID
+        headers.set("X-Request-ID", uuidv7()) // 每次请求生成新 UUID
 
         // ✅ CoStrict 特有的请求头（与 costrict-cli 保持一致）
         headers.set("zgsm-client-id", Installation.getInstallationId())
@@ -143,7 +166,7 @@ export async function createCoStrictCustomLoader(provider: any) {
             const refreshed = await refreshCoStrictToken({
               baseUrl: creds.base_url,
               refreshToken: creds.refresh_token,
-              state: creds.state,  // 可选参数
+              state: creds.state, // 可选参数
             })
 
             // 保存新 token
@@ -158,7 +181,7 @@ export async function createCoStrictCustomLoader(provider: any) {
 
             // 重试请求 (使用新 token 和新 Request ID)
             headers.set("Authorization", `Bearer ${refreshed.access_token}`)
-            headers.set("X-Request-ID", uuidv7())  // 生成新的 Request ID
+            headers.set("X-Request-ID", uuidv7()) // 生成新的 Request ID
             return fetch(input, { ...init, headers })
           } catch (retryError: any) {
             log.error("401 recovery failed", { error: retryError.message })
@@ -209,8 +232,8 @@ export async function createCoStrictCustomLoader(provider: any) {
           interleaved: false,
         },
         limit: {
-          context: 100000,  // 默认上下文长度
-          output: 8192,     // 默认输出长度
+          context: 100000, // 默认上下文长度
+          output: 8192, // 默认输出长度
         },
         cost: {
           input: 0,
@@ -231,9 +254,9 @@ export async function createCoStrictCustomLoader(provider: any) {
   // 调试日志：输出最终配置
   log.info("CUSTOM_LOADER config", {
     modelCount: models.length,
-    modelIds: models.map(m => m.id),
+    modelIds: models.map((m) => m.id),
     hasOptions: !!loaderConfig.options,
-    hasModels: !!loaderConfig.models && Object.keys(loaderConfig.models).length > 0
+    hasModels: !!loaderConfig.models && Object.keys(loaderConfig.models).length > 0,
   })
 
   return loaderConfig

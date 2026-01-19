@@ -6,6 +6,8 @@ import { NamedError } from "@opencode-ai/util/error"
 import { Log } from "../util/log"
 import { iife } from "@/util/iife"
 import { Flag } from "../flag/flag"
+import { createHash } from "node:crypto"
+import { hostname, userInfo } from "node:os"
 
 declare global {
   const COSTRICT_VERSION: string
@@ -182,6 +184,45 @@ export namespace Installation {
   export const VERSION = typeof COSTRICT_VERSION === "string" ? COSTRICT_VERSION : "local"
   export const CHANNEL = typeof COSTRICT_CHANNEL === "string" ? COSTRICT_CHANNEL : "local"
   export const USER_AGENT = `opencode/${CHANNEL}/${VERSION}/${Flag.COSTRICT_CLIENT}`
+
+  /**
+   * Generate stable installation ID based on machine information
+   * Compatible with costrict-cli InstallationManager
+   */
+  let cachedInstallationId: string | null = null
+  export function getInstallationId(): string {
+    // Try environment variable first (always check, not cached)
+    const envId = process.env["COSTRICT_CLIENT_ID"]
+    if (envId) {
+      // If env ID changed, update cache
+      if (cachedInstallationId !== envId) {
+        cachedInstallationId = envId
+      }
+      return envId
+    }
+
+    // If we have a cached ID and no env var, return it
+    if (cachedInstallationId) {
+      return cachedInstallationId
+    }
+
+    // Generate stable ID based on hostname and username
+    const host = hostname()
+    const user = userInfo().username
+    const machineInfo = `${host}-${user}`
+    const hash = createHash("sha256").update(machineInfo).digest("hex")
+
+    // Use first 32 characters for compatibility
+    cachedInstallationId = hash.substring(0, 32)
+    return cachedInstallationId
+  }
+
+  /**
+   * Clear the installation ID cache (for testing)
+   */
+  export function clearInstallationIdCache(): void {
+    cachedInstallationId = null
+  }
 
   export async function latest(installMethod?: Method) {
     const detectedMethod = installMethod || (await method())

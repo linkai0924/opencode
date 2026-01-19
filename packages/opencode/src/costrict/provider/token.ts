@@ -62,7 +62,7 @@ export function extractExpiryFromJWT(token: string): number {
  *
  * 策略优先级:
  * 1. expiry_date (30 分钟缓冲)
- * 2. refresh_token JWT
+ * 2. refresh_token JWT (如果存在)
  * 3. access_token JWT (30 分钟缓冲)
  *
  * @param credentials CoStrict 凭证
@@ -82,14 +82,16 @@ export function isCoStrictTokenValid(credentials: CoStrictCredentials): boolean 
     return isValid
   }
 
-  // 策略 2: refresh_token JWT
-  try {
-    const refreshPayload = parseJWT(credentials.refresh_token)
-    if (refreshPayload.exp) {
-      return refreshPayload.exp * 1000 > now
+  // 策略 2: refresh_token JWT (如果存在)
+  if (credentials.refresh_token) {
+    try {
+      const refreshPayload = parseJWT(credentials.refresh_token)
+      if (refreshPayload.exp) {
+        return refreshPayload.exp * 1000 > now
+      }
+    } catch {
+      // refresh_token 解析失败，尝试下一个策略
     }
-  } catch {
-    // refresh_token 解析失败，尝试下一个策略
   }
 
   // 策略 3: access_token JWT (30 分钟缓冲)
@@ -113,7 +115,7 @@ export function isCoStrictTokenValid(credentials: CoStrictCredentials): boolean 
 export interface RefreshTokenParams {
   baseUrl: string
   refreshToken: string
-  state: string
+  state?: string  // 可选: OAuth 状态标识
 }
 
 /**
@@ -137,14 +139,18 @@ export async function refreshCoStrictToken(
 ): Promise<RefreshTokenResponse> {
   log.info("Token refresh started", { baseUrl: params.baseUrl })
 
-  // 构建查询参数 (排除 machine_code)
-  const queryParams = [
-    ["state", params.state],
+  // 构建查询参数 (排除 machine_code，state 为可选)
+  const queryParams: [string, string][] = [
     ["provider", "casdoor"],
     ["plugin_version", "opencode-1.0.0"],
     ["vscode_version", "opencode-1.0.0"],
     ["uri_scheme", "opencode"],
   ]
+
+  // 只有当 state 存在时才添加到查询参数
+  if (params.state) {
+    queryParams.unshift(["state", params.state])
+  }
 
   const queryString = queryParams
     .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)

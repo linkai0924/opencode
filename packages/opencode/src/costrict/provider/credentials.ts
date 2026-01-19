@@ -18,8 +18,8 @@ export interface CoStrictCredentials {
   id: string                    // 标识符 (固定为 "opencode")
   name: string                  // 显示名称
   access_token: string          // OAuth 访问令牌
-  refresh_token: string         // OAuth 刷新令牌
-  state: string                 // OAuth 状态标识
+  refresh_token?: string        // OAuth 刷新令牌 (可选)
+  state?: string                // OAuth 状态标识 (可选)
   machine_id: string            // 机器唯一标识 (SHA256)
   base_url: string              // CoStrict 服务器地址
   expiry_date: number           // Token 过期时间戳 (毫秒)
@@ -62,15 +62,21 @@ export async function loadCoStrictCredentials(): Promise<CoStrictCredentials | n
     const content = await fs.readFile(filepath, "utf-8")
     const credentials = JSON.parse(content) as CoStrictCredentials
 
-    // 验证必需字段
+    // 验证必需字段 (refresh_token 和 state 为可选)
     if (
       !credentials.access_token ||
-      !credentials.refresh_token ||
-      !credentials.state ||
       !credentials.base_url
     ) {
       log.warn("Credentials file is missing required fields")
       return null
+    }
+
+    // refresh_token 和 state 为可选，记录日志但不阻止加载
+    if (!credentials.refresh_token) {
+      log.info("Credentials loaded without refresh_token")
+    }
+    if (!credentials.state) {
+      log.info("Credentials loaded without state")
     }
 
     return credentials

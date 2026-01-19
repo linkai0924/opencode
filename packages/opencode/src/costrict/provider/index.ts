@@ -86,14 +86,15 @@ export async function createCoStrictCustomLoader(provider: any) {
         }
 
         // ========== 步骤 2: Token 验证和刷新 (预防性) ==========
-        if (!isCoStrictTokenValid(creds)) {
-          log.debug("Token expired, refreshing...")
+        // 只有在 refresh_token 存在且 token 无效时才刷新
+        if (creds.refresh_token && !isCoStrictTokenValid(creds)) {
+          log.debug("Token expired, refreshing...", { hasState: !!creds.state })
 
           try {
             const refreshed = await refreshCoStrictToken({
               baseUrl: creds.base_url,
               refreshToken: creds.refresh_token,
-              state: creds.state,
+              state: creds.state,  // 可选参数
             })
 
             // 更新凭证
@@ -113,6 +114,8 @@ export async function createCoStrictCustomLoader(provider: any) {
             // 重新抛出原始错误，保留 statusCode 等元数据
             throw refreshError
           }
+        } else if (!creds.refresh_token) {
+          log.debug("No refresh_token available, skipping token refresh")
         }
 
         // ========== 步骤 3: 构建 headers ==========
@@ -123,19 +126,24 @@ export async function createCoStrictCustomLoader(provider: any) {
         headers.set("X-Costrict-Version", `costrict-cli-${Installation.VERSION}`)
         headers.set("X-Request-ID", uuidv7())  // 每次请求生成新 UUID
 
+        // ✅ CoStrict 特有的请求头（与 costrict-cli 保持一致）
+        headers.set("zgsm-client-id", Installation.getInstallationId())
+        headers.set("zgsm-client-ide", "cli")
+
         // ========== 步骤 4: 发起请求 ==========
         const response = await fetch(input, { ...init, headers })
 
         // ========== 步骤 5: 处理 401 错误 (反应性) ==========
-        if (response.status === 401) {
-          log.warn("401 error, force refreshing token...")
+        // 只有在 refresh_token 存在时才尝试刷新
+        if (response.status === 401 && creds.refresh_token) {
+          log.warn("401 error, force refreshing token...", { hasState: !!creds.state })
 
           try {
             // 强制刷新 token
             const refreshed = await refreshCoStrictToken({
               baseUrl: creds.base_url,
               refreshToken: creds.refresh_token,
-              state: creds.state,
+              state: creds.state,  // 可选参数
             })
 
             // 保存新 token
@@ -150,13 +158,15 @@ export async function createCoStrictCustomLoader(provider: any) {
 
             // 重试请求 (使用新 token 和新 Request ID)
             headers.set("Authorization", `Bearer ${refreshed.access_token}`)
-            headers.set("X-Request-ID", uuidv7())
+            headers.set("X-Request-ID", uuidv7())  // 生成新的 Request ID
             return fetch(input, { ...init, headers })
           } catch (retryError: any) {
             log.error("401 recovery failed", { error: retryError.message })
             // 重新抛出原始错误，保留 statusCode 等元数据
             throw retryError
           }
+        } else if (response.status === 401 && !creds.refresh_token) {
+          log.warn("401 error but no refresh_token available, cannot refresh")
         }
 
         return response
@@ -200,7 +210,7 @@ export async function createCoStrictCustomLoader(provider: any) {
         },
         limit: {
           context: 100000,  // 默认上下文长度
-          output: 4096,     // 默认输出长度
+          output: 8192,     // 默认输出长度
         },
         cost: {
           input: 0,

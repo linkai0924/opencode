@@ -2,6 +2,10 @@ You are executing a comprehensive testing workflow to ensure code quality.
 
 ---
 
+User Input: $ARGUMENTS
+
+---
+
 ## Testing Activity
 
 After coding is complete, proactive testing should be performed as much as possible to ensure code correctness and avoid potential issues caused by changes.
@@ -14,6 +18,15 @@ Follow these three phases in order:
 
 ### Phase 1: 确认用户需求
 
+**If user provided input above ($ARGUMENTS is not empty)**:
+- Use the user's input as the primary test scope and requirements
+- The input may specify:
+  - Specific modules/features to test (e.g., "test the login module")
+  - Test types to focus on (e.g., "only unit tests for API layer")
+  - Specific files or paths (e.g., "test src/auth/login.ts")
+  - Additional context or constraints
+
+**If no user input provided ($ARGUMENTS is empty)**:
 1. If the user is using plan mode, search for requirement proposals in '.cospec/plan/changes/'
 2. Otherwise, confirm the functional requirements based on the user's recent messages and code changes
 3. Clearly identify what functionality needs to be tested

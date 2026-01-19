@@ -106,6 +106,7 @@ describe("/test command", () => {
         const cmd = await Command.get("test")
         expect(cmd?.hints).toBeDefined()
         expect(Array.isArray(cmd?.hints)).toBe(true)
+        expect(cmd?.hints).toContain("$ARGUMENTS")
       },
     })
   })

@@ -191,15 +191,19 @@ export namespace Installation {
    */
   let cachedInstallationId: string | null = null
   export function getInstallationId(): string {
-    if (cachedInstallationId) {
-      return cachedInstallationId
-    }
-
-    // Try environment variable first
+    // Try environment variable first (always check, not cached)
     const envId = process.env["COSTRICT_CLIENT_ID"]
     if (envId) {
-      cachedInstallationId = envId
+      // If env ID changed, update cache
+      if (cachedInstallationId !== envId) {
+        cachedInstallationId = envId
+      }
       return envId
+    }
+
+    // If we have a cached ID and no env var, return it
+    if (cachedInstallationId) {
+      return cachedInstallationId
     }
 
     // Generate stable ID based on hostname and username
@@ -211,6 +215,13 @@ export namespace Installation {
     // Use first 32 characters for compatibility
     cachedInstallationId = hash.substring(0, 32)
     return cachedInstallationId
+  }
+
+  /**
+   * Clear the installation ID cache (for testing)
+   */
+  export function clearInstallationIdCache(): void {
+    cachedInstallationId = null
   }
 
   export async function latest(installMethod?: Method) {

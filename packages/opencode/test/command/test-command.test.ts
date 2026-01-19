@@ -86,17 +86,17 @@ describe("/test command", () => {
     })
   })
 
-  test.todo("can be disabled via config - needs state isolation fix")
+  test.todo("can be disabled via config - needs state isolation fix", () => {})
 
-  test.todo("description can be overridden via config - needs state isolation fix")
+  test.todo("description can be overridden via config - needs state isolation fix", () => {})
 
-  test.todo("template can be overridden via config - needs state isolation fix")
+  test.todo("template can be overridden via config - needs state isolation fix", () => {})
 
-  test.todo("agent can be specified via config - needs state isolation fix")
+  test.todo("agent can be specified via config - needs state isolation fix", () => {})
 
-  test.todo("model can be specified via config - needs state isolation fix")
+  test.todo("model can be specified via config - needs state isolation fix", () => {})
 
-  test.todo("subtask flag can be set via config - needs state isolation fix")
+  test.todo("subtask flag can be set via config - needs state isolation fix", () => {})
 
   test("hints are parsed from template", async () => {
     await using tmp = await tmpdir()
@@ -127,7 +127,7 @@ describe("command system", () => {
     })
   })
 
-  test.todo("custom command can be added via config - needs state isolation fix")
+  test.todo("custom command can be added via config - needs state isolation fix", () => {})
 
   test("Command.get returns undefined for non-existent command", async () => {
     await using tmp = await tmpdir()

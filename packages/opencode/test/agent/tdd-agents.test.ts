@@ -106,9 +106,9 @@ describe("TDD agents", () => {
       })
     })
 
-    test.todo("can be disabled via config - needs state isolation fix")
+    test.todo("can be disabled via config - needs state isolation fix", () => {})
 
-    test.todo("can override temperature via config - needs state isolation fix")
+    test.todo("can override temperature via config - needs state isolation fix", () => {})
   })
 
   describe("test_and_fix agent", () => {
@@ -194,9 +194,9 @@ describe("TDD agents", () => {
       })
     })
 
-    test.todo("can be disabled via config - needs state isolation fix")
+    test.todo("can be disabled via config - needs state isolation fix", () => {})
 
-    test.todo("can override description via config - needs state isolation fix")
+    test.todo("can override description via config - needs state isolation fix", () => {})
   })
 
   describe("TEST_GUIDE integration", () => {
@@ -256,8 +256,8 @@ describe("TDD agents", () => {
   })
 
   describe("permission overrides", () => {
-    test.todo("test_design can have permissions overridden - needs state isolation fix")
+    test.todo("test_design can have permissions overridden - needs state isolation fix", () => {})
 
-    test.todo("test_and_fix can have bash permission overridden - needs state isolation fix")
+    test.todo("test_and_fix can have bash permission overridden - needs state isolation fix", () => {})
   })
 })

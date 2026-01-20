@@ -96,6 +96,10 @@ const targets = singleFlag
 
 await $`rm -rf dist`
 
+// Generate builtin agents file before building
+console.log("Generating builtin agents...")
+await $`bun run script/generate-agents.ts`
+
 const binaries: Record<string, string> = {}
 if (!skipInstall) {
   await $`bun install --os="*" --cpu="*" @opentui/core@${pkg.dependencies["@opentui/core"]}`
@@ -129,6 +133,10 @@ for (const item of targets) {
     tsconfig: "./tsconfig.json",
     plugins: [solidPlugin],
     sourcemap: "external",
+    loader: {
+      ".md": "text",
+      ".txt": "text",
+    },
     compile: {
       autoloadBunfig: false,
       autoloadDotenv: false,
@@ -167,5 +175,9 @@ for (const item of targets) {
   )
   binaries[name] = Script.version
 }
+
+// Clean up generated builtin.ts file
+console.log("Cleaning up generated files...")
+await $`rm -f src/agent/builtin.ts`
 
 export { binaries }

@@ -1,6 +1,6 @@
 import { Log } from "../util/log"
 import path from "path"
-import { pathToFileURL } from "url"
+import { pathToFileURL, fileURLToPath } from "url"
 import os from "os"
 import z from "zod"
 import { Filesystem } from "../util/filesystem"
@@ -19,9 +19,7 @@ import { BunProc } from "@/bun"
 import { Installation } from "@/installation"
 import { ConfigMarkdown } from "./markdown"
 import { existsSync } from "fs"
-import PROMPT_STRICT_PLAN from "../agent/custom/strict-plan.txt"
-import PROMPT_STRICT_PLAN_APPLY from "../agent/custom/plan_apply.txt"
-import PROMPT_QUICK_EXPLORE from "../agent/custom/quick_explore.txt"
+import { BUILTIN_AGENTS } from "../agent/builtin"
 
 export namespace Config {
   const log = Log.create({ service: "config" })
@@ -256,16 +254,18 @@ export namespace Config {
     return result
   }
 
-  const AGENT_GLOB = new Bun.Glob("{agent,agents}/**/*.md")
+  const AGENT_GLOB = new Bun.Glob("{agent,agents}/**/*.{md,txt}")
   async function loadAgent(dir: string) {
     const result: Record<string, Agent> = {}
 
-    {
-      // 加载内置 strict_plan agent
-      const md = await ConfigMarkdown.parseString(PROMPT_STRICT_PLAN)
-      if (md.data) {
+    // Load built-in agents from imported modules
+    for (const agentContent of BUILTIN_AGENTS) {
+      try {
+        const md = await ConfigMarkdown.parseString(agentContent)
+        if (!md.data) continue
+
         const config = {
-          name: "StrictPlan",
+          name: "unknown",
           ...md.data,
           prompt: md.content.trim(),
         }
@@ -273,38 +273,12 @@ export namespace Config {
         if (parsed.success) {
           result[config.name] = parsed.data
         }
-      }
-    }
-    {
-      const md = await ConfigMarkdown.parseString(PROMPT_STRICT_PLAN_APPLY)
-      if (md.data) {
-        const config = {
-          name: "PlanApply",
-          ...md.data,
-          prompt: md.content.trim(),
-        }
-        const parsed = Agent.safeParse(config)
-        if (parsed.success) {
-          result[config.name] = parsed.data
-        }
+      } catch (error) {
+        log.warn("Failed to load built-in agent", error)
       }
     }
 
-    {
-      const md = await ConfigMarkdown.parseString(PROMPT_QUICK_EXPLORE)
-      if (md.data) {
-        const config = {
-          name: "QuickExplore",
-          ...md.data,
-          prompt: md.content.trim(),
-        }
-        const parsed = Agent.safeParse(config)
-        if (parsed.success) {
-          result[config.name] = parsed.data
-        }
-      }
-    }
-    
+    // Load user-defined agents from config directories
     for await (const item of AGENT_GLOB.scan({
       absolute: true,
       followSymlinks: true,

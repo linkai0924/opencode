@@ -133,10 +133,6 @@ for (const item of targets) {
     tsconfig: "./tsconfig.json",
     plugins: [solidPlugin],
     sourcemap: "external",
-    loader: {
-      ".md": "text",
-      ".txt": "text",
-    },
     compile: {
       autoloadBunfig: false,
       autoloadDotenv: false,
@@ -175,9 +171,5 @@ for (const item of targets) {
   )
   binaries[name] = Script.version
 }
-
-// Clean up generated builtin.ts file
-console.log("Cleaning up generated files...")
-await $`rm -f src/agent/builtin.ts`
 
 export { binaries }

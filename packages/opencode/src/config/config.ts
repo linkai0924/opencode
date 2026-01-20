@@ -266,7 +266,7 @@ export namespace Config {
 
         const config = {
           name: "unknown",
-          ...md.data,
+          ...(md.data as Record<string, any>),
           prompt: md.content.trim(),
         }
         const parsed = Agent.safeParse(config)
@@ -274,7 +274,7 @@ export namespace Config {
           result[config.name] = parsed.data
         }
       } catch (error) {
-        log.warn("Failed to load built-in agent", error)
+        log.warn("Failed to load built-in agent", error as Record<string, any>)
       }
     }
 

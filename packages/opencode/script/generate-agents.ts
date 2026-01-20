@@ -12,10 +12,10 @@ const outputFile = path.resolve(__dirname, "../src/agent/builtin.ts")
 async function generateBuiltinAgents() {
   const agentFiles: string[] = []
 
-  // Only scan the custom directory
+  // Only scan .txt files in the builtin directory
   const entries = await fs.readdir(agentDir, { withFileTypes: true })
   for (const entry of entries) {
-    if (entry.isFile() && (entry.name.endsWith(".txt") || entry.name.endsWith(".md"))) {
+    if (entry.isFile() && entry.name.endsWith(".txt")) {
       agentFiles.push(path.join(agentDir, entry.name))
     }
   }

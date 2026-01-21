@@ -19,7 +19,7 @@ import { BunProc } from "@/bun"
 import { Installation } from "@/installation"
 import { ConfigMarkdown } from "./markdown"
 import { existsSync } from "fs"
-import { BUILTIN_AGENTS } from "../agent/builtin"
+import { BUILTIN_AGENTS } from "../costrict/agent/builtin"
 
 export namespace Config {
   const log = Log.create({ service: "config" })

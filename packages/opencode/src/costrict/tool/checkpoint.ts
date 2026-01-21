@@ -1,6 +1,6 @@
 import z from "zod"
-import { Tool } from "./tool"
-import { GitService } from "@/service/git"
+import { Tool } from "../../tool/tool"
+import { GitService } from "@/costrict/tool/service/git"
 import { Log } from "@/util/log"
 import DESCRIPTION from "./checkpoint.txt"
 

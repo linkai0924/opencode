@@ -16,7 +16,7 @@ export const TEST_AND_FIX_PROMPT_METADATA: AgentPromptMetadata = {
   avoidWhen: ["Designing test cases", "Writing new features", "Code review"],
 }
 
-export async function createTestAndFixAgent(model: string): Promise<AgentConfig & { name: AgentName }> {
+export async function createTestAndFixAgent(_: string): Promise<AgentConfig & { name: AgentName }> {
   const testGuideResult = await import("../utils/test-guide-discovery").then((m) => m.TestGuide.load())
   const testGuideSuffix = testGuideResult.content ? `\n\n# Test Guide\n\n${testGuideResult.content}` : ""
 
@@ -25,7 +25,7 @@ export async function createTestAndFixAgent(model: string): Promise<AgentConfig 
     description:
       "Specialized agent for executing tests and automatically diagnosing and fixing test failures. Analyzes test output, locates issues, applies fixes, and validates results.",
     mode: "subagent",
-    model,
+    // model,
     temperature: 0.1,
     prompt: PROMPT + testGuideSuffix,
   }

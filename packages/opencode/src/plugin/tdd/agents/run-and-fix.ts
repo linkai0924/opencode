@@ -20,14 +20,19 @@ export const RUN_AND_FIX_PROMPT_METADATA: AgentPromptMetadata = {
   avoidWhen: ["Analyzing project structure", "Writing new features", "Code review"],
 }
 
-export function createRunAndFixAgent(model: string): AgentConfig & { name: AgentName } {
+export function createRunAndFixAgent(_: string): AgentConfig & { name: AgentName } {
   return {
     name: RUN_AND_FIX_AGENT_NAME,
     description:
       "Finds and executes verification commands, and fixes coding issues to ensure project runs or compiles successfully",
     mode: "subagent",
-    model,
+    // model,
     temperature: 0.1,
     prompt: PROMPT,
+    tools: {
+      question: true,
+      todowrite: true,
+      todoread: true
+    }
   }
 }

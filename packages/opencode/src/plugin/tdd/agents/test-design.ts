@@ -20,7 +20,7 @@ export const TEST_DESIGN_PROMPT_METADATA: AgentPromptMetadata = {
   avoidWhen: ["Executing tests", "Fixing specific bugs", "Writing implementation code"],
 }
 
-export async function createTestDesignAgent(model: string): Promise<AgentConfig & { name: AgentName }> {
+export async function createTestDesignAgent(_: string): Promise<AgentConfig & { name: AgentName }> {
   const testGuideResult = await import("../utils/test-guide-discovery").then((m) => m.TestGuide.load())
   const testGuideSuffix = testGuideResult.content ? `\n\n# Test Guide\n\n${testGuideResult.content}` : ""
 
@@ -29,7 +29,7 @@ export async function createTestDesignAgent(model: string): Promise<AgentConfig 
     description:
       "Specialized agent for test point design and test case planning. Designs comprehensive test points based on functional requirements or code, and generates structured test plan documents in Markdown format.",
     mode: "subagent",
-    model,
+    // model,
     temperature: 0.1,
     prompt: PROMPT + testGuideSuffix,
   }

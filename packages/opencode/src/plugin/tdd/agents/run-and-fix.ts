@@ -20,7 +20,10 @@ export const RUN_AND_FIX_PROMPT_METADATA: AgentPromptMetadata = {
   avoidWhen: ["Analyzing project structure", "Writing new features", "Code review"],
 }
 
-export function createRunAndFixAgent(_: string): AgentConfig & { name: AgentName } {
+export async function createRunAndFixAgent(_: string): Promise<AgentConfig & { name: AgentName }> {
+  const testGuideResult = await import("../utils/test-guide-discovery").then((m) => m.TestGuide.load())
+  const testGuideSuffix = testGuideResult.content ? `\n\n# Test Guide\n\n${testGuideResult.content}` : ""
+
   return {
     name: RUN_AND_FIX_AGENT_NAME,
     description:
@@ -28,7 +31,7 @@ export function createRunAndFixAgent(_: string): AgentConfig & { name: AgentName
     mode: "subagent",
     // model,
     temperature: 0.1,
-    prompt: PROMPT,
+    prompt: PROMPT + testGuideSuffix,
     tools: {
       question: true,
       todowrite: true,

@@ -107,7 +107,7 @@ Your task is to ensure the current project can run or compile successfully by:
    - Wait for user confirmation before proceeding
 
     After user confirms:
-    - Update the `.costrict/TEST_GUIDE.md` file with the verified runnability commands
+    - Update the `.cospec/TEST_GUIDE.md` file with the verified runnability commands
     - Use this format:
       ```markdown
       ## Runnability Verification Commands

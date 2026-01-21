@@ -1,14 +1,14 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin"
 import { handleConfig, handleSystemTransform, getTools } from "./handlers"
 import { Log } from "@/util/log"
-import { Bus } from "@/bus"
-import { MessageV2 } from "@/session/message-v2"
+// import { Bus } from "@/bus"
+// import { MessageV2 } from "@/session/message-v2"
 export { getCommands } from "./commands"
 
 const log = Log.create({ service: "tdd.plugin" })
 
 export async function TDDPlugin(input: PluginInput): Promise<Hooks> {
-  _subscribeToChunkEvents()
+  // _subscribeToChunkEvents()
   return {
     config: handleConfig,
     "experimental.chat.system.transform": handleSystemTransform,
@@ -18,37 +18,37 @@ export async function TDDPlugin(input: PluginInput): Promise<Hooks> {
   }
 }
 
-function _subscribeToChunkEvents() {
-  try {
-    Bus.subscribe(MessageV2.Event.PartUpdated, (event) => {
-      const part = event.properties.part
-      const delta = event.properties.delta
+// function _subscribeToChunkEvents() {
+//   try {
+//     Bus.subscribe(MessageV2.Event.PartUpdated, (event) => {
+//       const part = event.properties.part
+//       const delta = event.properties.delta
 
-      if (part.type === "text" && part.text && delta) {
-        log.info("Model response chunk", {
-          sessionID: part.sessionID,
-          messageID: part.messageID,
-          partID: part.id,
-          delta: truncateString(delta, 200),
-          totalLength: part.text.length,
-        })
-      } else if (part.type === "tool") {
-        const toolPart = part as MessageV2.ToolPart
-        log.info("Tool chunk", {
-          sessionID: part.sessionID,
-          messageID: part.messageID,
-          callID: toolPart.callID,
-          tool: toolPart.tool,
-          status: toolPart.state.status,
-          input:
-            JSON.stringify(toolPart.state.input).length > 100
-              ? `${JSON.stringify(toolPart.state.input).substring(0, 100)}...`
-              : JSON.stringify(toolPart.state.input),
-        })
-      }
-    })
-  } catch {}
-}
+//       if (part.type === "text" && part.text && delta) {
+//         log.info("Model response chunk", {
+//           sessionID: part.sessionID,
+//           messageID: part.messageID,
+//           partID: part.id,
+//           delta: truncateString(delta, 200),
+//           totalLength: part.text.length,
+//         })
+//       } else if (part.type === "tool") {
+//         const toolPart = part as MessageV2.ToolPart
+//         log.info("Tool chunk", {
+//           sessionID: part.sessionID,
+//           messageID: part.messageID,
+//           callID: toolPart.callID,
+//           tool: toolPart.tool,
+//           status: toolPart.state.status,
+//           input:
+//             JSON.stringify(toolPart.state.input).length > 100
+//               ? `${JSON.stringify(toolPart.state.input).substring(0, 100)}...`
+//               : JSON.stringify(toolPart.state.input),
+//         })
+//       }
+//     })
+//   } catch {}
+// }
 
 function truncateString(str: string, maxLength: number = 100): string {
   if (str.length <= maxLength) return str

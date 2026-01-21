@@ -3,7 +3,7 @@ import z from "zod"
 import { Config } from "../config/config"
 import { Instance } from "../project/instance"
 import { Identifier } from "../id/id"
-import PROMPT_INITIALIZE from "./template/initialize.txt"
+import PROMPT_INITIALIZE from "../costrict/command/template/enhanced-initialize.txt" // costrict change
 import PROMPT_REVIEW from "./template/review.txt"
 import { MCP } from "../mcp"
 import { getCommands } from "../plugin/tdd"

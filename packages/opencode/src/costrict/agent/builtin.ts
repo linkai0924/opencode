@@ -5,8 +5,9 @@ import AGENT_0 from "./fix-agent.txt"
 import AGENT_1 from "./plan_apply.txt"
 import AGENT_2 from "./quick_explore.txt"
 import AGENT_3 from "./strict-plan.txt"
-import AGENT_4 from "./test_and_fix.txt"
-import AGENT_5 from "./test_design.txt"
+import AGENT_4 from "./task-check.txt"
+import AGENT_5 from "./test_and_fix.txt"
+import AGENT_6 from "./test_design.txt"
 
 export const BUILTIN_AGENTS = [
   AGENT_0,
@@ -14,5 +15,6 @@ export const BUILTIN_AGENTS = [
   AGENT_2,
   AGENT_3,
   AGENT_4,
-  AGENT_5
+  AGENT_5,
+  AGENT_6
 ]

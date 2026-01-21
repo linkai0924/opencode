@@ -7,8 +7,8 @@ import DESCRIPTION from "./checkpoint.txt"
 const log = Log.create({ service: "checkpoint-tool" })
 
 export const CheckpointTool = Tool.define("checkpoint", async () => {
-  // Ensure GitService is initialized
-  await GitService.getInstance()
+  // Try to initialize GitService, but don't fail if Git is unavailable
+  const gitService = await GitService.getInstanceSafe()
 
   return {
     description: DESCRIPTION,
@@ -31,7 +31,14 @@ export const CheckpointTool = Tool.define("checkpoint", async () => {
     }),
 
     async execute(params, ctx) {
-      const gitService = await GitService.getInstance()
+      // Check if service is available
+      if (!gitService || !gitService.isAvailable()) {
+        return {
+          title: "Checkpoint Unavailable",
+          output: "Checkpoint feature is unavailable. Git is required for this functionality.\n\nPlease install Git and restart the CLI to use checkpoint features.",
+          metadata: {},
+        }
+      }
 
       // Validate parameters based on action
       if (params.action === "commit" && !params.message) {

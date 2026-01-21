@@ -17,6 +17,7 @@ export interface CommitInfo {
 export class GitService {
   private shadowRepoPath: string
   private projectRoot: string
+  private available: boolean = false
 
   constructor(projectRoot: string) {
     this.projectRoot = projectRoot
@@ -46,6 +47,7 @@ export class GitService {
       const gitDir = path.join(this.shadowRepoPath, ".git")
       if (existsSync(gitDir)) {
         log.info("Shadow repository already initialized", { path: this.shadowRepoPath })
+        this.available = true
         return
       }
 
@@ -65,8 +67,9 @@ export class GitService {
 
       log.info("Initializing shadow repository", { path: this.shadowRepoPath })
 
-      // Initialize git repository
-      await this.execGit(["init"])
+      // Initialize git repository (run directly in shadowRepoPath, not using execGit)
+      // because git init doesn't work with GIT_DIR pre-set
+      await $`git init`.cwd(this.shadowRepoPath).quiet()
 
       // Try to set initial branch to main (Git 2.28.0+)
       try {
@@ -86,10 +89,15 @@ export class GitService {
       // Create initial commit to establish main branch
       await this.createInitialCommit()
 
+      this.available = true
       log.info("Shadow repository initialized successfully")
     } catch (error) {
-      log.error("Failed to initialize shadow repository", { error })
-      throw new Error(`Failed to initialize checkpoint repository: ${error}`)
+      // Don't throw error, just log warning so CLI can continue to work
+      log.warn("Checkpoint feature unavailable", {
+        error: error instanceof Error ? error.message : String(error),
+        hint: "Git is required for checkpoint functionality. Install Git to enable this feature."
+      })
+      this.available = false
     }
   }
 
@@ -98,6 +106,12 @@ export class GitService {
       await $`git --version`.quiet()
     } catch (error) {
       throw new Error("Git is not installed or not available in PATH")
+    }
+  }
+
+  private ensureAvailable(): void {
+    if (!this.available) {
+      throw new Error("Checkpoint feature is unavailable. Git is required for this functionality.")
     }
   }
 
@@ -157,6 +171,7 @@ Created: ${new Date().toISOString()}
    * Create a checkpoint (snapshot) of the current project state
    */
   async createCheckpoint(message: string): Promise<string> {
+    this.ensureAvailable()
     try {
       // Stage all changes
       await this.execGit(["add", "."])
@@ -185,6 +200,7 @@ Created: ${new Date().toISOString()}
    * Get list of all checkpoints
    */
   async listCheckpoints(limit: number = 50): Promise<CommitInfo[]> {
+    this.ensureAvailable()
     try {
       const logOutput = await this.execGit([
         "log",
@@ -225,6 +241,7 @@ Created: ${new Date().toISOString()}
    * Show diff for a specific checkpoint
    */
   async showCheckpointDiff(commitHash: string): Promise<string> {
+    this.ensureAvailable()
     try {
       // First, check if this commit has a parent
       let hasParent = true
@@ -255,6 +272,7 @@ Created: ${new Date().toISOString()}
    * Restore project to a specific checkpoint
    */
   async restoreCheckpoint(commitHash: string, files?: string[]): Promise<void> {
+    this.ensureAvailable()
     try {
       if (files && files.length > 0) {
         // Restore specific files
@@ -278,6 +296,7 @@ Created: ${new Date().toISOString()}
    * Revert a specific checkpoint (create a new commit that undoes the changes)
    */
   async revertCheckpoint(commitHash: string): Promise<string> {
+    this.ensureAvailable()
     try {
       await this.execGit(["revert", "--no-edit", commitHash])
       const newHash = await this.getCurrentCommitHash()
@@ -298,6 +317,13 @@ Created: ${new Date().toISOString()}
   }
 
   /**
+   * Check if the service is available (Git is installed and initialized)
+   */
+  isAvailable(): boolean {
+    return this.available
+  }
+
+  /**
    * Get the shadow repository path
    */
   getShadowRepoPath(): string {
@@ -314,9 +340,25 @@ export namespace GitService {
       instance = new GitService(Instance.directory)
       if (!instance.isInitialized()) {
         await instance.initialize()
+      } else {
+        // Mark as available if already initialized
+        instance["available"] = true
       }
     }
     return instance
+  }
+
+  /**
+   * Get instance safely, returns null if service is not available
+   */
+  export async function getInstanceSafe(): Promise<GitService | null> {
+    try {
+      const service = await getInstance()
+      return service.isAvailable() ? service : null
+    } catch (error) {
+      log.warn("Failed to get GitService instance", { error })
+      return null
+    }
   }
 
   export function reset(): void {

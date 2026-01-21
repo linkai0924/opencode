@@ -18,7 +18,7 @@ import { BashArity } from "@/permission/arity"
 import { Truncate } from "./truncation"
 
 const MAX_METADATA_LENGTH = 30_000
-const DEFAULT_TIMEOUT = Flag.COSTRICT_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS || 2 * 60 * 1000
+const DEFAULT_TIMEOUT = Flag.COSTRICT_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS || 5 * 60 * 1000
 
 export const log = Log.create({ service: "bash-tool" })
 
@@ -77,7 +77,7 @@ export const BashTool = Tool.define("bash", async () => {
     async execute(params, ctx) {
       const cwd = params.workdir || Instance.directory
       if (params.timeout !== undefined && params.timeout < 0) {
-        throw new Error(`Invalid timeout value: ${params.timeout}. Timeout must be a positive number.`)
+        throw new Error(`Invalid timeout value: ${params.timeout}. Timeout must be a non-negative number (0 for no timeout).`)
       }
       const timeout = params.timeout ?? DEFAULT_TIMEOUT
       const tree = await parser().then((p) => p.parse(params.command))
@@ -206,14 +206,14 @@ export const BashTool = Tool.define("bash", async () => {
 
       ctx.abort.addEventListener("abort", abortHandler, { once: true })
 
-      const timeoutTimer = setTimeout(() => {
+      const timeoutTimer = timeout > 0 ? setTimeout(() => {
         timedOut = true
         void kill()
-      }, timeout + 100)
+      }, timeout + 100) : null
 
       await new Promise<void>((resolve, reject) => {
         const cleanup = () => {
-          clearTimeout(timeoutTimer)
+          if (timeoutTimer) clearTimeout(timeoutTimer)
           ctx.abort.removeEventListener("abort", abortHandler)
         }
 

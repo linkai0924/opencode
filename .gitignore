@@ -27,3 +27,5 @@ logs/
 *.bun-build
 
 .claude
+.opencode
+.costrict

@@ -5,8 +5,8 @@ import { Instance } from "../project/instance"
 import { Identifier } from "../id/id"
 import PROMPT_INITIALIZE from "./template/initialize.txt"
 import PROMPT_REVIEW from "./template/review.txt"
-import PROMPT_TEST from "./template/test.txt"
 import { MCP } from "../mcp"
+import { getCommands } from "../plugin/tdd"
 
 export namespace Command {
   export const Event = {
@@ -78,14 +78,11 @@ export namespace Command {
         subtask: true,
         hints: hints(PROMPT_REVIEW),
       },
-      [Default.TEST]: {
-        name: Default.TEST,
-        description: "execute comprehensive testing workflow: confirm requirements, generate test cases, and execute tests with automated fixes",
-        get template() {
-          return PROMPT_TEST
-        },
-        hints: hints(PROMPT_TEST),
-      },
+    }
+
+    const tddCommands = await getCommands()
+    for (const [name, command] of Object.entries(tddCommands)) {
+      result[name] = command
     }
 
     for (const [name, command] of Object.entries(cfg.command ?? {})) {

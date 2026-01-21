@@ -2834,11 +2834,12 @@ export namespace Server {
         )
         .all("/*", async (c) => {
           const path = c.req.path
-          const response = await proxy(`https://app.costrict.ai${path}`, {
+          const appUrl = new URL(Flag.COSTRICT_APP_URL)
+          const response = await proxy(`${appUrl.origin}${path}`, {
             ...c.req,
             headers: {
               ...c.req.raw.headers,
-              host: "app.costrict.ai",
+              host: appUrl.host,
             },
           })
           response.headers.set(
@@ -2906,3 +2907,4 @@ export namespace Server {
     return server
   }
 }
+

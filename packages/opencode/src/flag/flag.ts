@@ -22,6 +22,7 @@ export namespace Flag {
   export const COSTRICT_CLIENT = process.env["COSTRICT_CLIENT"] ?? "cli"
   export const COSTRICT_SERVER_PASSWORD = process.env["COSTRICT_SERVER_PASSWORD"]
   export const COSTRICT_SERVER_USERNAME = process.env["COSTRICT_SERVER_USERNAME"]
+  export const COSTRICT_APP_URL = process.env["COSTRICT_APP_URL"] ?? "https://app.opencode.ai"
 
   // Experimental
   export const COSTRICT_EXPERIMENTAL = truthy("COSTRICT_EXPERIMENTAL")

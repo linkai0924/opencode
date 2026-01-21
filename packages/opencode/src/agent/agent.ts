@@ -12,8 +12,6 @@ import PROMPT_COMPACTION from "./prompt/compaction.txt"
 import PROMPT_EXPLORE from "./prompt/explore.txt"
 import PROMPT_SUMMARY from "./prompt/summary.txt"
 import PROMPT_TITLE from "./prompt/title.txt"
-import PROMPT_TEST_DESIGN from "./custom/test_design.txt"
-import PROMPT_TEST_AND_FIX from "./custom/test_and_fix.txt"
 import { PermissionNext } from "@/permission/next"
 import { mergeDeep, pipe, sortBy, values } from "remeda"
 import { Global } from "@/global"
@@ -151,42 +149,6 @@ export namespace Agent {
         ),
         description: `Fast agent specialized for exploring codebases. Use this when you need to quickly find files by patterns (eg. "src/components/**/*.tsx"), search code for keywords (eg. "API endpoints"), or answer questions about the codebase (eg. "how do API endpoints work?"). When calling this agent, specify the desired thoroughness level: "quick" for basic searches, "medium" for moderate exploration, or "very thorough" for comprehensive analysis across multiple locations and naming conventions.`,
         prompt: PROMPT_EXPLORE,
-        options: {},
-        mode: "subagent",
-        native: true,
-      },
-      test_design: {
-        name: "test_design",
-        description: `Specialized agent for test point design and test case planning. Designs comprehensive test points based on functional requirements or code, and generates structured test plan documents in Markdown format.`,
-        permission: PermissionNext.merge(
-          defaults,
-          PermissionNext.fromConfig({
-            "*": "allow",
-            edit: "allow",
-            write: "allow",
-          }),
-          user,
-        ),
-        prompt: PROMPT_TEST_DESIGN + testGuideSuffix,
-        temperature: 0.1,
-        options: {},
-        mode: "subagent",
-        native: true,
-      },
-      test_and_fix: {
-        name: "test_and_fix",
-        description: `Specialized agent for executing tests and automatically diagnosing and fixing test failures. Analyzes test output, locates issues, applies fixes, and validates results.`,
-        permission: PermissionNext.merge(
-          defaults,
-          PermissionNext.fromConfig({
-            "*": "allow",
-            bash: "allow",
-            edit: "allow",
-          }),
-          user,
-        ),
-        prompt: PROMPT_TEST_AND_FIX + testGuideSuffix,
-        temperature: 0.1,
         options: {},
         mode: "subagent",
         native: true,

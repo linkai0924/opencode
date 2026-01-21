@@ -96,6 +96,10 @@ const targets = singleFlag
 
 await $`rm -rf dist`
 
+// Generate builtin agents file before building
+console.log("Generating builtin agents...")
+await $`bun run script/generate-agents.ts`
+
 const binaries: Record<string, string> = {}
 if (!skipInstall) {
   await $`bun install --os="*" --cpu="*" @opentui/core@${pkg.dependencies["@opentui/core"]}`

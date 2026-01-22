@@ -2,9 +2,11 @@ import {
   createRunAndFixAgent,
   createTestDesignAgent,
   createTestAndFixAgent,
+  createTestPrepareAgent,
   RUN_AND_FIX_AGENT_NAME,
   TEST_DESIGN_AGENT_NAME,
   TEST_AND_FIX_AGENT_NAME,
+  TEST_PREPARE_AGENT_NAME,
 } from "../agents"
 
 export async function handleConfig(config: any): Promise<void> {
@@ -17,4 +19,5 @@ export async function handleConfig(config: any): Promise<void> {
   config.agent[RUN_AND_FIX_AGENT_NAME] = await createRunAndFixAgent(systemDefaultModel)
   config.agent[TEST_DESIGN_AGENT_NAME] = await createTestDesignAgent(systemDefaultModel)
   config.agent[TEST_AND_FIX_AGENT_NAME] = await createTestAndFixAgent(systemDefaultModel)
+  config.agent[TEST_PREPARE_AGENT_NAME] = await createTestPrepareAgent(systemDefaultModel)
 }

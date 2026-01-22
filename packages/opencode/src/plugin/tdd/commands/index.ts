@@ -1,10 +1,10 @@
-import type { Command as CommandType } from "../../../command"
+import { Command } from "../../../command"
 
 async function getTestTemplate(): Promise<string> {
   return Bun.file(new URL("./template/test.txt", import.meta.url)).text()
 }
 
-export async function getCommands(): Promise<Record<string, CommandType.Info>> {
+export async function getCommands(): Promise<Record<string, Command.Info>> {
   const testTemplate = await getTestTemplate()
   return {
     test: {
@@ -12,7 +12,7 @@ export async function getCommands(): Promise<Record<string, CommandType.Info>> {
       description:
         "execute comprehensive testing workflow: confirm requirements, generate test cases, and execute tests with automated fixes",
       template: testTemplate,
-      hints: [],
+      hints: Command.hints(testTemplate),
     },
   }
 }

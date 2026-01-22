@@ -1,4 +1,4 @@
-import type { AgentConfig } from "@opencode-ai/sdk"
+import type { Config } from "../../../config/config"
 import type { AgentPromptMetadata } from "../types"
 import PROMPT from "./prompts/run_and_fix.txt"
 import { RUN_AND_FIX_AGENT_NAME, type AgentName } from "./constants"
@@ -20,7 +20,7 @@ export const RUN_AND_FIX_PROMPT_METADATA: AgentPromptMetadata = {
   avoidWhen: ["Analyzing project structure", "Writing new features", "Code review"],
 }
 
-export async function createRunAndFixAgent(_: string): Promise<AgentConfig & { name: AgentName }> {
+export async function createRunAndFixAgent(_: string): Promise<Config.Agent & { name: AgentName }> {
   const testGuideResult = await import("../utils/test-guide-discovery").then((m) => m.TestGuide.load())
   const testGuideSuffix = testGuideResult.content ? `\n\n# Test Guide\n\n${testGuideResult.content}` : ""
 
@@ -32,10 +32,10 @@ export async function createRunAndFixAgent(_: string): Promise<AgentConfig & { n
     // model,
     temperature: 0.1,
     prompt: PROMPT + testGuideSuffix,
-    tools: {
-      question: true,
-      todowrite: true,
-      todoread: true
+    permission: {
+      question: "allow",
+      todowrite: "allow",
+      todoread: "allow"
     }
   }
 }

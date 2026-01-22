@@ -3,6 +3,7 @@ import { Bus } from "@/bus"
 import { GlobalBus } from "@/bus/global"
 import { Log } from "../util/log"
 import { describeRoute, generateSpecs, validator, resolver, openAPIRouteHandler } from "hono-openapi"
+import { EmbeddedAssets as StaticAssets } from "./costrict/embedded-assets" /*costrict change*/
 import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { stream, streamSSE } from "hono/streaming"
@@ -2833,7 +2834,36 @@ export namespace Server {
           },
         )
         .all("/*", async (c) => {
-          const path = c.req.path
+          let path = c.req.path
+          
+          /*costrict change start*/
+          // 移除路径中的 base64 编码的项目目录前缀 (如 /RDpcY29kZVxMUkFTUC1KQVZBLUFHRU5U/favicon.ico -> /favicon.ico)
+          // 前端路由格式: /{base64EncodedDirectory}/...
+          const pathParts = path.split('/').filter(Boolean)
+          if (pathParts.length >= 2) {
+            // 检查第一个部分是否像 base64 (只包含 base64 字符)
+            const firstPart = pathParts[0]
+            if (/^[A-Za-z0-9+/=_-]+$/.test(firstPart) && firstPart.length > 10) {
+              // 移除第一个部分,保留后面的路径
+              path = '/' + pathParts.slice(1).join('/')
+            }
+          }
+          
+          // 1. 优先尝试从嵌入资源获取
+          if (StaticAssets.isAvailable()) {
+            const asset = await StaticAssets.getAsset(path)
+            if (asset) {
+              // 设置 CSP 响应头
+              asset.headers.set(
+                "Content-Security-Policy",
+                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'",
+              )
+              return asset
+            }
+          }
+          
+          // 2. 回退到远程代理
+          /*costrict change end*/
           const appUrl = new URL(Flag.COSTRICT_APP_URL)
           const response = await proxy(`${appUrl.origin}${path}`, {
             ...c.req,

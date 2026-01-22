@@ -29,7 +29,9 @@ export async function createTestAndFixAgent(_: string): Promise<Config.Agent & {
     temperature: 0.1,
     prompt: PROMPT + testGuideSuffix,
     permission: {
-      task: { "*": "allow" }
+      question: "allow",
+      todowrite: "allow",
+      todoread: "allow"
     }
   }
 }

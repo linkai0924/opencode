@@ -47,8 +47,18 @@ Phase 2：获取验证命令
    - 以这两个来源的拼接内容为准
 2. 检查 TEST_GUIDE.md 是否包含"可运行性验证命令"部分
 3. 如果不包含或缺失验证命令：
-   - 使用 `task` 工具调用 `TestPrepare` subagent 来填充可运行性验证命令
-   - 等待 `TestPrepare` 完成后，使用 Read 工具读取 `.cospec/TEST_GUIDE.md` 获取更新后的内容
+   - **停止当前任务**
+   - 输出以下格式的消息，要求主流程调用 TestPrepare：
+     ```markdown
+     ## Task Action Required
+     
+     TEST_GUIDE.md is missing or incomplete.
+     
+     **Action Required**: Please run the `TestPrepare` subagent first to populate TEST_GUIDE.md with runnability verification commands.
+     
+     After TestPrepare completes, retry this task.
+     ```
+   - **退出任务**，不要继续执行后续步骤
 4. 从 TEST_GUIDE.md 中提取验证命令
 
 Phase 3：使用 TodoWrite 管理过程

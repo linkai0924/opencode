@@ -37,8 +37,18 @@ Phase 1：执行测试
    - 以这两个来源的拼接内容为准
 4. 检查 TEST_GUIDE.md 的完整性：
    - 如果文档不存在或缺少测试运行命令（如 "运行测试" 部分），需要调用 TestPrepare 子代理
-   - 使用 task 工具调用 TestPrepare 子代理，指定其检查并填充 TEST_GUIDE.md
-   - 等待 TestPrepare 完成后，使用 Read 工具读取 `.cospec/TEST_GUIDE.md` 获取更新后的内容
+   - **停止当前任务**
+   - 输出以下格式的消息，要求主流程调用 TestPrepare：
+     ```markdown
+     ## Task Action Required
+     
+     TEST_GUIDE.md is missing or incomplete.
+     
+     **Action Required**: Please run the `TestPrepare` subagent first to populate TEST_GUIDE.md with test execution commands.
+     
+     After TestPrepare completes, retry this task.
+     ```
+   - **退出任务**，不要继续执行后续步骤
 5. 根据测试指导文档的内容，执行测试
 6. 捕获并保存测试输出
 

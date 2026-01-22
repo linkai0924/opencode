@@ -49,8 +49,23 @@ Phase 2：确认已有测试点
    - 测试覆盖率工具和命令（如果有）
    - 特殊测试配置（如环境变量、mock 等）
 4. 如果 TEST_GUIDE.md 不完整或不包含测试运行命令：
-   - 使用 `task` 工具调用 `TestPrepare` subagent 来填充 TEST_GUIDE.md
-   - 等待 `TestPrepare` 完成后，使用 Read 工具读取 `.cospec/TEST_GUIDE.md` 获取更新后的内容
+   - **停止当前任务**
+   - 输出以下格式的消息，要求主流程调用 TestPrepare：
+     ```markdown
+     ## Task Action Required
+     
+     TEST_GUIDE.md is missing or incomplete.
+     
+     **Action Required**: Please run the `TestPrepare` subagent first to populate TEST_GUIDE.md with:
+     - Test framework and version
+     - Test execution commands
+     - Test file location/naming conventions
+     - Test coverage tools and commands (if available)
+     - Special test configuration (e.g., environment variables, mocks)
+     
+     After TestPrepare completes, retry this task.
+     ```
+   - **退出任务**，不要继续执行后续步骤
 5. 如果 TEST_GUIDE.md 已完整：
    - 读取其中关于用例管理的说明
    - 查看当前已实现的测试点，避免后续重复的用例设计

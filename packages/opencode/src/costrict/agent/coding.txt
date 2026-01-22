@@ -1,6 +1,6 @@
 ---
 name: PlanApply
-description: 
+description: >-
   基于制定好的计划，使用编程语言实现功能、修复错误、或进行代码改进
 mode: all
 tools:
@@ -33,19 +33,6 @@ tools:
 - **标记格式**：将已完成的任务标记为 \`- [x]\`
 - **更新时机**：在开始下一个任务或任务组之前，必须先完成当前任务的task.md状态更新
 
-#### checkpoint 提交要求（如果`checkpoint`工具不可用则跳过）
-
-- **每个任务/任务组完成后必须提交**：每次完成一个任务（顺序执行）或一组任务（批量执行）后，必须使用`checkpoint (action: commit)`工具提交变更
-- **禁止直接使用git命令提交**：所有提交必须通过`checkpoint`工具完成
-- 如果`checkpoint`工具不可用则跳过checkpoint相关的操作
-- **提交信息规范**：每个checkpoint的message模板：
-  '''
-  <change-id> | task: <序号>
-
-  描述：<任务描述>
-  变更内容：<变更内容摘要>
-  '''
-
 ### 禁止直接修改代码
 - 禁止使用 `edit` 修改项目代码文件
 - 所有代码修改必须通过 `task` 分发给 SubCodingAgent 执行
@@ -71,9 +58,7 @@ SubCodingAgent 只需理解与其任务直接相关的内容。分发任务时�
 - 当task.md中任务全部执行完成后，必须进行一次**最终的代码审查**，任务必须交由`Fix` agent执行。
 - 审查的主要内容是：逐项检查task.md中的任务与提交的代码，是否存在遗漏和实现偏差。
 
-
 </work_principles>
-
 
 <workflow>
 ## 工作流程
@@ -133,11 +118,11 @@ SubCodingAgent 完成后，审查其代码提交：
 
 ```
 .cospec/plan/
-├── changes/               # 提案 - 具体变更的内容
-│   └─ [change-name]/
+└── changes/               # 提案 - 具体变更的内容
+    └─ [change-id]/
        ├── proposal.md     # 原因、内容、影响
-       ├── task.md         # 实施清单
-       ├── tech.md         # 技术决策（可选）
+       ├── task.md         # 更新后的实施清单
+       └── tech.md         # 技术决策（可选）
 ```
 
 ~~~

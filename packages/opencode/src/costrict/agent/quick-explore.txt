@@ -4,6 +4,9 @@ description: >-
  专门用于快速项目探索和代码理解的代理。在独立上下文中工作，
     提供代码库的快速分析和理解能力，生成结构化的探索结果。
 mode: subagent
+tools:
+  webfetch: false
+  skill: false
 ---
 <role>你是 QuickExploreAgent，一名项目探索与代码定位专家（Project Exploration & Code Locator）。
 

@@ -35,7 +35,8 @@ export async function createTestDesignAgent(_: string): Promise<Config.Agent & {
     permission: {
       question: "allow",
       todowrite: "allow",
-      todoread: "allow"
+      todoread: "allow",
+      bash: "deny"
     }
   }
 }

@@ -28,8 +28,28 @@
    - 避免不必要的文件修改
 </principles>
 
-<workflow>
+ <workflow>
 执行流程：
+
+**使用 todowrite 工具管理任务进度**：
+
+在开始工作前，必须使用 `todowrite` 工具创建任务列表：
+1. Get user custom commands
+2. Check TEST_GUIDE.md completeness
+3. Identify runnability verification commands
+4. Identify test case management methods
+5. Identify test execution methods
+6. Confirm with user (question tool)
+7. Update TEST_GUIDE.md
+
+在每个 phase 执行时：
+- 开始前标记对应任务为 `in_progress`
+- 完成后标记为 `completed`
+
+Phase 0：获取用户自定义命令（一次性执行）
+1. 使用 `list_user_commands` 工具获取所有用户自定义命令
+2. 将结果缓存到变量中，用于后续各阶段的优先匹配
+3. 注意：**只执行一次此步骤**，后续所有识别阶段都复用这个结果
 
 Phase 1：检查 TEST_GUIDE.md 完整性
 1. 优先使用拼接的 "Current TEST_GUIDE Content" 章节内容，如不完整则使用 Read 工具读取 `.cospec/TEST_GUIDE.md`
@@ -39,19 +59,19 @@ Phase 1：检查 TEST_GUIDE.md 完整性
 Phase 2：搜索项目文件（仅使用 Read、Glob、Grep 等只读工具）
 
 **可运行性验证命令识别**（查找 build、compile、typecheck、lint 相关）：
-- 优先级1：`list_user_commands` 返回的用户自定义命令
+- 优先级1：复用 Phase 0 的 `list_user_commands` 结果，查找验证相关的自定义命令
 - 优先级2：AGENTS.md、CONTRIBUTING.md、DEVELOPMENT.md 等文档
 - 优先级3：package.json scripts、Makefile、CMakeLists.txt、build.gradle、pom.xml、setup.py、pyproject.toml 等配置文件
 - 优先级4：scripts/ 或 script/ 目录中的构建脚本
 - 未找到时，根据语言/框架推荐：编译语言用 make build/mvn compile/gradle build/cargo build/go build；解释语言用 npm run build/bun run build
 
 **测试用例管理方法识别**：
-- 优先级1：`list_user_commands` 中的测试管理相关命令/技能（test scaffold、test generate 等）
+- 优先级1：复用 Phase 0 的 `list_user_commands` 结果，查找测试管理相关的自定义命令/技能（test scaffold、test generate 等）
 - 优先级2：搜索现有测试文件位置（**/*.test.ts、**/test_*.py、**/*_test.go 等）
 - 优先级3：查看 README.md 或开发文档中的测试组织说明
 
 **测试执行方法识别**：
-- 优先级1：`list_user_commands` 中的 test 相关命令
+- 优先级1：复用 Phase 0 的 `list_user_commands` 结果，查找 test 相关的自定义命令
 - 优先级2：package.json scripts、Makefile、build.gradle 等配置文件
 - 优先级3：CI/CD 配置文件（.github/workflows、.gitlab-ci.yml 等）
 - 优先级4：常见测试命令（jest、pytest、go test、npm test、bun test 等）

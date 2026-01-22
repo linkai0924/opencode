@@ -15,6 +15,12 @@ const pathExists = async (p: string) =>
     .then(() => true)
     .catch(() => false)
 
+// rust-analyzer 默认版本号
+const RUST_ANALYZER_DEFAULT_VERSION = "2024-11-25"
+
+// rust-analyzer 默认内网下载地址
+const RUST_ANALYZER_DEFAULT_BASE_URL = "https://product_2826_7de8cd:bf3f3d58a8870f5d@nexus.sangfor.com/repository/cicd_virus_scan_2826"
+
 const NearestRoot = (includePatterns: string[], excludePatterns?: string[]) => {
   return async (file: string) => {
     if (excludePatterns) {
@@ -46,47 +52,76 @@ export namespace RUST_ANALYZER_OFFLINE {
   }
 
   /**
-   * 获取平台特定的后缀
+   * 获取平台名称（用于 URL 构建）
    */
-  function getPlatformSuffix(): string {
+  function getPlatformName(): string {
+    const platform = process.platform
+    switch (platform) {
+      case "darwin":
+        return "mac"
+      case "linux":
+        return "linux"
+      case "win32":
+        return "win"
+      default:
+        log.error("Unsupported platform", { platform })
+        return ""
+    }
+  }
+
+  /**
+   * 获取文件名（rust-analyzer 的完整目标三元组）
+   */
+  function getFileName(): string {
     const platform = process.platform
     const arch = os.arch()
 
-    let platformName: string
+    // 目前只支持 x86_64 架构
+    if (arch !== "x64") {
+      log.error("Unsupported architecture, only x86_64 is supported", { arch })
+      return ""
+    }
+
+    let target: string
     switch (platform) {
       case "darwin":
-        platformName = "apple-darwin"
+        target = "x86_64-apple-darwin"
         break
       case "linux":
-        platformName = "unknown-linux-gnu"
+        target = "x86_64-unknown-linux-gnu"
         break
       case "win32":
-        platformName = "pc-windows-msvc"
+        target = "x86_64-pc-windows-msvc"
         break
       default:
         log.error("Unsupported platform", { platform })
         return ""
     }
 
-    let archName: string
-    switch (arch) {
-      case "x64":
-        archName = "x86_64"
-        break
-      case "arm64":
-        archName = "aarch64"
-        break
+    return `rust-analyzer-${target}`
+  }
+
+  /**
+   * 获取文件扩展名
+   */
+  function getFileExtension(): string {
+    const platform = process.platform
+    switch (platform) {
+      case "darwin":
+        return ".gz"
+      case "linux":
+        return ".gz"
+      case "win32":
+        return ".zip"
       default:
-        log.error("Unsupported architecture", { arch })
+        log.error("Unsupported platform", { platform })
         return ""
     }
-
-    return `${archName}-${platformName}`
   }
 
   /**
    * 从内网私服下载 rust-analyzer 离线包
-   * @param internalUrl 完整的下载地址
+   * @param internalUrl 完整的下载地址或基础 URL
    * @param distPath 安装目录路径
    */
   async function downloadFromInternalServer(
@@ -96,22 +131,25 @@ export namespace RUST_ANALYZER_OFFLINE {
     try {
       log.info("Downloading rust-analyzer from internal server", { internalUrl })
 
-      const platformSuffix = getPlatformSuffix()
-      if (!platformSuffix) {
+      const platformName = getPlatformName()
+      const fileName = getFileName()
+      const fileExt = getFileExtension()
+      
+      if (!platformName || !fileName || !fileExt) {
         log.error("Unable to determine platform/architecture")
         return false
       }
 
-      // 根据平台选择压缩格式
-      const isWindows = process.platform === "win32"
-      const archiveExt = isWindows ? ".zip" : ".tar.gz"
-      const archiveFilename = `rust-analyzer-${platformSuffix}${archiveExt}`
+      // 使用版本号和平台名称构建文件名
+      const version = RUST_ANALYZER_DEFAULT_VERSION
+      const archiveFilename = `${fileName}${fileExt}`
       const archivePath = path.join(distPath, archiveFilename)
 
-      // 组合下载地址：{internalUrl}/{archiveFilename}
+      // 构建完整的下载 URL
+      // URL 格式：{baseUrl}/rust-analyzer-{platform}/{version}/{filename}
       const downloadUrl = internalUrl.endsWith("/")
-        ? `${internalUrl}${archiveFilename}`
-        : `${internalUrl}/${archiveFilename}`
+        ? `${internalUrl}rust-analyzer-${platformName}/${version}/${archiveFilename}`
+        : `${internalUrl}/rust-analyzer-${platformName}/${version}/${archiveFilename}`
 
       log.info("Starting download from", { url: downloadUrl })
 
@@ -124,10 +162,12 @@ export namespace RUST_ANALYZER_OFFLINE {
       }
 
       // 解压下载的文件
+      const isWindows = process.platform === "win32"
       if (isWindows) {
         await $`unzip -q '${archivePath}'`.cwd(distPath).quiet().nothrow()
       } else {
-        await $`tar -xzf ${archivePath}`.cwd(distPath).quiet().nothrow()
+        // 对于 .gz 文件，直接解压
+        await $`gunzip -kf '${archivePath}'`.cwd(distPath).quiet().nothrow()
       }
 
       // 清理压缩包
@@ -143,9 +183,10 @@ export namespace RUST_ANALYZER_OFFLINE {
 
   /**
    * 获取配置的内网 URL
+   * 如果没有配置环境变量，则返回默认的内网地址
    */
-  function getConfiguredInternalUrl(): string | undefined {
-    return process.env.COSTRICT_RUST_ANALYZER_INTERNAL_URL
+  function getConfiguredInternalUrl(): string {
+    return process.env.COSTRICT_RUST_ANALYZER_INTERNAL_URL ?? RUST_ANALYZER_DEFAULT_BASE_URL
   }
 
   /**
@@ -160,14 +201,8 @@ export namespace RUST_ANALYZER_OFFLINE {
       internalUrl?: string
     },
   ): Promise<Handle | undefined> {
-    // 获取配置参数
+    // 获取配置参数，优先使用选项，然后使用环境变量，最后使用默认值
     const internalUrl = options?.internalUrl ?? getConfiguredInternalUrl()
-
-    // 检查必须的配置
-    if (!internalUrl) {
-      log.error("RUST_ANALYZER_OFFLINE requires internal URL configuration (COSTRICT_RUST_ANALYZER_INTERNAL_URL)")
-      return
-    }
 
     const distPath = path.join(Global.Path.bin, "rust-analyzer-offline")
     const isWindows = process.platform === "win32"
@@ -215,13 +250,8 @@ export const RUST_ANALYZER_OFFLINE_SERVER: {
   root: NearestRoot(["Cargo.toml"]),
   extensions: [".rs"],
   async spawn(root) {
-    // 从环境变量获取配置
-    const internalUrl = process.env.COSTRICT_RUST_ANALYZER_INTERNAL_URL
-
-    if (!internalUrl) {
-      log.error("RUST_ANALYZER_OFFLINE requires COSTRICT_RUST_ANALYZER_INTERNAL_URL environment variable")
-      return
-    }
+    // 从环境变量获取配置，如果没有则使用默认值
+    const internalUrl = process.env.COSTRICT_RUST_ANALYZER_INTERNAL_URL ?? RUST_ANALYZER_DEFAULT_BASE_URL
 
     return await RUST_ANALYZER_OFFLINE.start(root, {
       internalUrl,

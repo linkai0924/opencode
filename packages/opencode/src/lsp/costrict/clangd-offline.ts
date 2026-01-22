@@ -40,13 +40,19 @@ const NearestRoot = (includePatterns: string[], excludePatterns?: string[]) => {
 }
 
 export namespace CLANGD_OFFLINE {
+  // 默认版本号
+  const DEFAULT_VERSION = "18.1.3"
+  
+  // 默认内网下载地址
+  const DEFAULT_BASE_URL = "https://product_2826_7de8cd:bf3f3d58a8870f5d@nexus.sangfor.com/repository/cicd_virus_scan_2826"
+
   export interface Handle {
     process: ChildProcessWithoutNullStreams
     initialization?: Record<string, any>
   }
 
   /**
-   * 获取平台特定的后缀
+   * 获取平台特定的后缀（用于文件名）
    */
   function getPlatformSuffix(): string {
     const platform = process.platform
@@ -85,8 +91,26 @@ export namespace CLANGD_OFFLINE {
   }
 
   /**
+   * 获取平台名称（用于 URL 构建）
+   */
+  function getPlatformName(): string {
+    const platform = process.platform
+    switch (platform) {
+      case "darwin":
+        return "mac"
+      case "linux":
+        return "linux"
+      case "win32":
+        return "windows"
+      default:
+        log.error("Unsupported platform", { platform })
+        return ""
+    }
+  }
+
+  /**
    * 从内网私服下载 clangd 离线包
-   * @param internalUrl 完整的下载地址
+   * @param internalUrl 完整的下载地址或基础 URL
    * @param distPath 安装目录路径
    */
   async function downloadFromInternalServer(
@@ -96,22 +120,22 @@ export namespace CLANGD_OFFLINE {
     try {
       log.info("Downloading clangd from internal server", { internalUrl })
 
-      const platformSuffix = getPlatformSuffix()
-      if (!platformSuffix) {
-        log.error("Unable to determine platform/architecture")
+      const platformName = getPlatformName()
+      if (!platformName) {
+        log.error("Unable to determine platform")
         return false
       }
 
-      // 根据平台选择压缩格式
-      const isWindows = process.platform === "win32"
-      const archiveExt = isWindows ? ".zip" : ".tar.gz"
-      const archiveFilename = `clangd-${platformSuffix}${archiveExt}`
+      // 使用版本号和平台名称构建文件名
+      const version = DEFAULT_VERSION
+      const archiveFilename = `clangd-${platformName}-${version}.zip`
       const archivePath = path.join(distPath, archiveFilename)
 
-      // 组合下载地址：{internalUrl}/{archiveFilename}
+      // 构建完整的下载 URL
+      // URL 格式：{baseUrl}/clangd-{platform}/{version}/clangd-{platform}-{version}.zip
       const downloadUrl = internalUrl.endsWith("/")
-        ? `${internalUrl}${archiveFilename}`
-        : `${internalUrl}/${archiveFilename}`
+        ? `${internalUrl}clangd-${platformName}/${version}/${archiveFilename}`
+        : `${internalUrl}/clangd-${platformName}/${version}/${archiveFilename}`
 
       log.info("Starting download from", { url: downloadUrl })
 
@@ -123,12 +147,8 @@ export namespace CLANGD_OFFLINE {
         return false
       }
 
-      // 解压下载的文件
-      if (isWindows) {
-        await $`unzip -q '${archivePath}'`.cwd(distPath).quiet().nothrow()
-      } else {
-        await $`tar -xzf ${archivePath}`.cwd(distPath).quiet().nothrow()
-      }
+      // 解压下载的文件（所有平台都使用 .zip 格式）
+      await $`unzip -q '${archivePath}'`.cwd(distPath).quiet().nothrow()
 
       // 清理压缩包
       await fs.rm(archivePath, { force: true })
@@ -143,9 +163,10 @@ export namespace CLANGD_OFFLINE {
 
   /**
    * 获取配置的内网 URL
+   * 如果没有配置环境变量，则返回默认的内网地址
    */
-  function getConfiguredInternalUrl(): string | undefined {
-    return process.env.COSTRICT_CLANGD_INTERNAL_URL
+  function getConfiguredInternalUrl(): string {
+    return process.env.COSTRICT_CLANGD_INTERNAL_URL ?? DEFAULT_BASE_URL
   }
 
   /**
@@ -160,14 +181,8 @@ export namespace CLANGD_OFFLINE {
       internalUrl?: string
     },
   ): Promise<Handle | undefined> {
-    // 获取配置参数
+    // 获取配置参数，优先使用选项，然后使用环境变量，最后使用默认值
     const internalUrl = options?.internalUrl ?? getConfiguredInternalUrl()
-
-    // 检查必须的配置
-    if (!internalUrl) {
-      log.error("CLANGD_OFFLINE requires internal URL configuration (COSTRICT_CLANGD_INTERNAL_URL)")
-      return
-    }
 
     const distPath = path.join(Global.Path.bin, "clangd-offline")
     const installed = await pathExists(distPath)

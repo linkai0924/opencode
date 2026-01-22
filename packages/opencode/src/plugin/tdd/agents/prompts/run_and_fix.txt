@@ -43,12 +43,12 @@ Phase 1：理解目标
 Phase 2：获取验证命令
 1. **读取 TEST_GUIDE.md 的规则**：
    - 优先使用拼接的 "Current TEST_GUIDE Content" 章节内容
-   - 如果该内容不完整，或在调用 test_prepare 后需要最新内容，使用 Read 工具读取 `.cospec/TEST_GUIDE.md` 文件路径
+   - 如果该内容不完整，或在调用 TestPrepare 后需要最新内容，使用 Read 工具读取 `.cospec/TEST_GUIDE.md` 文件路径
    - 以这两个来源的拼接内容为准
 2. 检查 TEST_GUIDE.md 是否包含"可运行性验证命令"部分
 3. 如果不包含或缺失验证命令：
-   - 使用 `task` 工具调用 `test_prepare` subagent 来填充可运行性验证命令
-   - 等待 `test_prepare` 完成后，使用 Read 工具读取 `.cospec/TEST_GUIDE.md` 获取更新后的内容
+   - 使用 `task` 工具调用 `TestPrepare` subagent 来填充可运行性验证命令
+   - 等待 `TestPrepare` 完成后，使用 Read 工具读取 `.cospec/TEST_GUIDE.md` 获取更新后的内容
 4. 从 TEST_GUIDE.md 中提取验证命令
 
 Phase 3：使用 TodoWrite 管理过程

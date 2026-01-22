@@ -29,7 +29,7 @@ export async function createTestPrepareAgent(_: string): Promise<Config.Agent & 
   return {
     name: TEST_PREPARE_AGENT_NAME,
     description:
-      "Specialized agent for checking and filling TEST_GUIDE.md. Ensures TEST_GUIDE.md contains runnability verification commands, test case management methods, and test execution methods.",
+      "Specialized agent for checking and filling TEST_GUIDE.md. Ensures TEST_GUIDE.md contains runnability verification commands, test case management methods, and test execution methods. Only locates commands without executing them.",
     mode: "subagent",
     // model,
     temperature: 0.1,
@@ -38,7 +38,12 @@ export async function createTestPrepareAgent(_: string): Promise<Config.Agent & 
       question: "allow",
       todowrite: "allow",
       todoread: "allow",
-      task: { "*": "allow" }
+      read: "allow",
+      glob: "allow",
+      grep: "allow",
+      write: "allow",
+      task: "deny",
+      bash: "deny"
     }
   }
 }

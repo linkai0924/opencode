@@ -2,7 +2,7 @@
 name: Fix
 description: >-
   专门用于修复代码问题的代理。能够理解问题、定位代码、实施修复，并管理修复过程。
-mode: subagent
+mode: all
 tools:
   question: true
   task: true

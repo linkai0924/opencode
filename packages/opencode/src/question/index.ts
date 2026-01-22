@@ -3,6 +3,7 @@ import { BusEvent } from "@/bus/bus-event"
 import { Identifier } from "@/id/id"
 import { Instance } from "@/project/instance"
 import { Log } from "@/util/log"
+import { Config } from "@/config/config"
 import z from "zod"
 
 export namespace Question {
@@ -103,6 +104,22 @@ export namespace Question {
     const id = Identifier.ascending("question")
 
     log.info("asking", { id, questions: input.questions.length })
+
+    // Check if auto-select mode is enabled
+    const configState = await Config.state()
+    const autoSelectEnabled = configState.config.question?.autoSelectFirstOption ?? false
+
+    if (autoSelectEnabled) {
+      log.info("auto-select mode enabled", { id })
+      // Auto-select first option for each question
+      const autoAnswers: Answer[] = input.questions.map((question) => {
+        if (question.options.length > 0) {
+          return [question.options[0].label]
+        }
+        return []
+      })
+      return autoAnswers
+    }
 
     return new Promise<Answer[]>((resolve, reject) => {
       const info: Request = {

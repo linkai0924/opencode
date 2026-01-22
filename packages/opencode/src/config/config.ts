@@ -1070,6 +1070,15 @@ export namespace Config {
             .describe("Timeout in milliseconds for model context protocol (MCP) requests"),
         })
         .optional(),
+      question: z
+        .object({
+          autoSelectFirstOption: z
+            .boolean()
+            .optional()
+            .describe("Automatically select the first option for each question (default: false). Useful for CI/CD and automated scripts."),
+        })
+        .optional()
+        .describe("Question tool behavior configuration"),
     })
     .strict()
     .meta({

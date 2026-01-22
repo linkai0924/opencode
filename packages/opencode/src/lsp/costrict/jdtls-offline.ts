@@ -15,6 +15,12 @@ const pathExists = async (p: string) =>
     .then(() => true)
     .catch(() => false)
 
+// jdtls 默认版本号
+const JDTLS_DEFAULT_VERSION = "1.30.0"
+
+// jdtls 默认下载地址（完整 URL）
+const JDTLS_DEFAULT_URL = "https://product_2826_7de8cd:bf3f3d58a8870f5d@nexus.sangfor.com/repository/cicd_virus_scan_2826/jdtls/1.30.0/jdt-language-server-1.30.0-202311301503.tar.gz"
+
 const NearestRoot = (includePatterns: string[], excludePatterns?: string[]) => {
   return async (file: string) => {
     if (excludePatterns) {
@@ -89,12 +95,11 @@ export namespace JDTLS_OFFLINE {
 
 
   /**
-   * 获取配置的内网 URL，如果未配置则使用默认空值
+   * 获取配置的内网 URL
+   * 如果没有配置环境变量，则返回默认下载地址
    */
-  function getConfiguredInternalUrl(): string | undefined {
-    // 从配置中获取内网 URL，如果没有配置则返回 undefined
-    // TODO: 在实际配置系统中获取
-    return process.env.COSTRICT_JDTLS_INTERNAL_URL
+  function getConfiguredInternalUrl(): string {
+    return process.env.COSTRICT_JDTLS_INTERNAL_URL ?? JDTLS_DEFAULT_URL
   }
 
   /**
@@ -130,14 +135,8 @@ export namespace JDTLS_OFFLINE {
       return
     }
 
-    // 获取配置参数
+    // 获取配置参数，优先使用选项，然后使用环境变量，最后使用默认值
     const internalUrl = options?.internalUrl ?? getConfiguredInternalUrl()
-
-    // 检查必须的配置
-    if (!internalUrl) {
-      log.error("JDTLS_OFFLINE requires internal URL configuration (jdtls-offline.internalUrl)")
-      return
-    }
 
     const distPath = path.join(Global.Path.bin, "jdtls-offline")
     const launcherDir = path.join(distPath, "plugins")
@@ -232,13 +231,8 @@ export const JDTLS_OFFLINE_SERVER: {
   root: NearestRoot(["pom.xml", "build.gradle", "build.gradle.kts", ".project", ".classpath"]),
   extensions: [".java"],
   async spawn(root) {
-    // 从环境变量获取配置
-    const internalUrl = process.env.COSTRICT_JDTLS_INTERNAL_URL
-    
-    if (!internalUrl) {
-      log.error("JDTLS_OFFLINE requires COSTRICT_JDTLS_INTERNAL_URL environment variable")
-      return
-    }
+    // 从环境变量获取配置，如果没有则使用默认值
+    const internalUrl = process.env.COSTRICT_JDTLS_INTERNAL_URL ?? JDTLS_DEFAULT_URL
     
     return await JDTLS_OFFLINE.start(root, {
       internalUrl,

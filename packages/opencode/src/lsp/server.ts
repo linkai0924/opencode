@@ -10,6 +10,12 @@ import { Filesystem } from "../util/filesystem"
 import { Instance } from "../project/instance"
 import { Flag } from "../flag/flag"
 import { Archive } from "../util/archive"
+// /*costrict change*/ 导入离线 LSP 服务器
+import {
+  CLANGD_OFFLINE_SERVER_FOR_LSP,
+  JDTLS_OFFLINE_SERVER_FOR_LSP,
+  RUST_ANALYZER_OFFLINE_SERVER_FOR_LSP,
+} from "./costrict"
 
 export namespace LSPServer {
   const log = Log.create({ service: "lsp.server" })
@@ -2029,4 +2035,9 @@ export namespace LSPServer {
       }
     },
   }
+
+  // /*costrict change*/ 导出离线 LSP 服务器，使其能够被自动注册
+  export const ClangdOffline = CLANGD_OFFLINE_SERVER_FOR_LSP
+  export const JdtsOffline = JDTLS_OFFLINE_SERVER_FOR_LSP
+  export const RustAnalyzerOffline = RUST_ANALYZER_OFFLINE_SERVER_FOR_LSP
 }

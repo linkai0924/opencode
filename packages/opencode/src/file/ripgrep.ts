@@ -9,6 +9,9 @@ import { $ } from "bun"
 
 import { ZipReader, BlobReader, BlobWriter } from "@zip.js/zip.js"
 import { Log } from "@/util/log"
+/*costrict change*/
+import { downloadWithFallback } from "./costrict/download-manager"
+/*costrict change*/
 
 export namespace Ripgrep {
   const log = Log.create({ service: "ripgrep" })
@@ -137,10 +140,16 @@ export namespace Ripgrep {
       const filename = `ripgrep-${version}-${config.platform}.${config.extension}`
       const url = `https://github.com/BurntSushi/ripgrep/releases/download/${version}/${filename}`
 
-      const response = await fetch(url)
-      if (!response.ok) throw new DownloadFailedError({ url, status: response.status })
+      /*costrict change*/
+      const buffer = await downloadWithFallback(url, {
+        version,
+        filename,
+        platform: config.platform,
+        extension: config.extension,
+        processPlatformKey: platformKey,
+      })
+      /*costrict change*/
 
-      const buffer = await response.arrayBuffer()
       const archivePath = path.join(Global.Path.bin, filename)
       await Bun.write(archivePath, buffer)
       if (config.extension === "tar.gz") {

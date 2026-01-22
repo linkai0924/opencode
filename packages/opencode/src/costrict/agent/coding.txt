@@ -5,6 +5,7 @@ description:
 mode: all
 tools:
   webfetch: false
+  task: true
 ---
 # CodingAgent - 开发任务管理与协调
 

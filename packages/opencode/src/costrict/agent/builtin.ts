@@ -3,12 +3,12 @@
 
 import AGENT_0 from "./coding.txt"
 import AGENT_1 from "./fix-agent.txt"
-import AGENT_2 from "./quick_explore.txt"
+import AGENT_2 from "./quick-explore.txt"
 import AGENT_3 from "./strict-plan.txt"
-import AGENT_4 from "./sub_coding.txt"
+import AGENT_4 from "./sub-coding.txt"
 import AGENT_5 from "./task-check.txt"
-import AGENT_6 from "./test_and_fix.txt"
-import AGENT_7 from "./test_design.txt"
+import AGENT_6 from "./test-and-fix.txt"
+import AGENT_7 from "./test-design.txt"
 
 export const BUILTIN_AGENTS = [
   AGENT_0,

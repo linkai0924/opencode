@@ -4,7 +4,17 @@ This directory contains all agent definitions for the TDD plugin.
 
 ## Agents
 
-### 1. Runnability Analyzer (`runnability-analyzer.ts`)
+### 1. Test Prepare Agent (`test-prepare.ts`)
+
+- **Purpose**: Checks and prepares TEST_GUIDE.md for completeness
+- **Usage**: Starting work on a new project, verifying project testing configuration
+- **Key Features**:
+  - Checks TEST_GUIDE.md completeness
+  - Searches project to identify testing configuration
+  - Fills in missing sections in TEST_GUIDE.md
+  - Reports findings and actions taken
+
+### 2. Runnability Analyzer (`runnability-analyzer.ts`)
 
 - **Purpose**: Analyzes project structure to determine how to verify code works
 - **Usage**: Creating runnability verification guide

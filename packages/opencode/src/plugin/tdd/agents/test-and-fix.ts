@@ -1,4 +1,4 @@
-import type { AgentConfig } from "@opencode-ai/sdk"
+import type { Config } from "../../../config/config"
 import type { AgentPromptMetadata } from "../types"
 import PROMPT from "./prompts/test_and_fix.txt"
 import { TEST_AND_FIX_AGENT_NAME, type AgentName } from "./constants"
@@ -16,7 +16,7 @@ export const TEST_AND_FIX_PROMPT_METADATA: AgentPromptMetadata = {
   avoidWhen: ["Designing test cases", "Writing new features", "Code review"],
 }
 
-export async function createTestAndFixAgent(_: string): Promise<AgentConfig & { name: AgentName }> {
+export async function createTestAndFixAgent(_: string): Promise<Config.Agent & { name: AgentName }> {
   const testGuideResult = await import("../utils/test-guide-discovery").then((m) => m.TestGuide.load())
   const testGuideSuffix = testGuideResult.content ? `\n\n# Test Guide\n\n${testGuideResult.content}` : ""
 
@@ -28,5 +28,8 @@ export async function createTestAndFixAgent(_: string): Promise<AgentConfig & { 
     // model,
     temperature: 0.1,
     prompt: PROMPT + testGuideSuffix,
+    permission: {
+      task: { "*": "allow" }
+    }
   }
 }

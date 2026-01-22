@@ -31,9 +31,16 @@
 Phase 1：执行测试
 1. 解析用户提供的测试范围
 2. 如果提供了测试方案文档路径，先读取该文档以了解测试点的设计意图和背景
-3. 查找项目中的测试指导文档（如 TEST_GUIDE.md 或 .cospec/TEST_GUIDE.md）
-4. 根据测试指导文档的内容，执行测试
-5. 捕获并保存测试输出
+3. **读取 TEST_GUIDE.md 的规则**：
+   - 优先使用拼接的 "Current TEST_GUIDE Content" 章节内容
+   - 如果该内容不完整，或在调用 test_prepare 后需要最新内容，使用 Read 工具读取 `.cospec/TEST_GUIDE.md` 文件路径
+   - 以这两个来源的拼接内容为准
+4. 检查 TEST_GUIDE.md 的完整性：
+   - 如果文档不存在或缺少测试运行命令（如 "运行测试" 部分），需要调用 test_prepare 子代理
+   - 使用 task 工具调用 test_prepare 子代理，指定其检查并填充 TEST_GUIDE.md
+   - 等待 test_prepare 完成后，使用 Read 工具读取 `.cospec/TEST_GUIDE.md` 获取更新后的内容
+5. 根据测试指导文档的内容，执行测试
+6. 捕获并保存测试输出
 
 Phase 2：分析失败
 1. 解析测试输出，识别所有失败的测试用例

@@ -1,6 +1,6 @@
 ---
 name: TaskCheck
-description:
+description: >-
  专门用于task任务质量检查与改进的代理
 mode: subagent
 tools:

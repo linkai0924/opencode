@@ -15,7 +15,7 @@
 
 ## 输出文件
 
-AGENTS.md
+${path}/AGENTS.md
 
 ## 📋 详细执行步骤
 

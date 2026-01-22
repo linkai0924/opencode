@@ -14,40 +14,26 @@ After coding is complete, proactive testing should be performed as much as possi
 
 ## Testing Execution Process
 
-Follow these three phases in order:
+Follow these steps in order, using the `todowrite` tool to track progress:
 
-### Phase 1: 确认用户需求并验证项目可运行性
+**Step 1: 执行可运行性验证**
 
-**Step 1: 检查是否需要运行可运行性验证**
+Use the `@RunAndFix` agent to verify the project can run/compile:
+- The agent will automatically find and execute verification commands
+- It will fix any coding issues encountered (syntax errors, type errors, logic bugs, etc.)
+- It will exit and report non-coding issues (missing dependencies, environment problems, etc.)
+- Wait for verification to complete and review the results
 
-Before proceeding with testing, check if `@run_and_fix` agent has been executed recently:
+If verification fails with coding issues:
+- The agent will have applied fixes automatically
+- Proceed to confirm user requirements
 
-1. **Check recent conversation history** for any invocations of `@run_and_fix` agent
-2. **Check if code changes have been made** since the last `@run_and_fix` execution:
-   - Look for recent code edits in the conversation
-   - Consider whether significant changes were made that could affect project runnability
-3. **Determine if verification is needed**:
-   - If `@run_and_fix` has been recently executed AND no major code changes since then → skip verification
-   - If `@run_and_fix` has never been executed OR code has been modified → proceed with verification
+If verification reports non-coding issues:
+- These require manual resolution (e.g., npm install, environment setup)
+- Pause and inform user that non-coding issues need to be resolved first
+- Wait for user confirmation before continuing
 
-**Step 2: 执行可运行性验证（如果需要）**
-
-If verification is needed:
-
-1. **Use the `@run_and_fix` agent** to verify the project can run/compile
-   - The agent will automatically find and execute verification commands
-   - It will fix any coding issues encountered (syntax errors, type errors, logic bugs, etc.)
-   - It will exit and report non-coding issues (missing dependencies, environment problems, etc.)
-2. **Wait for verification to complete** and review the results
-3. **If verification fails with coding issues**:
-   - The agent will have applied fixes automatically
-   - Proceed to confirm user requirements
-4. **If verification reports non-coding issues**:
-   - These require manual resolution (e.g., npm install, environment setup)
-   - Pause and inform user that non-coding issues need to be resolved first
-   - Wait for user confirmation before continuing
-
-**Step 3: 确认用户需求**
+**Step 2: 确认用户需求**
 
 After project is verified to be buildable/runnable:
 
@@ -64,28 +50,44 @@ After project is verified to be buildable/runnable:
 2. Otherwise, confirm the functional requirements based on the user's recent messages and code changes
 3. Clearly identify what functionality needs to be tested
 
-### Phase 2: 生成测试用例
+**Step 3: 生成测试用例**
 
-1. Use the `@test_design` agent to generate test cases
-   - Input: User requirement description, related code paths
-   - The agent will design comprehensive test points covering:
-     - Normal scenarios
-     - Boundary conditions
-     - Exception handling
-   - Output: Test plan document saved to `.cospec/test-plans/test-plan-*.md`
+Use the `@TestDesign` agent to generate test cases:
+- Input: User requirement description, related code paths
+- The agent will design comprehensive test points covering:
+  - Normal scenarios
+  - Boundary conditions
+  - Exception handling
+- Output: Test plan document saved to `.cospec/test-plans/test-plan-*.md`
 
-2. Review the generated test plan with the user if needed
+Review the generated test plan with the user if needed
 
-### Phase 3: 执行测试用例并修复
+**Step 4: 执行测试用例并修复**
 
-1. Use the `@test_and_fix` agent to execute tests and fix failures
-   - Input: Test plan document path (optional), test scope
-   - The agent will:
-     - Execute the tests
-     - Diagnose failures systematically
-     - Apply fixes (prioritizing business code over test code)
-     - Re-run tests to verify fixes (max 3 rounds)
-   - Output: Test execution report with fix details
+Use the `@TestAndFix` agent to execute tests and fix failures:
+- Input: Test plan document path (optional), test scope
+- The agent will:
+  - Execute the tests
+  - Diagnose failures systematically
+  - Apply fixes (prioritizing business code over test code)
+  - Re-run tests to verify fixes (max 3 rounds)
+- Output: Test execution report with fix details
+
+---
+
+## Progress Tracking
+
+Use the `todowrite` tool to manage and track progress through these steps:
+
+1. Create todos at the start:
+   - Execute runnability verification with @RunAndFix
+   - Confirm user requirements
+   - Generate test cases with @TestDesign
+   - Execute tests and fix failures with @TestAndFix
+
+2. Update todo status as you complete each step:
+   - Mark each step as `in_progress` when starting
+   - Mark each step as `completed` when finished
 
 ---
 
@@ -100,4 +102,4 @@ After project is verified to be buildable/runnable:
 
 ## Execution
 
-Start by confirming the user requirements, then proceed with test case generation and execution. Follow the three-phase process systematically to ensure thorough testing and quality code.
+Start by confirming the user requirements, then proceed with test case generation and execution. Follow the four-step process systematically, using the `todowrite` tool to track progress, to ensure thorough testing and quality code.

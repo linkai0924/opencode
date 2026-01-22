@@ -57,7 +57,7 @@ describe("/test command", () => {
     })
   })
 
-  test("template mentions test_design and test_and_fix agents", async () => {
+  test("template mentions TestDesign and TestAndFix agents", async () => {
     await using tmp = await tmpdir()
     await Instance.provide({
       directory: tmp.path,
@@ -65,8 +65,8 @@ describe("/test command", () => {
         const cmd = await Command.get("test")
         const template = await Promise.resolve(cmd!.template)
 
-        expect(template).toContain("@test_design")
-        expect(template).toContain("@test_and_fix")
+        expect(template).toContain("@TestDesign")
+        expect(template).toContain("@TestAndFix")
       },
     })
   })

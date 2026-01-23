@@ -1198,6 +1198,9 @@ export namespace Provider {
       if (providerID.startsWith("opencode")) {
         priority = ["gpt-5-nano"]
       }
+      if (providerID.startsWith("costrict")) {
+        priority = ["Auto"]
+      }
       if (providerID.startsWith("github-copilot")) {
         // prioritize free models for github copilot
         priority = ["gpt-5-mini", "claude-haiku-4.5", ...priority]

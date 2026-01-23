@@ -49,12 +49,6 @@ export namespace Agent {
   const state = Instance.state(async () => {
     const cfg = await Config.get()
 
-    // Load TEST_GUIDE.md content
-    const testGuideResult = await TestGuide.load()
-    const testGuideSuffix = testGuideResult.content
-      ? `\n\n# Test Guide\n\n${testGuideResult.content}`
-      : ""
-
     const defaults = PermissionNext.fromConfig({
       "*": "allow",
       doom_loop: "ask",

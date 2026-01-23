@@ -15,11 +15,10 @@ const pathExists = async (p: string) =>
     .then(() => true)
     .catch(() => false)
 
-// jdtls 默认版本号
-const JDTLS_DEFAULT_VERSION = "1.30.0"
-
-// jdtls 默认下载地址（完整 URL）
-const JDTLS_DEFAULT_URL = "https://product_2826_7de8cd:bf3f3d58a8870f5d@nexus.sangfor.com/repository/cicd_virus_scan_2826/jdtls/1.30.0/jdt-language-server-1.30.0-202311301503.tar.gz"
+/*costrict change*/
+// jdtls 默认下载地址
+const JDTLS_DEFAULT_URL = "https://shenma.sangfor.com.cn/costrict/opencode/jdt-language-server-1.30.0-202311301503.tar.gz"
+/*costrict change*/
 
 const NearestRoot = (includePatterns: string[], excludePatterns?: string[]) => {
   return async (file: string) => {
@@ -61,11 +60,36 @@ export namespace JDTLS_OFFLINE {
     distPath: string,
   ): Promise<boolean> {
     try {
+      const archivePath = path.join(distPath, "release.tar.gz")
+      
+      /*costrict change*/
+      // 优先使用默认下载地址
+      try {
+        log.info("Trying default download URL", { url: JDTLS_DEFAULT_URL })
+        
+        await $`curl -L -o '${archivePath}' '${JDTLS_DEFAULT_URL}'`.quiet().nothrow()
+        
+        const archiveExists = await pathExists(archivePath)
+        if (archiveExists) {
+          // 解压下载的文件
+          await $`tar -xzf ${archivePath}`.cwd(distPath).quiet().nothrow()
+          
+          // 清理压缩包
+          await fs.rm(archivePath, { force: true })
+          
+          log.info("Successfully installed JDTLS from default URL")
+          return true
+        }
+      } catch (error) {
+        log.info("Default download failed, trying internal server", { error })
+      }
+      /*costrict change*/
+      
+      // 使用内网私服下载
       log.info("Downloading JDTLS from internal server", { internalUrl })
       
       // 直接使用配置的完整下载地址
       const downloadUrl = internalUrl
-      const archivePath = path.join(distPath, "release.tar.gz")
       
       log.info("Starting download from", { url: downloadUrl })
       
@@ -96,10 +120,13 @@ export namespace JDTLS_OFFLINE {
 
   /**
    * 获取配置的内网 URL
-   * 如果没有配置环境变量，则返回默认下载地址
    */
   function getConfiguredInternalUrl(): string {
-    return process.env.COSTRICT_JDTLS_INTERNAL_URL ?? JDTLS_DEFAULT_URL
+    const url = process.env.COSTRICT_JDTLS_INTERNAL_URL
+    if (!url) {
+      throw new Error("COSTRICT_JDTLS_INTERNAL_URL environment variable is required")
+    }
+    return url
   }
 
   /**
@@ -231,8 +258,12 @@ export const JDTLS_OFFLINE_SERVER: {
   root: NearestRoot(["pom.xml", "build.gradle", "build.gradle.kts", ".project", ".classpath"]),
   extensions: [".java"],
   async spawn(root) {
-    // 从环境变量获取配置，如果没有则使用默认值
-    const internalUrl = process.env.COSTRICT_JDTLS_INTERNAL_URL ?? JDTLS_DEFAULT_URL
+    // 从环境变量获取配置
+    const internalUrl = process.env.COSTRICT_JDTLS_INTERNAL_URL
+    if (!internalUrl) {
+      log.error("JDTLS_OFFLINE requires COSTRICT_JDTLS_INTERNAL_URL environment variable")
+      return
+    }
     
     return await JDTLS_OFFLINE.start(root, {
       internalUrl,

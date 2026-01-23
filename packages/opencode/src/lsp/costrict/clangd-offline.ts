@@ -43,8 +43,13 @@ export namespace CLANGD_OFFLINE {
   // 默认版本号
   const DEFAULT_VERSION = "18.1.3"
   
-  // 默认内网下载地址
-  const DEFAULT_BASE_URL = "https://product_2826_7de8cd:bf3f3d58a8870f5d@nexus.sangfor.com/repository/cicd_virus_scan_2826"
+  /*costrict change*/
+  // 默认下载地址
+  const DEFAULT_DOWNLOAD_URLS: Record<string, string> = {
+    linux: "https://shenma.sangfor.com.cn/costrict/opencode/clangd-linux-18.1.3.zip",
+    windows: "https://shenma.sangfor.com.cn/costrict/opencode/clangd-windows-18.1.3.zip",
+  }
+  /*costrict change*/
 
   export interface Handle {
     process: ChildProcessWithoutNullStreams
@@ -118,13 +123,43 @@ export namespace CLANGD_OFFLINE {
     distPath: string,
   ): Promise<boolean> {
     try {
-      log.info("Downloading clangd from internal server", { internalUrl })
-
+      /*costrict change*/
       const platformName = getPlatformName()
       if (!platformName) {
         log.error("Unable to determine platform")
         return false
       }
+
+      // 优先使用默认下载地址
+      const defaultUrl = DEFAULT_DOWNLOAD_URLS[platformName]
+      if (defaultUrl) {
+        try {
+          log.info("Trying default download URL", { url: defaultUrl })
+          const version = DEFAULT_VERSION
+          const archiveFilename = `clangd-${platformName}-${version}.zip`
+          const archivePath = path.join(distPath, archiveFilename)
+
+          await $`curl -L -o '${archivePath}' '${defaultUrl}'`.quiet().nothrow()
+
+          const archiveExists = await pathExists(archivePath)
+          if (archiveExists) {
+            // 解压下载的文件（所有平台都使用 .zip 格式）
+            await $`unzip -q '${archivePath}'`.cwd(distPath).quiet().nothrow()
+            
+            // 清理压缩包
+            await fs.rm(archivePath, { force: true })
+
+            log.info("Successfully installed clangd from default URL")
+            return true
+          }
+        } catch (error) {
+          log.info("Default download failed, trying internal server", { error })
+        }
+      }
+      /*costrict change*/
+
+      // 使用内网私服下载
+      log.info("Downloading clangd from internal server", { internalUrl })
 
       // 使用版本号和平台名称构建文件名
       const version = DEFAULT_VERSION
@@ -163,11 +198,14 @@ export namespace CLANGD_OFFLINE {
 
   /**
    * 获取配置的内网 URL
-   * 如果没有配置环境变量，则返回默认的内网地址
    */
-  function getConfiguredInternalUrl(): string {
-    return process.env.COSTRICT_CLANGD_INTERNAL_URL ?? DEFAULT_BASE_URL
-  }
+ function getConfiguredInternalUrl(): string {
+   const url = process.env.COSTRICT_CLANGD_INTERNAL_URL
+   if (!url) {
+     throw new Error("COSTRICT_CLANGD_INTERNAL_URL environment variable is required")
+   }
+   return url
+ }
 
   /**
    * 启动 CLANGD_OFFLINE 服务器

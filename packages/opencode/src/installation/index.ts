@@ -160,7 +160,7 @@ export namespace Installation {
         cmd = $`echo Y | choco upgrade costrict-cli --version=${target}`
         break
       case "scoop":
-        cmd = $`scoop install extras/opencode@${target}`
+        cmd = $`scoop install opencode@${target}`
         break
       default:
         throw new Error(`Unknown method: ${method}`)
@@ -267,7 +267,7 @@ export namespace Installation {
     }
 
     if (detectedMethod === "scoop") {
-      return fetch("https://raw.githubusercontent.com/ScoopInstaller/Extras/master/bucket/opencode.json", {
+      return fetch("https://raw.githubusercontent.com/ScoopInstaller/Main/master/bucket/opencode.json", {
         headers: { Accept: "application/json" },
       })
         .then((res) => {

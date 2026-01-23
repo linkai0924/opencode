@@ -11,7 +11,7 @@ export async function handleLLMError(input: { event: any }): Promise<void> {
     return
   }
 
-  const { providerID, modelID, sessionID, agent, requestType, attempt, error } = input.event.properties
+  const { providerID, modelID, sessionID, agent, requestType, attempt, error, request } = input.event.properties
 
   log.info("LLM error detected", {
     providerID,
@@ -30,5 +30,6 @@ export async function handleLLMError(input: { event: any }): Promise<void> {
     agent,
     requestType,
     attempt,
+    request,
   })
 }

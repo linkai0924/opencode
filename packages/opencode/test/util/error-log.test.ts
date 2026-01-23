@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test"
 import { ErrorLog } from "../../src/plugin/tdd/utils/error-log"
+import { Global } from "@/global"
 import fs from "fs/promises"
+import path from "path"
 
 describe("ErrorLog", () => {
   beforeEach(async () => {
@@ -205,6 +207,139 @@ describe("ErrorLog", () => {
       const logPath = ErrorLog.logPath()
       expect(logPath).toContain("llm-errors.log")
       expect(logPath).toContain("log")
+    })
+  })
+
+  describe("Request Data Saving", () => {
+    it("should save LLM request data to JSON file when provided", async () => {
+      const error = new Error("LLM request failed")
+      const requestData = {
+        body: {
+          temperature: 0.7,
+          messages: [{ role: "user", content: "test" }],
+        },
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer test-token",
+        },
+      }
+
+      await ErrorLog.logLLMError(error, {
+        providerID: "test-provider",
+        modelID: "test-model",
+        sessionID: "test-session",
+        agent: "test-agent",
+        requestType: "stream",
+        request: requestData,
+      })
+
+      const logContent = await fs.readFile(ErrorLog.logPath(), "utf-8")
+      expect(logContent).toContain("LLM request failed")
+      expect(logContent).toContain("requestFilePath")
+
+      const match = logContent.match(/requestFilePath":\s*"([^"]+)"/)
+      expect(match).toBeTruthy()
+
+      if (match) {
+        const requestFilePath = match[1]
+        expect(requestFilePath).toContain("request-")
+        expect(requestFilePath).toContain(".json")
+
+        const requestFileContent = await fs.readFile(requestFilePath, "utf-8")
+        const parsedRequest = JSON.parse(requestFileContent)
+        expect(parsedRequest.body.temperature).toBe(0.7)
+        expect(parsedRequest.body.messages).toHaveLength(1)
+        expect(parsedRequest.headers["content-type"]).toBe("application/json")
+      }
+    })
+
+    it("should not create request file when request data is not provided", async () => {
+      const error = new Error("Error without request data")
+
+      await ErrorLog.logLLMError(error, {
+        providerID: "test-provider",
+        agent: "test-agent",
+      })
+
+      const logContent = await fs.readFile(ErrorLog.logPath(), "utf-8")
+      expect(logContent).toContain("Error without request data")
+      expect(logContent).not.toContain("requestFilePath")
+    })
+
+    it("should not save request data when logging is disabled", async () => {
+      process.env.COSTRICT_ERROR_LOG_ENABLED = "false"
+      const error = new Error("Should not be logged")
+      const requestData = {
+        body: { test: "data" },
+        headers: {},
+      }
+
+      await ErrorLog.logLLMError(error, {
+        request: requestData,
+      })
+
+      const requestDir = path.join(Global.Path.log, "llm-requests")
+      await expect(fs.readdir(requestDir)).rejects.toThrow()
+    })
+
+    it("should clear both error logs and request files", async () => {
+      const error = new Error("Test error")
+      const requestData = {
+        body: { test: "data" },
+        headers: {},
+      }
+
+      await ErrorLog.logLLMError(error, { request: requestData })
+
+      await ErrorLog.clearLogs()
+
+      const recentErrors = await ErrorLog.readRecentErrors()
+      expect(recentErrors).toHaveLength(0)
+
+      const requestDir = path.join(Global.Path.log, "llm-requests")
+      await expect(fs.readdir(requestDir)).rejects.toThrow()
+    })
+
+    it("should rotate request logs to keep only 20 most recent files", async () => {
+      const requestDir = path.join(Global.Path.log, "llm-requests")
+      await fs.mkdir(requestDir, { recursive: true })
+
+      const oldTime = new Date(Date.now() - 1000 * 60 * 60)
+      const newTime = new Date()
+
+      const oldTimestamp = oldTime.toISOString().replace(/[:.]/g, "-")
+      const newTimestamp = newTime.toISOString().replace(/[:.]/g, "-")
+
+      for (let i = 0; i < 25; i++) {
+        const isOld = i < 15
+        const timestamp = isOld ? oldTimestamp : newTimestamp
+        const fileName = `request-${timestamp}-${String(i).padStart(3, "0")}.json`
+        const filePath = path.join(requestDir, fileName)
+        const fileTime = isOld ? oldTime : newTime
+        await fs.writeFile(filePath, JSON.stringify({ id: i }), "utf-8")
+        await fs.utimes(filePath, fileTime, fileTime)
+      }
+
+      const remainingBefore = await fs.readdir(requestDir)
+      expect(remainingBefore.length).toBe(25)
+
+      const requestData = { body: { test: "rotate" }, headers: {} }
+      await ErrorLog.logLLMError(new Error("Trigger rotation"), { request: requestData })
+
+      const remainingFiles = await fs.readdir(requestDir)
+      expect(remainingFiles.length).toBeLessThanOrEqual(21)
+
+      const filesWithStats = await Promise.all(
+        remainingFiles.map(async (file) => ({
+          file,
+          mtime: (await fs.stat(path.join(requestDir, file))).mtime.getTime(),
+        })),
+      )
+
+      const sortedFiles = filesWithStats.sort((a, b) => a.mtime - b.mtime)
+      const oldestTime = sortedFiles[0].mtime
+      const oneHourAgo = newTime.getTime() - 1000 * 60 * 60
+      expect(oldestTime).toBeGreaterThanOrEqual(oneHourAgo)
     })
   })
 })

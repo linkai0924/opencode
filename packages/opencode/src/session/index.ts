@@ -135,6 +135,12 @@ export namespace Session {
         requestType: z.enum(["stream", "chat", "completion"]),
         attempt: z.number().optional(),
         error: z.any(),
+        request: z
+          .object({
+            body: z.any(),
+            headers: z.record(z.string(), z.any()),
+          })
+          .optional(),
       }),
     ),
   }

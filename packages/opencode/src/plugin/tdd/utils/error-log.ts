@@ -4,8 +4,10 @@ import { Global } from "@/global"
 
 export namespace ErrorLog {
   const ERROR_LOG_FILE = "llm-errors.log"
-  const MAX_LOG_SIZE = 10 * 1024 * 1024 // 10MB
+  const REQUEST_LOG_DIR = "llm-requests"
+  const MAX_LOG_SIZE = 10 * 1024 * 1024
   const MAX_LOG_FILES = 5
+  const MAX_REQUEST_LOGS = 20
 
   /**
    * Check if error logging is enabled via environment variable
@@ -70,6 +72,72 @@ export namespace ErrorLog {
     parts.push(`${"=".repeat(80)}`)
 
     return parts.join("\n")
+  }
+
+  async function rotateRequestLogs(): Promise<void> {
+    const requestDir = path.join(Global.Path.log, REQUEST_LOG_DIR)
+
+    try {
+      const files = await fs.readdir(requestDir)
+      const requestFiles = files.filter((file) => file.startsWith("request-") && file.endsWith(".json"))
+
+      if (requestFiles.length <= MAX_REQUEST_LOGS) {
+        return
+      }
+
+      const stats = await Promise.all(
+        requestFiles.map(async (file) => ({
+          file,
+          mtime: (await fs.stat(path.join(requestDir, file))).mtime,
+        })),
+      )
+
+      const sortedRequests = stats.sort((a, b) => a.mtime.getTime() - b.mtime.getTime())
+      const filesToDelete = sortedRequests.slice(0, requestFiles.length - MAX_REQUEST_LOGS)
+
+      for (const { file } of filesToDelete) {
+        try {
+          await fs.unlink(path.join(requestDir, file))
+        } catch {
+          // Ignore individual file deletion failures
+        }
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        console.error("Failed to rotate request logs:", error)
+      }
+    }
+  }
+
+  async function saveRequestData(requestData: { body: any; headers: Record<string, any> }): Promise<string> {
+    if (!isEnabled()) return ""
+
+    await rotateRequestLogs()
+
+    await rotateRequestLogs()
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+    const fileName = `request-${timestamp}-${Math.random().toString(36).slice(2, 8)}.json`
+    const requestDir = path.join(Global.Path.log, REQUEST_LOG_DIR)
+    const filePath = path.join(requestDir, fileName)
+
+    try {
+      await fs.mkdir(requestDir, { recursive: true })
+      const requestJson = JSON.stringify(
+        {
+          timestamp: new Date().toISOString(),
+          body: requestData.body,
+          headers: requestData.headers,
+        },
+        null,
+        2,
+      )
+      await fs.writeFile(filePath, requestJson, { encoding: "utf-8" })
+      return filePath
+    } catch (error) {
+      console.error("Failed to save request data:", error)
+      return ""
+    }
   }
 
   /**
@@ -139,11 +207,21 @@ export namespace ErrorLog {
       sessionID?: string
       agent?: string
       requestType?: "stream" | "chat" | "completion"
+      attempt?: number
+      request?: { body: any; headers: Record<string, any> }
       [key: string]: any
     },
   ): Promise<void> {
     if (!isEnabled()) return
-    const entry = formatErrorEntry(error, context)
+    let requestFilePath = ""
+    if (context?.request) {
+      requestFilePath = await saveRequestData(context.request)
+    }
+    const { request, ...contextWithoutRequest } = context || {}
+    const entry = formatErrorEntry(error, {
+      ...contextWithoutRequest,
+      requestFilePath: requestFilePath || undefined,
+    })
     await writeLogEntry(entry)
   }
 
@@ -209,6 +287,15 @@ export namespace ErrorLog {
       await Promise.all(
         files.filter((file) => file.startsWith("llm-errors")).map((file) => fs.unlink(path.join(logDir, file))),
       )
+
+      const requestLogDir = path.join(logDir, REQUEST_LOG_DIR)
+      try {
+        const requestFiles = await fs.readdir(requestLogDir)
+        await Promise.all(requestFiles.map((file) => fs.unlink(path.join(requestLogDir, file))))
+        await fs.rmdir(requestLogDir)
+      } catch {
+        // Ignore if directory doesn't exist
+      }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
         throw error

@@ -139,20 +139,72 @@ export namespace LLM {
 
     const tools = await resolveTools(input)
 
+    const requestHeaders = {
+      ...(isCodex
+        ? {
+            originator: "costrict",
+            "User-Agent": `costrict-cli/${Installation.VERSION} (${os.platform()} ${os.release()}; ${os.arch()})`,
+            session_id: input.sessionID,
+          }
+        : undefined),
+      ...(input.model.providerID.startsWith("opencode")
+        ? {
+            "x-opencode-project": Instance.project.id,
+            "x-opencode-session": input.sessionID,
+            "x-opencode-request": input.user.id,
+            "x-opencode-client": Flag.COSTRICT_CLIENT,
+          }
+        : undefined),
+      ...input.model.headers,
+    }
+
+    const requestMessages = [
+      ...(isCodex
+        ? [
+            {
+              role: "user",
+              content: system.join("\n\n"),
+            } as ModelMessage,
+          ]
+        : system.map(
+            (x): ModelMessage => ({
+              role: "system",
+              content: x,
+            }),
+          )),
+      ...input.messages,
+    ]
+
+    const requestBody = {
+      temperature: params.temperature,
+      topP: params.topP,
+      topK: params.topK,
+      providerOptions: ProviderTransform.providerOptions(input.model, params.options),
+      activeTools: Object.keys(tools).filter((x) => x !== "invalid"),
+      tools,
+      maxOutputTokens,
+      messages: requestMessages,
+      maxRetries: input.retries ?? 0,
+    }
+
     return streamText({
       onError(error) {
         l.error("stream error", {
           error,
         })
 
-        // Publish LLM error event for plugins to handle
         Bus.publish(Session.Event.LLMError, {
           providerID: input.model.providerID,
           modelID: input.model.id,
           sessionID: input.sessionID,
           agent: input.agent.name,
           requestType: "stream",
+          attempt: 0,
           error,
+          request: {
+            body: requestBody,
+            headers: requestHeaders,
+          },
         })
       },
       async experimental_repairToolCall(failed) {
@@ -184,41 +236,9 @@ export namespace LLM {
       tools,
       maxOutputTokens,
       abortSignal: input.abort,
-      headers: {
-        ...(isCodex
-          ? {
-              originator: "costrict",
-              "User-Agent": `costrict-cli/${Installation.VERSION} (${os.platform()} ${os.release()}; ${os.arch()})`,
-              session_id: input.sessionID,
-            }
-          : undefined),
-        ...(input.model.providerID.startsWith("opencode")
-          ? {
-              "x-opencode-project": Instance.project.id,
-              "x-opencode-session": input.sessionID,
-              "x-opencode-request": input.user.id,
-              "x-opencode-client": Flag.COSTRICT_CLIENT,
-            }
-          : undefined),
-        ...input.model.headers,
-      },
+      headers: requestHeaders,
       maxRetries: input.retries ?? 0,
-      messages: [
-        ...(isCodex
-          ? [
-              {
-                role: "user",
-                content: system.join("\n\n"),
-              } as ModelMessage,
-            ]
-          : system.map(
-              (x): ModelMessage => ({
-                role: "system",
-                content: x,
-              }),
-            )),
-        ...input.messages,
-      ],
+      messages: requestMessages,
       model: wrapLanguageModel({
         model: language,
         middleware: [

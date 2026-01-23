@@ -2,5 +2,3 @@ research
 dist
 gen
 app.log
-# 构建时自动生成的嵌入资源模块
-src/server/costrict/embedded-assets.gen.ts

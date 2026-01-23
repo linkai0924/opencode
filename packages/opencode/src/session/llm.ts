@@ -2,6 +2,8 @@ import os from "os"
 import { Installation } from "@/installation"
 import { Provider } from "@/provider/provider"
 import { Log } from "@/util/log"
+import { Bus } from "@/bus"
+import { Session } from "."
 import {
   streamText,
   wrapLanguageModel,
@@ -140,6 +142,16 @@ export namespace LLM {
     return streamText({
       onError(error) {
         l.error("stream error", {
+          error,
+        })
+
+        // Publish LLM error event for plugins to handle
+        Bus.publish(Session.Event.LLMError, {
+          providerID: input.model.providerID,
+          modelID: input.model.id,
+          sessionID: input.sessionID,
+          agent: input.agent.name,
+          requestType: "stream",
           error,
         })
       },

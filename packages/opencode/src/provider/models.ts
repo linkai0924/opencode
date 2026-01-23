@@ -86,7 +86,15 @@ export namespace ModelsDev {
       return JSON.parse(json) as Record<string, Provider>
     }
     const url = Global.Path.modelsDevUrl
-    const json = await fetch(`${url}/api.json`).then((x) => x.text())
+    const json = await fetch(`${url}/api.json`)
+      .then((x) => x.text())
+      .catch((e) => {
+        log.error("Failed to fetch models.dev data", {
+          error: e,
+          url,
+        })
+        return "{}"
+      })
     return JSON.parse(json) as Record<string, Provider>
   }
 

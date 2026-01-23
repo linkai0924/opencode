@@ -55,19 +55,26 @@ export namespace Config {
       if (value.type === "wellknown") {
         process.env[value.key] = value.token
         log.debug("fetching remote config", { url: `${key}/.well-known/opencode` })
-        const response = await fetch(`${key}/.well-known/opencode`)
-        if (!response.ok) {
-          throw new Error(`failed to fetch remote config from ${key}: ${response.status}`)
+        try {
+          const response = await fetch(`${key}/.well-known/opencode`)
+          if (!response.ok) {
+            log.warn(`failed to fetch remote config from ${key}: ${response.status}`)
+            continue
+          }
+          const wellknown = (await response.json()) as any
+          const remoteConfig = wellknown.config ?? {}
+          // Add $schema to prevent load() from trying to write back to a non-existent file
+          if (!remoteConfig.$schema) remoteConfig.$schema = "https://costrict.ai/config.json"
+          result = mergeConfigConcatArrays(
+            result,
+            await load(JSON.stringify(remoteConfig), `${key}/.well-known/opencode`),
+          )
+          log.debug("loaded remote config from well-known", { url: key })
+        } catch (error) {
+          // costrict change: 在内网环境下无法访问时继续启动,不抛出异常
+          log.warn(`failed to fetch remote config from ${key}`, { error })
+          continue
         }
-        const wellknown = (await response.json()) as any
-        const remoteConfig = wellknown.config ?? {}
-        // Add $schema to prevent load() from trying to write back to a non-existent file
-        if (!remoteConfig.$schema) remoteConfig.$schema = "https://costrict.ai/config.json"
-        result = mergeConfigConcatArrays(
-          result,
-          await load(JSON.stringify(remoteConfig), `${key}/.well-known/opencode`),
-        )
-        log.debug("loaded remote config from well-known", { url: key })
       }
     }
 

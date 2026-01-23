@@ -2835,7 +2835,7 @@ export namespace Server {
         .all("/*", async (c) => {
           const path = c.req.path
           const appUrl = new URL(Flag.COSTRICT_APP_URL)
-          const response = await proxy(`${appUrl.origin}${path}`, {
+          const response = await proxy(`${appUrl.href.replace(/\/$/, '')}${path}`, {
             ...c.req,
             headers: {
               ...c.req.raw.headers,

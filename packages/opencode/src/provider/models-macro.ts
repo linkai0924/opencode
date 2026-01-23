@@ -9,6 +9,8 @@ export async function data() {
     }
   }
   const url = Global.Path.modelsDevUrl
-  const json = await fetch(`${url}/api.json`).then((x) => x.text())
+  const json = await fetch(`${url}/api.json`, {
+    signal: AbortSignal.timeout(10 * 1000),
+  }).then((x) => x.text())
   return json
 }

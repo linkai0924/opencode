@@ -77,25 +77,39 @@ export namespace ModelsDev {
   export type Provider = z.infer<typeof Provider>
 
   export async function get() {
-    refresh()
+    // 异步刷新，不阻塞启动
+    refresh().catch(() => {})
+    
+    // 优先尝试读取缓存
     const file = Bun.file(filepath)
     const result = await file.json().catch(() => {})
     if (result) return result as Record<string, Provider>
+    
+    // 其次尝试内置数据
     if (typeof data === "function") {
       const json = await data()
       return JSON.parse(json) as Record<string, Provider>
     }
+    
+    // 最后异步获取在线数据，不阻塞启动
     const url = Global.Path.modelsDevUrl
-    const json = await fetch(`${url}/api.json`)
+    fetch(`${url}/api.json`, {
+      signal: AbortSignal.timeout(10 * 1000),
+    })
       .then((x) => x.text())
+      .then(async (json) => {
+        await Bun.write(filepath, json)
+        log.info("models.dev data fetched and cached")
+      })
       .catch((e) => {
         log.error("Failed to fetch models.dev data", {
           error: e,
           url,
         })
-        return "{}"
       })
-    return JSON.parse(json) as Record<string, Provider>
+    
+    // 返回空对象，后续会在定时刷新中获取
+    return {}
   }
 
   export async function refresh() {

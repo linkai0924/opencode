@@ -498,8 +498,24 @@ export namespace Server {
           },
         )
         .all("/*", async (c) => {
-          const path = c.req.path
+          let path = c.req.path
           const appUrl = new URL(Flag.COSTRICT_APP_URL)
+          
+          // 如果路径中包含会话ID（base64编码）和 /session/，需要移除它以便资源能够正确代理
+          // 例如：/RDovY29kZS9ob3N0bWFu/session/assets/index.js -> /assets/index.js (静态资源)
+          // /RDovY29kZS9ob3N0bWFu/session/ses_xxx -> / (前端路由，加载 index.html)
+          const sessionMatch = path.match(/^[A-Za-z0-9_=\/+-]+\/session\/(.*)/)
+          if (sessionMatch) {
+            const subPath = sessionMatch[1]
+            // 如果是静态资源请求（包含 .），则保留路径
+            // 否则（前端路由），代理到根路径 /
+            if (subPath && subPath.includes('.')) {
+              path = '/' + subPath
+            } else {
+              path = '/'
+            }
+          }
+          
           const response = await proxy(`${appUrl.href.replace(/\/$/, '')}${path}`, {
             ...c.req,
             headers: {
@@ -509,7 +525,7 @@ export namespace Server {
           })
           response.headers.set(
             "Content-Security-Policy",
-            "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' data:",
+            "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' data:; media-src 'self' data: blob:;",
           )
           return response
         }) as unknown as Hono,

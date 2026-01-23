@@ -401,7 +401,7 @@ export const { use: useMarked, provider: MarkedProvider } = createSimpleContext(
           }
           return highlighter.codeToHtml(code, {
             lang: lang || "text",
-            theme: "OpenCode",
+            theme: "CoStrict",
             tabindex: false,
           })
         },

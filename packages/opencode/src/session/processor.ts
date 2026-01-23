@@ -176,7 +176,7 @@ export namespace SessionProcessor {
                       ...match,
                       state: {
                         status: "completed",
-                        input: value.input,
+                        input: value.input ?? match.state.input,
                         output: value.output.output,
                         metadata: value.output.metadata,
                         title: value.output.title,
@@ -200,7 +200,7 @@ export namespace SessionProcessor {
                       ...match,
                       state: {
                         status: "error",
-                        input: value.input,
+                        input: value.input ?? match.state.input,
                         error: (value.error as any).toString(),
                         time: {
                           start: match.state.time.start,
@@ -341,6 +341,18 @@ export namespace SessionProcessor {
               error: e,
               stack: JSON.stringify(e.stack),
             })
+
+            // Publish LLM error event for plugins to handle
+            Bus.publish(Session.Event.LLMError, {
+              providerID: input.model.providerID,
+              modelID: input.model.id,
+              sessionID: input.sessionID,
+              agent: input.assistantMessage.agent,
+              requestType: "stream",
+              attempt,
+              error: e,
+            })
+
             const error = MessageV2.fromError(e, { providerID: input.model.providerID })
             const retry = SessionRetry.retryable(error)
             if (retry !== undefined) {

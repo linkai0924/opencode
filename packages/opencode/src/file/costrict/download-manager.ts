@@ -1,7 +1,13 @@
 // costrict 下载管理器
 import path from "path"
 
-export const DEFAULT_PRIVATE_REGISTRY_URL = "https://product_2826_7de8cd:bf3f3d58a8870f5d@nexus.sangfor.com/repository/cicd_virus_scan_2826/"
+/*costrict change*/
+// 默认下载地址
+export const DEFAULT_DOWNLOAD_URLS: Record<string, string> = {
+  "x64-win32": "https://shenma.sangfor.com.cn/costrict/opencode/ripgrep-14.1.1-x86_64-pc-windows-msvc.zip",
+  "x64-linux": "https://shenma.sangfor.com.cn/costrict/opencode/ripgrep-14.1.1-x86_64-unknown-linux-musl.tar.gz",
+}
+/*costrict change*/
 
 export interface DownloadConfig {
   version: string
@@ -39,6 +45,24 @@ export async function downloadWithFallback(
   publicUrl: string,
   config: DownloadConfig,
 ): Promise<ArrayBuffer> {
+  /*costrict change*/
+  // 优先使用默认下载地址
+  const { processPlatformKey } = config
+  if (processPlatformKey && DEFAULT_DOWNLOAD_URLS[processPlatformKey]) {
+    const defaultUrl = DEFAULT_DOWNLOAD_URLS[processPlatformKey]
+    try {
+      console.log(`Trying default download URL: ${defaultUrl}`)
+      const response = await fetch(defaultUrl)
+      if (response.ok) {
+        return await response.arrayBuffer()
+      }
+      console.log(`Default download failed: ${defaultUrl} (status: ${response.status})`)
+    } catch (error) {
+      console.log(`Default download error: ${error}`)
+    }
+  }
+  /*costrict change*/
+  
   // 尝试从 GitHub 下载
   try {
     const response = await fetch(publicUrl)
@@ -48,11 +72,13 @@ export async function downloadWithFallback(
     throw new Error(`GitHub download failed: ${publicUrl} (status: ${response.status})`)
   } catch (error) {
     // GitHub 下载失败，尝试从内网私服下载
-    const privateRegistryUrl = process.env.COSTRICT_PRIVATE_REGISTRY || DEFAULT_PRIVATE_REGISTRY_URL
-    /*costrict change*/
+    const privateRegistryUrl = process.env.COSTRICT_PRIVATE_REGISTRY
+    if (!privateRegistryUrl) {
+      console.log("COSTRICT_PRIVATE_REGISTRY environment variable not set, skipping private registry")
+      throw error
+    }
     const privatePath = buildPrivateRegistryPath(config)
     const privateUrl = `${privateRegistryUrl}${privatePath}`
-    /*costrict change*/
     
     console.log(`GitHub download failed, trying private registry: ${privateUrl}`)
     

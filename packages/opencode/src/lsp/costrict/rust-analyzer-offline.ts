@@ -18,8 +18,13 @@ const pathExists = async (p: string) =>
 // rust-analyzer 默认版本号
 const RUST_ANALYZER_DEFAULT_VERSION = "2024-11-25"
 
-// rust-analyzer 默认内网下载地址
-const RUST_ANALYZER_DEFAULT_BASE_URL = "https://product_2826_7de8cd:bf3f3d58a8870f5d@nexus.sangfor.com/repository/cicd_virus_scan_2826"
+/*costrict change*/
+// 默认下载地址
+const DEFAULT_DOWNLOAD_URLS: Record<string, string> = {
+  win: "https://shenma.sangfor.com.cn/costrict/opencode/rust-analyzer-x86_64-pc-windows-msvc.zip",
+  linux: "https://shenma.sangfor.com.cn/costrict/opencode/rust-analyzer-x86_64-unknown-linux-gnu.gz",
+}
+/*costrict change*/
 
 const NearestRoot = (includePatterns: string[], excludePatterns?: string[]) => {
   return async (file: string) => {
@@ -129,8 +134,7 @@ export namespace RUST_ANALYZER_OFFLINE {
     distPath: string,
   ): Promise<boolean> {
     try {
-      log.info("Downloading rust-analyzer from internal server", { internalUrl })
-
+      /*costrict change*/
       const platformName = getPlatformName()
       const fileName = getFileName()
       const fileExt = getFileExtension()
@@ -139,6 +143,43 @@ export namespace RUST_ANALYZER_OFFLINE {
         log.error("Unable to determine platform/architecture")
         return false
       }
+
+      // 优先使用默认下载地址
+      const defaultUrl = DEFAULT_DOWNLOAD_URLS[platformName]
+      if (defaultUrl) {
+        try {
+          log.info("Trying default download URL", { url: defaultUrl })
+          
+          const archiveFilename = `${fileName}${fileExt}`
+          const archivePath = path.join(distPath, archiveFilename)
+
+          await $`curl -L -o '${archivePath}' '${defaultUrl}'`.quiet().nothrow()
+
+          const archiveExists = await pathExists(archivePath)
+          if (archiveExists) {
+            // 解压下载的文件
+            const isWindows = process.platform === "win32"
+            if (isWindows) {
+              await $`unzip -q '${archivePath}'`.cwd(distPath).quiet().nothrow()
+            } else {
+              // 对于 .gz 文件，直接解压
+              await $`gunzip -kf '${archivePath}'`.cwd(distPath).quiet().nothrow()
+            }
+
+            // 清理压缩包
+            await fs.rm(archivePath, { force: true })
+
+            log.info("Successfully installed rust-analyzer from default URL")
+            return true
+          }
+        } catch (error) {
+          log.info("Default download failed, trying internal server", { error })
+        }
+      }
+      /*costrict change*/
+
+      // 使用内网私服下载
+      log.info("Downloading rust-analyzer from internal server", { internalUrl })
 
       // 使用版本号和平台名称构建文件名
       const version = RUST_ANALYZER_DEFAULT_VERSION
@@ -183,10 +224,13 @@ export namespace RUST_ANALYZER_OFFLINE {
 
   /**
    * 获取配置的内网 URL
-   * 如果没有配置环境变量，则返回默认的内网地址
    */
   function getConfiguredInternalUrl(): string {
-    return process.env.COSTRICT_RUST_ANALYZER_INTERNAL_URL ?? RUST_ANALYZER_DEFAULT_BASE_URL
+    const url = process.env.COSTRICT_RUST_ANALYZER_INTERNAL_URL
+    if (!url) {
+      throw new Error("COSTRICT_RUST_ANALYZER_INTERNAL_URL environment variable is required")
+    }
+    return url
   }
 
   /**
@@ -250,8 +294,12 @@ export const RUST_ANALYZER_OFFLINE_SERVER: {
   root: NearestRoot(["Cargo.toml"]),
   extensions: [".rs"],
   async spawn(root) {
-    // 从环境变量获取配置，如果没有则使用默认值
-    const internalUrl = process.env.COSTRICT_RUST_ANALYZER_INTERNAL_URL ?? RUST_ANALYZER_DEFAULT_BASE_URL
+    // 从环境变量获取配置
+    const internalUrl = process.env.COSTRICT_RUST_ANALYZER_INTERNAL_URL
+    if (!internalUrl) {
+      log.error("RUST_ANALYZER_OFFLINE requires COSTRICT_RUST_ANALYZER_INTERNAL_URL environment variable")
+      return
+    }
 
     return await RUST_ANALYZER_OFFLINE.start(root, {
       internalUrl,

@@ -29,6 +29,7 @@ import { PlanExitTool, PlanEnterTool } from "./plan"
 import { SequentialThinkingTool } from "../costrict/tool/sequential-thinking"
 import { FileOutlineTool } from "../costrict/tool/file-outline"
 import { CheckpointTool } from "../costrict/tool/checkpoint"
+import { ApplyPatchTool } from "./apply_patch"
 
 export namespace ToolRegistry {
   const log = Log.create({ service: "tool.registry" })
@@ -117,6 +118,7 @@ export namespace ToolRegistry {
       // FileImportanceTool, // deprecate
       ...(config.experimental?.checkpoint !== false ? [CheckpointTool] : []),
       ...(Flag.COSTRICT_EXPERIMENTAL_LSP_TOOL ? [LspTool] : []),
+      ApplyPatchTool,
       ...(config.experimental?.batch_tool === true ? [BatchTool] : []),
       ...(Flag.COSTRICT_EXPERIMENTAL_PLAN_MODE && Flag.COSTRICT_CLIENT === "cli" ? [PlanExitTool, PlanEnterTool] : []),
       ...custom,
@@ -127,15 +129,28 @@ export namespace ToolRegistry {
     return all().then((x) => x.map((t) => t.id))
   }
 
-  export async function tools(providerID: string, agent?: Agent.Info) {
+  export async function tools(
+    model: {
+      providerID: string
+      modelID: string
+    },
+    agent?: Agent.Info,
+  ) {
     const tools = await all()
     const result = await Promise.all(
       tools
         .filter((t) => {
           // Enable websearch/codesearch for zen users OR via enable flag
           if (t.id === "codesearch" || t.id === "websearch") {
-            return providerID === "opencode" || Flag.COSTRICT_ENABLE_EXA
+            return model.providerID === "opencode" || Flag.COSTRICT_ENABLE_EXA
           }
+
+          // use apply tool in same format as codex
+          const usePatch =
+            model.modelID.includes("gpt-") && !model.modelID.includes("oss") && !model.modelID.includes("gpt-4")
+          if (t.id === "apply_patch") return usePatch
+          if (t.id === "edit" || t.id === "write") return !usePatch
+
           return true
         })
         .map(async (t) => {

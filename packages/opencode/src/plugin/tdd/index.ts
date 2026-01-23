@@ -1,5 +1,5 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin"
-import { handleConfig, handleSystemTransform, getTools } from "./handlers"
+import { handleConfig, handleSystemTransform, getTools, handleLLMError } from "./handlers"
 import { Log } from "@/util/log"
 // import { Bus } from "@/bus"
 // import { MessageV2 } from "@/session/message-v2"
@@ -15,6 +15,7 @@ export async function TDDPlugin(input: PluginInput): Promise<Hooks> {
     tool: getTools(),
     "tool.execute.before": handleToolExecuteBefore,
     "tool.execute.after": handleToolExecuteAfter,
+    event: handleLLMError,
   }
 }
 

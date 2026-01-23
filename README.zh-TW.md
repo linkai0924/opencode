@@ -52,6 +52,8 @@ CoStrict 也提供桌面版應用程式。您可以直接從 [發佈頁面 (rele
 ```bash
 # macOS (Homebrew Cask)
 brew install --cask opencode-desktop
+# Windows (Scoop)
+scoop bucket add extras; scoop install extras/opencode-desktop
 ```
 
 #### 安裝目錄

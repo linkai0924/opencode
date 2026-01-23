@@ -5,8 +5,6 @@ import { generateObject, type ModelMessage } from "ai"
 import { SystemPrompt } from "../session/system"
 import { Instance } from "../project/instance"
 import { Truncate } from "../tool/truncation"
-import { TestGuide } from "../util/testGuideDiscovery"
-
 import PROMPT_GENERATE from "./generate.txt"
 import PROMPT_COMPACTION from "./prompt/compaction.txt"
 import PROMPT_EXPLORE from "./prompt/explore.txt"
@@ -46,12 +44,6 @@ export namespace Agent {
 
   const state = Instance.state(async () => {
     const cfg = await Config.get()
-
-    // Load TEST_GUIDE.md content
-    const testGuideResult = await TestGuide.load()
-    const testGuideSuffix = testGuideResult.content
-      ? `\n\n# Test Guide\n\n${testGuideResult.content}`
-      : ""
 
     const defaults = PermissionNext.fromConfig({
       "*": "allow",

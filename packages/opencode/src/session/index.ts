@@ -125,6 +125,24 @@ export namespace Session {
         error: MessageV2.Assistant.shape.error,
       }),
     ),
+    LLMError: BusEvent.define(
+      "session.llm.error",
+      z.object({
+        providerID: z.string(),
+        modelID: z.string(),
+        sessionID: z.string(),
+        agent: z.string(),
+        requestType: z.enum(["stream", "chat", "completion"]),
+        attempt: z.number().optional(),
+        error: z.any(),
+        request: z
+          .object({
+            body: z.any(),
+            headers: z.record(z.string(), z.any()),
+          })
+          .optional(),
+      }),
+    ),
   }
 
   export const create = fn(

@@ -1,9 +1,27 @@
+function truthy(key: string) {
+  const value = process.env[key]?.toLowerCase()
+  return value === "true" || value === "1"
+}
+
+function number(key: string) {
+  const value = process.env[key]
+  if (!value) return undefined
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined
+}
+
 export namespace Flag {
   export const COSTRICT_AUTO_SHARE = truthy("COSTRICT_AUTO_SHARE")
+  export const COSTRICT_DISABLE_PROJECT_CONFIG = truthy("COSTRICT_DISABLE_PROJECT_CONFIG")
   export const COSTRICT_GIT_BASH_PATH = process.env["COSTRICT_GIT_BASH_PATH"]
   export const COSTRICT_CONFIG = process.env["COSTRICT_CONFIG"]
   export const COSTRICT_CONFIG_DIR = process.env["COSTRICT_CONFIG_DIR"]
   export const COSTRICT_CONFIG_CONTENT = process.env["COSTRICT_CONFIG_CONTENT"]
+  
+  // OPENCODE_ flags
+  export const OPENCODE_DISABLE_PROJECT_CONFIG = truthy("OPENCODE_DISABLE_PROJECT_CONFIG")
+  export const OPENCODE_CONFIG_DIR = process.env["OPENCODE_CONFIG_DIR"]
+  export const OPENCODE_DISABLE_FILETIME_CHECK = truthy("OPENCODE_DISABLE_FILETIME_CHECK")
   export const COSTRICT_DISABLE_AUTOUPDATE = truthy("COSTRICT_DISABLE_AUTOUPDATE")
   export const COSTRICT_DISABLE_PRUNE = truthy("COSTRICT_DISABLE_PRUNE")
   export const COSTRICT_DISABLE_TERMINAL_TITLE = truthy("COSTRICT_DISABLE_TERMINAL_TITLE")
@@ -26,6 +44,7 @@ export namespace Flag {
   export const COSTRICT_APP_URL =
     process.env["COSTRICT_APP_URL"] ??
     (COSTRICT_BASE_URL ? `${COSTRICT_BASE_URL}/costrict/opencode-web/dist/` : "https://zgsm.sangfor.com/costrict/opencode-web/dist/")
+  export const COSTRICT_DISABLE_FILETIME_CHECK = truthy("COSTRICT_DISABLE_FILETIME_CHECK")
 
   // Experimental
   export const COSTRICT_EXPERIMENTAL = truthy("COSTRICT_EXPERIMENTAL")
@@ -43,16 +62,37 @@ export namespace Flag {
   export const COSTRICT_EXPERIMENTAL_LSP_TY = truthy("COSTRICT_EXPERIMENTAL_LSP_TY")
   export const COSTRICT_EXPERIMENTAL_LSP_TOOL = COSTRICT_EXPERIMENTAL || truthy("COSTRICT_EXPERIMENTAL_LSP_TOOL")
   export const COSTRICT_EXPERIMENTAL_PLAN_MODE = COSTRICT_EXPERIMENTAL || truthy("COSTRICT_EXPERIMENTAL_PLAN_MODE")
-
-  function truthy(key: string) {
-    const value = process.env[key]?.toLowerCase()
-    return value === "true" || value === "1"
-  }
-
-  function number(key: string) {
-    const value = process.env[key]
-    if (!value) return undefined
-    const parsed = Number(value)
-    return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined
-  }
 }
+
+// Dynamic getter for COSTRICT_DISABLE_PROJECT_CONFIG
+// This must be evaluated at access time, not module load time,
+// because external tooling may set this env var at runtime
+Object.defineProperty(Flag, "COSTRICT_DISABLE_PROJECT_CONFIG", {
+  get() {
+    return truthy("COSTRICT_DISABLE_PROJECT_CONFIG")
+  },
+  enumerable: true,
+  configurable: false,
+})
+
+// Dynamic getter for COSTRICT_CONFIG_DIR
+// This must be evaluated at access time, not module load time,
+// because external tooling may set this env var at runtime
+Object.defineProperty(Flag, "COSTRICT_CONFIG_DIR", {
+  get() {
+    return process.env["COSTRICT_CONFIG_DIR"]
+  },
+  enumerable: true,
+  configurable: false,
+})
+
+// Dynamic getter for OPENCODE_CONFIG_DIR
+// This must be evaluated at access time, not module load time,
+// because external tooling may set this env var at runtime
+Object.defineProperty(Flag, "OPENCODE_CONFIG_DIR", {
+  get() {
+    return process.env["OPENCODE_CONFIG_DIR"]
+  },
+  enumerable: true,
+  configurable: false,
+})

@@ -52,6 +52,8 @@ CoStrict is also available as a desktop application. Download directly from the 
 ```bash
 # macOS (Homebrew)
 brew install --cask opencode-desktop
+# Windows (Scoop)
+scoop bucket add extras; scoop install extras/opencode-desktop
 ```
 
 #### Installation Directory

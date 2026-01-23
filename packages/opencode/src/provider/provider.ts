@@ -41,6 +41,18 @@ import { ProviderTransform } from "./transform"
 export namespace Provider {
   const log = Log.create({ service: "provider" })
 
+  function isGpt5OrLater(modelID: string): boolean {
+    const match = /^gpt-(\d+)/.exec(modelID)
+    if (!match) {
+      return false
+    }
+    return Number(match[1]) >= 5
+  }
+
+  function shouldUseCopilotResponsesApi(modelID: string): boolean {
+    return isGpt5OrLater(modelID) && !modelID.startsWith("gpt-5-mini")
+  }
+
   const BUNDLED_PROVIDERS: Record<string, (options: any) => SDK> = {
     "@ai-sdk/amazon-bedrock": createAmazonBedrock,
     "@ai-sdk/anthropic": createAnthropic,
@@ -126,10 +138,7 @@ export namespace Provider {
       return {
         autoload: false,
         async getModel(sdk: any, modelID: string, _options?: Record<string, any>) {
-          if (modelID.includes("codex")) {
-            return sdk.responses(modelID)
-          }
-          return sdk.chat(modelID)
+          return shouldUseCopilotResponsesApi(modelID) ? sdk.responses(modelID) : sdk.chat(modelID)
         },
         options: {},
       }
@@ -138,10 +147,7 @@ export namespace Provider {
       return {
         autoload: false,
         async getModel(sdk: any, modelID: string, _options?: Record<string, any>) {
-          if (modelID.includes("codex")) {
-            return sdk.responses(modelID)
-          }
-          return sdk.chat(modelID)
+          return shouldUseCopilotResponsesApi(modelID) ? sdk.responses(modelID) : sdk.chat(modelID)
         },
         options: {},
       }
@@ -563,6 +569,7 @@ export namespace Provider {
       }),
       limit: z.object({
         context: z.number(),
+        input: z.number().optional(),
         output: z.number(),
       }),
       status: z.enum(["alpha", "beta", "deprecated", "active"]),
@@ -600,7 +607,10 @@ export namespace Provider {
       api: {
         id: model.id,
         url: provider.api!,
-        npm: model.provider?.npm ?? provider.npm ?? "@ai-sdk/openai-compatible",
+        npm: iife(() => {
+          if (provider.id.startsWith("github-copilot")) return "@ai-sdk/github-copilot"
+          return model.provider?.npm ?? provider.npm ?? "@ai-sdk/openai-compatible"
+        }),
       },
       status: model.status ?? "active",
       headers: model.headers ?? {},
@@ -625,6 +635,7 @@ export namespace Provider {
       },
       limit: {
         context: model.limit.context,
+        input: model.limit.input,
         output: model.limit.output,
       },
       capabilities: {
@@ -948,16 +959,6 @@ export namespace Provider {
         continue
       }
 
-      if (providerID === "github-copilot" || providerID === "github-copilot-enterprise") {
-        provider.models = mapValues(provider.models, (model) => ({
-          ...model,
-          api: {
-            ...model.api,
-            npm: "@ai-sdk/github-copilot",
-          },
-        }))
-      }
-
       const configProvider = config.provider?.[providerID]
 
       // 跳过没有 models 字段的 provider
@@ -1046,6 +1047,24 @@ export namespace Provider {
           const combined = signals.length > 1 ? AbortSignal.any(signals) : signals[0]
 
           opts.signal = combined
+        }
+
+        // Strip openai itemId metadata following what codex does
+        // Codex uses #[serde(skip_serializing)] on id fields for all item types:
+        // Message, Reasoning, FunctionCall, LocalShellCall, CustomToolCall, WebSearchCall
+        // IDs are only re-attached for Azure with store=true
+        if (model.api.npm === "@ai-sdk/openai" && opts.body && opts.method === "POST") {
+          const body = JSON.parse(opts.body as string)
+          const isAzure = model.providerID.includes("azure")
+          const keepIds = isAzure && body.store === true
+          if (!keepIds && Array.isArray(body.input)) {
+            for (const item of body.input) {
+              if ("id" in item) {
+                delete item.id
+              }
+            }
+            opts.body = JSON.stringify(body)
+          }
         }
 
         return fetchFn(input, {

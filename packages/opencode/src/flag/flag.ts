@@ -12,16 +12,17 @@ function number(key: string) {
 
 export namespace Flag {
   export const COSTRICT_AUTO_SHARE = truthy("COSTRICT_AUTO_SHARE")
-  export const COSTRICT_DISABLE_PROJECT_CONFIG = truthy("COSTRICT_DISABLE_PROJECT_CONFIG")
   export const COSTRICT_GIT_BASH_PATH = process.env["COSTRICT_GIT_BASH_PATH"]
   export const COSTRICT_CONFIG = process.env["COSTRICT_CONFIG"]
   export const COSTRICT_CONFIG_DIR = process.env["COSTRICT_CONFIG_DIR"]
   export const COSTRICT_CONFIG_CONTENT = process.env["COSTRICT_CONFIG_CONTENT"]
-  
+  export const COSTRICT_DISABLE_PROJECT_CONFIG = truthy("COSTRICT_DISABLE_PROJECT_CONFIG")
+
   // OPENCODE_ flags
   export const OPENCODE_DISABLE_PROJECT_CONFIG = truthy("OPENCODE_DISABLE_PROJECT_CONFIG")
   export const OPENCODE_CONFIG_DIR = process.env["OPENCODE_CONFIG_DIR"]
   export const OPENCODE_DISABLE_FILETIME_CHECK = truthy("OPENCODE_DISABLE_FILETIME_CHECK")
+
   export const COSTRICT_DISABLE_AUTOUPDATE = truthy("COSTRICT_DISABLE_AUTOUPDATE")
   export const COSTRICT_DISABLE_PRUNE = truthy("COSTRICT_DISABLE_PRUNE")
   export const COSTRICT_DISABLE_TERMINAL_TITLE = truthy("COSTRICT_DISABLE_TERMINAL_TITLE")
@@ -43,7 +44,9 @@ export namespace Flag {
   export const COSTRICT_BASE_URL = process.env["COSTRICT_BASE_URL"]
   export const COSTRICT_APP_URL =
     process.env["COSTRICT_APP_URL"] ??
-    (COSTRICT_BASE_URL ? `${COSTRICT_BASE_URL}/costrict/opencode-web/dist/` : "https://zgsm.sangfor.com/costrict/opencode-web/dist/")
+    (COSTRICT_BASE_URL
+      ? `${COSTRICT_BASE_URL}/costrict/opencode-web/dist/`
+      : "https://zgsm.sangfor.com/costrict/opencode-web/dist/")
   export const COSTRICT_DISABLE_FILETIME_CHECK = truthy("COSTRICT_DISABLE_FILETIME_CHECK")
 
   // Experimental
@@ -57,6 +60,7 @@ export namespace Flag {
     truthy("COSTRICT_ENABLE_EXA") || COSTRICT_EXPERIMENTAL || truthy("COSTRICT_EXPERIMENTAL_EXA")
   export const COSTRICT_EXPERIMENTAL_BASH_MAX_OUTPUT_LENGTH = number("COSTRICT_EXPERIMENTAL_BASH_MAX_OUTPUT_LENGTH")
   export const COSTRICT_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS = number("COSTRICT_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS")
+  export const COSTRICT_SHELL_TIMEOUT = process.env["COSTRICT_SHELL_TIMEOUT"]
   export const COSTRICT_EXPERIMENTAL_OUTPUT_TOKEN_MAX = number("COSTRICT_EXPERIMENTAL_OUTPUT_TOKEN_MAX")
   export const COSTRICT_EXPERIMENTAL_OXFMT = COSTRICT_EXPERIMENTAL || truthy("COSTRICT_EXPERIMENTAL_OXFMT")
   export const COSTRICT_EXPERIMENTAL_LSP_TY = truthy("COSTRICT_EXPERIMENTAL_LSP_TY")

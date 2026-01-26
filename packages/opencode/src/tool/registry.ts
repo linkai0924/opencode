@@ -1,5 +1,5 @@
 import { QuestionTool } from "./question"
-import { BashTool } from "./bash"
+import { BashTool } from "../plugin/tdd/tools/bash"
 import { EditTool } from "./edit"
 import { GlobTool } from "./glob"
 import { GrepTool } from "./grep"

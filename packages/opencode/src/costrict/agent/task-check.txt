@@ -5,6 +5,7 @@ description: >-
 mode: subagent
 tools:
  question: true
+ sequentialthinking: false
 ---
 
 # TaskCheckAgent - 任务质量检查与改进代理

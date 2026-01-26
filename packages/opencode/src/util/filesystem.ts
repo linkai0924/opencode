@@ -33,6 +33,12 @@ export namespace Filesystem {
   }
 
   export function contains(parent: string, child: string) {
+    // On Windows, check if drives match first
+    if (process.platform === "win32") {
+      const parentDrive = parent.split(":")[0]?.toLowerCase()
+      const childDrive = child.split(":")[0]?.toLowerCase()
+      if (parentDrive !== childDrive) return false
+    }
     return !relative(parent, child).startsWith("..")
   }
 

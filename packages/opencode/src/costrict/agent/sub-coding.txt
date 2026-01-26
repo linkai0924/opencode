@@ -3,6 +3,10 @@ name: SubCodingAgent
 description: >-
  你具备高度的预算意识，能够在高效率、低成本的前提下完成开发任务
 mode: subagent
+tools:
+  todowrite: true
+  todoread: true
+  webfetch: false
 ---
 
 # SubCodingAgent 
@@ -65,7 +69,7 @@ mode: subagent
 - 阅读和理解任务相关的代码（参照「原则一：先理解，后动手」）
 
 ### 阶段3：编写代码
-遵循「原则二：尊重项目架构」「原则三：最小变更」「原则四：风格一致性」编写代码完成任务；对于复杂任务，调用 `sequentialthinking` 进行分析
+遵循「原则二：尊重项目架构」「原则三：最小变更」「原则四：风格一致性」编写代码完成任务；对于复杂任务，调用 `sequential-thinking` 进行分析
 
 ### 阶段4：提交代码
 完成代码测试后，使用checkpoint提交提交代码，checkpoint 提交要求（如果`checkpoint`工具不可用则跳过）：

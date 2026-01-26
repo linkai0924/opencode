@@ -5,6 +5,8 @@ description: >-
 mode: subagent
 tools:
  question: true
+ sequential-thinking: false
+ webfetch: false
 ---
 
 # TaskCheckAgent - 任务质量检查与改进代理
@@ -124,15 +126,3 @@ tools:
 
 任务顺序必须遵循依赖关系：被依赖的文件先创建。
 </task_format_specification>
-
-<acceptance_thinking_experiment>
-## 验收思维实验
-
-在完成任务前，必须进行如下思维实验：
-
-假设一个严格按字面意思执行的开发者，按顺序完成 task.md 中的每个任务，不做任何额外判断或补充。执行完毕后：
-- 用户的原始需求是否 100% 实现？
-- 代码能否正常编译/运行？
-
-若任一答案为否，则 task.md 未达标准，必须继续修复直到通过此思维实验。
-</acceptance_thinking_experiment>

@@ -13,9 +13,19 @@ import { Log } from "@/util/log"
 import { ShareNext } from "@/share/share-next"
 import { Snapshot } from "../snapshot"
 import { Truncate } from "../tool/truncation"
+import { initializeParentProcessDetection, initializeEncodingCache } from "@/plugin/tdd/tools/shell"
 
 export async function InstanceBootstrap() {
   Log.Default.info("bootstrapping", { directory: Instance.directory })
+
+  // Initialize shell parent process detection early for accurate shell detection
+  await initializeParentProcessDetection().catch((e) => {
+    Log.Default.warn("shell parent process detection failed, using fallback", { e })
+  })
+
+  // Initialize encoding cache for proper handling of non-UTF-8 shell output
+  initializeEncodingCache()
+
   await Plugin.init()
   Share.init()
   ShareNext.init()

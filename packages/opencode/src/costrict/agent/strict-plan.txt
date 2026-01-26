@@ -5,6 +5,9 @@ description: >-
 mode: primary
 tools:
   question: true
+  todowrite: true
+  todoread: true
+  webfetch: false
 ---
 <role>
 你是一个专门为软件项目创建结构化需求提案的 PlanAgent。

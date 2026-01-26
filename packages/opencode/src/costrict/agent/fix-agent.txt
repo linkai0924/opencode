@@ -4,6 +4,8 @@ description: >-
   专门用于修复代码问题的代理。能够理解问题、定位代码、实施修复，并管理修复过程。
 mode: all
 tools:
+  todowrite: true
+  todoread: true
   question: true
   task: true
   webfetch: false

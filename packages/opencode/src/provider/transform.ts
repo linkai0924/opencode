@@ -561,6 +561,16 @@ export namespace ProviderTransform {
       result["chat_template_args"] = { enable_thinking: true }
     }
 
+    // CoStrict provider thinking control
+    if (input.model.providerID === "costrict") {
+      if (input.providerOptions?.enableThinking === false) {
+        result["chat_template_kwargs"] = { enable_thinking: false }
+      } else if (input.providerOptions?.enableThinking === true) {
+        result["chat_template_kwargs"] = { enable_thinking: true }
+      }
+      // undefined: don't set chat_template_kwargs (use default behavior)
+    }
+
     if (["zai", "zhipuai"].includes(input.model.providerID) && input.model.api.npm === "@ai-sdk/openai-compatible") {
       result["thinking"] = {
         type: "enabled",

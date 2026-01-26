@@ -901,6 +901,7 @@ export namespace Config {
             .describe(
               "Timeout in milliseconds for requests to this provider. Default is 300000 (5 minutes). Set to false to disable timeout.",
             ),
+          enableThinking: z.boolean().optional().describe("Enable thinking mode for costrict provider. Default: true"),
         })
         .catchall(z.any())
         .optional(),

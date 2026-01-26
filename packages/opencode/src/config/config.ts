@@ -1407,4 +1407,60 @@ export namespace Config {
   export async function directories() {
     return state().then((x) => x.directories)
   }
+
+  /**
+   * Resolves the config file path for a base directory
+   * This function provides a reusable way to find config files consistently across the codebase
+   *
+   * @param baseDir - The base directory to search for config files
+   * @param global - Whether to search for global config (costrict.json) or project config
+   * @returns The path to the config file that exists, or the default path if none exists
+   *
+   * Priority order (global=true):
+   * 1. costrict.jsonc
+   * 2. costrict.json
+   *
+   * Priority order (global=false):
+   * 1. baseDir/costrict.jsonc
+   * 2. baseDir/costrict.json
+   * 3. baseDir/.opencode/costrict.jsonc
+   * 4. baseDir/.opencode/costrict.json
+   *
+   * Defaults to costrict.json if no file exists
+   */
+  export async function resolveConfigFile(baseDir: string, global: boolean): Promise<string> {
+    if (global) {
+      // Global config: use costrict.json (not opencode.json) for consistency
+      const candidates = [
+        path.join(baseDir, "costrict.jsonc"),
+        path.join(baseDir, "costrict.json"),
+      ]
+      
+      for (const candidate of candidates) {
+        if (await Bun.file(candidate).exists()) {
+          return candidate
+        }
+      }
+      
+      // Default to costrict.json if none exist
+      return candidates[1]
+    } else {
+      // Project config: check .opencode/ subdirectory
+      const projectCandidates = [
+        path.join(baseDir, "costrict.jsonc"),
+        path.join(baseDir, "costrict.json"),
+        path.join(baseDir, ".opencode", "costrict.jsonc"),
+        path.join(baseDir, ".opencode", "costrict.json"),
+      ]
+      
+      for (const candidate of projectCandidates) {
+        if (await Bun.file(candidate).exists()) {
+          return candidate
+        }
+      }
+      
+      // Default to costrict.json if none exist
+      return projectCandidates[1]
+    }
+  }
 }

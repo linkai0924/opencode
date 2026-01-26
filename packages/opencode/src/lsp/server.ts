@@ -15,6 +15,7 @@ import {
   CLANGD_OFFLINE_SERVER_FOR_LSP,
   JDTLS_OFFLINE_SERVER_FOR_LSP,
   RUST_ANALYZER_OFFLINE_SERVER_FOR_LSP,
+  GOPLS_OFFLINE_SERVER_FOR_LSP,
 } from "./costrict"
 
 export namespace LSPServer {
@@ -2054,4 +2055,5 @@ export namespace LSPServer {
   export const ClangdOffline = CLANGD_OFFLINE_SERVER_FOR_LSP
   export const JdtsOffline = JDTLS_OFFLINE_SERVER_FOR_LSP
   export const RustAnalyzerOffline = RUST_ANALYZER_OFFLINE_SERVER_FOR_LSP
+  export const GoplsOffline = GOPLS_OFFLINE_SERVER_FOR_LSP
 }

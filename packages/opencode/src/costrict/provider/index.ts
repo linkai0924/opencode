@@ -148,6 +148,7 @@ export async function createCoStrictCustomLoader(provider: any) {
         headers.set("X-Title", "CoStrict-CLI")
         headers.set("X-Costrict-Version", `costrict-cli-${Installation.VERSION}`)
         headers.set("X-Request-ID", uuidv7()) // 每次请求生成新 UUID
+        headers.set("Accept-Language", "zh-CN")
 
         // ✅ CoStrict 特有的请求头（与 costrict-cli 保持一致）
         headers.set("zgsm-client-id", Installation.getInstallationId())

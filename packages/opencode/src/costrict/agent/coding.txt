@@ -68,7 +68,7 @@ SubCodingAgent 只需理解与其任务直接相关的内容。分发任务时�
 ### 阶段 1：理解全局
 1. 阅读 .cospec/plan/changes/<id>/task.md：理解任务拆解、阶段划分、依赖关系
 - 使用todowrite跟踪<objective>中用户提到的具体任务，如果没有提到具体任务，列出所有`.cospec/plan/changes/<id>/task.md`中的任务。
-- 阅读 `.cospec/plan/changes/<id>/proposal.md`（如果存在）、`tech.md`（如果存在）和`task.md`（如果存在）以确认范围和验收标准。
+- 阅读 `.cospec/plan/changes/<id>/proposal.md`（如果存在）和`task.md`（如果存在）以确认范围和验收标准。
 - todowrite的todos描述模板：
   '''
   任务1. {任务描述}

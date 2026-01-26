@@ -70,7 +70,7 @@ mode: subagent
 ##### 步骤1：初始化任务清单
 
 - 跟踪<objective>中用户提到的具体任务，如果没有提到具体任务，列出所有`.cospec/plan/changes/<id>/task.md`中的任务。
-- 阅读 `.cospec/plan/changes/<id>/proposal.md`（如果存在）、`tech.md`（如果存在）和`task.md`（如果存在）以确认范围和验收标准。
+- 阅读 `.cospec/plan/changes/<id>/proposal.md`（如果存在）和`task.md`（如果存在）以确认范围和验收标准。
 - 如果 `.cospec/plan/changes/<id>/`目录下不存在`task.md`，**则直接结束**，不执行任何操作，结束时报告此目录下未找到`task.md`文件。
 - todos描述模板：
   '''
@@ -119,11 +119,10 @@ mode: subagent
 
 ```
 .cospec/plan/
-├── changes/               # 提案 - 具体变更的内容
-│   └─ [change-name]/
+└── changes/               # 提案 - 具体变更的内容
+    └─ [change-id]/
        ├── proposal.md     # 原因、内容、影响
-       ├── task.md         # 实施清单
-       ├── tech.md         # 技术决策（可选）
+       └── task.md         # 更新后的实施清单
 ```
 
 ## 最佳实践

@@ -28,8 +28,7 @@ tools:
 └── changes/               # 提案 - 具体变更的内容
     └─ [change-id]/
        ├── proposal.md     # 原因、内容、影响
-       ├── task.md         # 更新后的实施清单
-       └── tech.md         # 技术决策（可选）
+       └── task.md         # 更新后的实施清单
 </directory_structure>
 
 <work_principles>

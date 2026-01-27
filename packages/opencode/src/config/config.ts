@@ -78,16 +78,44 @@ export namespace Config {
       }
     }
 
-    // Global user config overrides remote config
+    // Load OpenCode config first when enabled
+    if (Flag.COSTRICT_ENABLE_OPENCODE_CONFIG) {
+      // Load OpenCode global config
+      result = mergeConfigConcatArrays(result, await opencodeGlobal())
+      
+      // Load OpenCode custom config path
+      if (Flag.OPENCODE_CONFIG) {
+        result = mergeConfigConcatArrays(result, await loadFile(Flag.OPENCODE_CONFIG))
+        log.debug("loaded OpenCode custom config", { path: Flag.OPENCODE_CONFIG })
+      }
+      
+      // Load OpenCode project config
+      if (!Flag.COSTRICT_DISABLE_PROJECT_CONFIG) {
+        for (const file of ["opencode.jsonc", "opencode.json"]) {
+          const found = await Filesystem.findUp(file, Instance.directory, Instance.worktree)
+          for (const resolved of found.toReversed()) {
+            result = mergeConfigConcatArrays(result, await loadFile(resolved))
+          }
+        }
+      }
+      
+      // Load OpenCode inline config content
+      if (Flag.OPENCODE_CONFIG_CONTENT) {
+        result = mergeConfigConcatArrays(result, JSON.parse(Flag.OPENCODE_CONFIG_CONTENT))
+        log.debug("loaded OpenCode custom config from OPENCODE_CONFIG_CONTENT")
+      }
+    }
+
+    // Global user config overrides OpenCode config
     result = mergeConfigConcatArrays(result, await global())
 
     // Custom config path overrides global
     if (Flag.COSTRICT_CONFIG) {
       result = mergeConfigConcatArrays(result, await loadFile(Flag.COSTRICT_CONFIG))
-      log.debug("loaded custom config", { path: Flag.COSTRICT_CONFIG })
+      log.debug("loaded CoStrict custom config", { path: Flag.COSTRICT_CONFIG })
     }
 
-    // Project config has highest precedence (overrides global and remote)
+    // Project config has highest precedence (overrides OpenCode and global)
     if (!Flag.COSTRICT_DISABLE_PROJECT_CONFIG) {
       for (const file of ["costrict.jsonc", "costrict.json"]) {
         const found = await Filesystem.findUp(file, Instance.directory, Instance.worktree)
@@ -100,7 +128,7 @@ export namespace Config {
     // Inline config content has highest precedence
     if (Flag.COSTRICT_CONFIG_CONTENT) {
       result = mergeConfigConcatArrays(result, JSON.parse(Flag.COSTRICT_CONFIG_CONTENT))
-      log.debug("loaded custom config from COSTRICT_CONFIG_CONTENT")
+      log.debug("loaded CoStrict custom config from COSTRICT_CONFIG_CONTENT")
     }
 
     result.agent = result.agent || {}
@@ -110,7 +138,7 @@ export namespace Config {
     const directories = [
       Global.Path.config,
       // Only scan project .opencode/ directories when project discovery is enabled
-      ...(!Flag.COSTRICT_DISABLE_PROJECT_CONFIG
+      ...(Flag.COSTRICT_ENABLE_OPENCODE_CONFIG && !Flag.COSTRICT_DISABLE_PROJECT_CONFIG
         ? await Array.fromAsync(
             Filesystem.up({
               targets: [".opencode"],
@@ -119,7 +147,27 @@ export namespace Config {
             }),
           )
         : []),
-      // Always scan ~/.opencode/ (user home directory)
+      // CoStrict project discovery (overrides OpenCode)
+      ...(!Flag.COSTRICT_DISABLE_PROJECT_CONFIG
+        ? await Array.fromAsync(
+            Filesystem.up({
+              targets: [".costrict"],
+              start: Instance.directory,
+              stop: Instance.worktree,
+            }),
+          )
+        : []),
+      // Always scan ~/.opencode/ (user home directory) when OpenCode config is enabled
+      ...(Flag.COSTRICT_ENABLE_OPENCODE_CONFIG
+        ? await Array.fromAsync(
+            Filesystem.up({
+              targets: [".opencode"],
+              start: Global.Path.home,
+              stop: Global.Path.home,
+            }),
+          )
+        : []),
+      // Always scan ~/.costrict/ (user home directory)
       ...(await Array.fromAsync(
         Filesystem.up({
           targets: [".costrict"],
@@ -129,15 +177,33 @@ export namespace Config {
       )),
     ]
 
+    if (Flag.COSTRICT_ENABLE_OPENCODE_CONFIG && Flag.OPENCODE_CONFIG_DIR) {
+      directories.push(Flag.OPENCODE_CONFIG_DIR)
+      log.debug("loading config from OPENCODE_CONFIG_DIR", { path: Flag.OPENCODE_CONFIG_DIR })
+    }
+
     if (Flag.COSTRICT_CONFIG_DIR) {
       directories.push(Flag.COSTRICT_CONFIG_DIR)
       log.debug("loading config from COSTRICT_CONFIG_DIR", { path: Flag.COSTRICT_CONFIG_DIR })
     }
 
     for (const dir of unique(directories)) {
+      // Load OpenCode config files first (lower priority)
+      if (Flag.COSTRICT_ENABLE_OPENCODE_CONFIG && (dir.endsWith(".opencode") || dir.endsWith("opencode") || dir === Flag.OPENCODE_CONFIG_DIR)) {
+        for (const file of ["opencode.jsonc", "opencode.json"]) {
+          log.debug(`loading OpenCode config from ${path.join(dir, file)}`)
+          result = mergeConfigConcatArrays(result, await loadFile(path.join(dir, file)))
+          // to satisfy the type checker
+          result.agent ??= {}
+          result.mode ??= {}
+          result.plugin ??= []
+        }
+      }
+      
+      // Load CoStrict config files (higher priority, overrides OpenCode)
       if (dir.endsWith(".costrict") || dir === Flag.COSTRICT_CONFIG_DIR) {
         for (const file of ["costrict.jsonc", "costrict.json"]) {
-          log.debug(`loading config from ${path.join(dir, file)}`)
+          log.debug(`loading CoStrict config from ${path.join(dir, file)}`)
           result = mergeConfigConcatArrays(result, await loadFile(path.join(dir, file)))
           // to satisfy the type checker
           result.agent ??= {}
@@ -1160,6 +1226,32 @@ export namespace Config {
         result = mergeDeep(result, rest)
         await Bun.write(path.join(Global.Path.config, "config.json"), JSON.stringify(result, null, 2))
         await fs.unlink(path.join(Global.Path.config, "config"))
+      })
+      .catch(() => {})
+
+    return result
+  })
+
+  export const opencodeGlobal = lazy(async () => {
+    let result: Info = pipe(
+      {},
+      mergeDeep(await loadFile(path.join(Global.Path.config, "config.json"))),
+      mergeDeep(await loadFile(path.join(Global.Path.config, "opencode.json"))),
+      mergeDeep(await loadFile(path.join(Global.Path.config, "opencode.jsonc"))),
+      mergeDeep(await loadFile(path.join(os.homedir(), ".config", "opencode", "opencode.json"))),
+      mergeDeep(await loadFile(path.join(os.homedir(), ".config", "opencode", "opencode.jsonc"))),
+    )
+
+    await import(path.join(Global.Path.config, "config"), {
+      with: {
+        type: "toml",
+      },
+    })
+      .then(async (mod) => {
+        const { provider, model, ...rest } = mod.default
+        if (provider && model) result.model = `${provider}/${model}`
+        result["$schema"] = "https://costrict.ai/config.json"
+        result = mergeDeep(result, rest)
       })
       .catch(() => {})
 

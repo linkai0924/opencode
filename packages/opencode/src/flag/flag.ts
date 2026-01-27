@@ -14,6 +14,9 @@ function number(key: string) {
 
 export namespace Flag {
   // COSTRICT flags
+  export const COSTRICT_ENABLE_OPENCODE_CONFIG = process.env.COSTRICT_ENABLE_OPENCODE_CONFIG === undefined
+    ? false
+    : truthy("COSTRICT_ENABLE_OPENCODE_CONFIG")
   export const COSTRICT_AUTO_SHARE = truthy("COSTRICT_AUTO_SHARE")
   export const COSTRICT_GIT_BASH_PATH = process.env["COSTRICT_GIT_BASH_PATH"]
   export const COSTRICT_CONFIG = process.env["COSTRICT_CONFIG"]

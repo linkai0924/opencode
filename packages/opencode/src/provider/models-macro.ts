@@ -1,4 +1,5 @@
 import { Global } from "../global"
+import { Flag } from "../flag/flag"
 
 export async function data() {
   const path = Bun.env.MODELS_DEV_API_JSON
@@ -8,7 +9,7 @@ export async function data() {
       return await file.text()
     }
   }
-  const url = Global.Path.modelsDevUrl
+  const url = Flag.OPENCODE_MODELS_URL || "https://models.dev"
   const json = await fetch(`${url}/api.json`, {
     signal: AbortSignal.timeout(10 * 1000),
   }).then((x) => x.text())

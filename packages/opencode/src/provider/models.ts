@@ -2,9 +2,13 @@ import { Global } from "../global"
 import { Log } from "../util/log"
 import path from "path"
 import z from "zod"
-import { data } from "./models-macro" with { type: "macro" }
 import { Installation } from "../installation"
 import { Flag } from "../flag/flag"
+import { lazy } from "@/util/lazy"
+
+// Try to import bundled snapshot (generated at build time)
+// Falls back to undefined in dev mode when snapshot doesn't exist
+/* @ts-ignore */
 
 export namespace ModelsDev {
   const log = Log.create({ service: "models.dev" })
@@ -76,50 +80,37 @@ export namespace ModelsDev {
 
   export type Provider = z.infer<typeof Provider>
 
-  export async function get() {
-    // 异步刷新，不阻塞启动
-    refresh().catch(() => {})
-    
-    // 优先尝试读取缓存
+  function url() {
+    return Flag.OPENCODE_MODELS_URL || "https://models.dev"
+  }
+
+  export const Data = lazy(async () => {
     const file = Bun.file(filepath)
     const result = await file.json().catch(() => {})
-    if (result) return result as Record<string, Provider>
-    
-    // 其次尝试内置数据
-    if (typeof data === "function") {
-      const json = await data()
-      return JSON.parse(json) as Record<string, Provider>
-    }
-    
-    // 最后异步获取在线数据，不阻塞启动
-    const url = Global.Path.modelsDevUrl
-    fetch(`${url}/api.json`, {
-      signal: AbortSignal.timeout(10 * 1000),
-    })
-      .then((x) => x.text())
-      .then(async (json) => {
-        await Bun.write(filepath, json)
-        log.info("models.dev data fetched and cached")
-      })
-      .catch((e) => {
-        log.error("Failed to fetch models.dev data", {
-          error: e,
-          url,
-        })
-      })
-    
-    // 返回空对象，后续会在定时刷新中获取
-    return {}
+    if (result) return result
+    // @ts-ignore
+    const snapshot = await import("./models-snapshot")
+      .then((m) => m.snapshot as Record<string, unknown>)
+      .catch(() => undefined)
+    if (snapshot) return snapshot
+    const disableFetch =
+      Flag.COSTRICT_DISABLE_MODELS_FETCH || Flag.OPENCODE_DISABLE_MODELS_FETCH
+    if (disableFetch) return {}
+    const json = await fetch(`${url()}/api.json`).then((x) => x.text())
+    return JSON.parse(json)
+  })
+
+  export async function get() {
+    const result = await Data()
+    return result as Record<string, Provider>
   }
 
   export async function refresh() {
-    if (Flag.COSTRICT_DISABLE_MODELS_FETCH) return
+    const disableFetch =
+      Flag.COSTRICT_DISABLE_MODELS_FETCH || Flag.OPENCODE_DISABLE_MODELS_FETCH
+    if (disableFetch) return
     const file = Bun.file(filepath)
-    log.info("refreshing", {
-      file,
-    })
-    const url = Global.Path.modelsDevUrl
-    const result = await fetch(`${url}/api.json`, {
+    const result = await fetch(`${url()}/api.json`, {
       headers: {
         "User-Agent": Installation.USER_AGENT,
       },
@@ -129,8 +120,21 @@ export namespace ModelsDev {
         error: e,
       })
     })
-    if (result && result.ok) await Bun.write(file, await result.text())
+    if (result && result.ok) {
+      await Bun.write(file, await result.text())
+      ModelsDev.Data.reset()
+    }
   }
 }
 
-setInterval(() => ModelsDev.refresh(), 60 * 1000 * 60).unref()
+const disableFetch =
+  Flag.COSTRICT_DISABLE_MODELS_FETCH || Flag.OPENCODE_DISABLE_MODELS_FETCH
+if (!disableFetch) {
+  ModelsDev.refresh()
+  setInterval(
+    async () => {
+      await ModelsDev.refresh()
+    },
+    60 * 1000 * 60,
+).unref()
+}

@@ -38,6 +38,7 @@ export const DialogSelectModelUnpaid: Component = () => {
       <div class="flex flex-col gap-3 px-2.5">
         <div class="text-14-medium text-text-base px-2.5">Free models provided by CoStrict</div>
         <List
+          class="flex-1 min-h-0 [&_[data-slot=list-scroll]]:flex-1 [&_[data-slot=list-scroll]]:min-h-0"
           ref={(ref) => (listRef = ref)}
           items={local.model.list}
           current={local.model.current()}

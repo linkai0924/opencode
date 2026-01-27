@@ -158,6 +158,9 @@ pub fn create_command(app: &tauri::AppHandle, args: &str) -> Command {
         .args(args.split_whitespace())
         .env("COSTRICT_EXPERIMENTAL_ICON_DISCOVERY", "true")
         .env("COSTRICT_CLIENT", "desktop")
+        .env("OPENCODE_EXPERIMENTAL_ICON_DISCOVERY", "true")
+        .env("OPENCODE_EXPERIMENTAL_FILEWATCHER", "true")
+        .env("OPENCODE_CLIENT", "desktop")
         .env("XDG_STATE_HOME", &state_dir);
 
     #[cfg(not(target_os = "windows"))]
@@ -175,6 +178,9 @@ pub fn create_command(app: &tauri::AppHandle, args: &str) -> Command {
             .command(&shell)
             .env("COSTRICT_EXPERIMENTAL_ICON_DISCOVERY", "true")
             .env("COSTRICT_CLIENT", "desktop")
+            .env("OPENCODE_EXPERIMENTAL_ICON_DISCOVERY", "true")
+            .env("OPENCODE_EXPERIMENTAL_FILEWATCHER", "true")
+            .env("OPENCODE_CLIENT", "desktop")
             .env("XDG_STATE_HOME", &state_dir)
             .args(["-il", "-c", &cmd])
     };

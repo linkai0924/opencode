@@ -15,6 +15,7 @@ import { Config } from "@/config/config"
 import { SessionCompaction } from "./compaction"
 import { PermissionNext } from "@/permission/next"
 import { Question } from "@/question"
+import { toolInputFormatter, toolNameFormatter } from "@/costrict/utils/tool-transform-v2" // costrict change
 
 export namespace SessionProcessor {
   const DOOM_LOOP_THRESHOLD = 3
@@ -46,6 +47,8 @@ export namespace SessionProcessor {
         log.info("process")
         needsCompaction = false
         const shouldBreak = (await Config.get()).experimental?.continue_loop_on_deny !== true
+        // Extract available tool names for alias resolution with custom tool priority
+        const availableTools = new Set(Object.keys(streamInput.tools))
         while (true) {
           try {
             let currentText: MessageV2.TextPart | undefined
@@ -106,7 +109,7 @@ export namespace SessionProcessor {
                     messageID: input.assistantMessage.id,
                     sessionID: input.assistantMessage.sessionID,
                     type: "tool",
-                    tool: value.toolName,
+                    tool: toolNameFormatter(value.toolName, availableTools), // costrict change
                     callID: value.id,
                     state: {
                       status: "pending",
@@ -126,12 +129,15 @@ export namespace SessionProcessor {
                 case "tool-call": {
                   const match = toolcalls[value.toolCallId]
                   if (match) {
+                    const cleanedToolName = toolNameFormatter(value.toolName, availableTools) // costrict change
+                    const cleanedInput = toolInputFormatter(value.input, value.toolCallId) // costrict change
+                    
                     const part = await Session.updatePart({
                       ...match,
-                      tool: value.toolName,
+                      tool: cleanedToolName, // costrict change
                       state: {
                         status: "running",
-                        input: value.input,
+                        input: cleanedInput, // costrict change
                         time: {
                           start: Date.now(),
                         },
@@ -148,21 +154,21 @@ export namespace SessionProcessor {
                       lastThree.every(
                         (p) =>
                           p.type === "tool" &&
-                          p.tool === value.toolName &&
+                          p.tool === cleanedToolName && // costrict change
                           p.state.status !== "pending" &&
-                          JSON.stringify(p.state.input) === JSON.stringify(value.input),
+                          JSON.stringify(p.state.input) === JSON.stringify(cleanedInput), // costrict change
                       )
                     ) {
                       const agent = await Agent.get(input.assistantMessage.agent)
                       await PermissionNext.ask({
                         permission: "doom_loop",
-                        patterns: [value.toolName],
+                        patterns: [cleanedToolName], // costrict change
                         sessionID: input.assistantMessage.sessionID,
                         metadata: {
-                          tool: value.toolName,
-                          input: value.input,
+                          tool: cleanedToolName, // costrict change
+                          input: cleanedInput, // costrict change
                         },
-                        always: [value.toolName],
+                        always: [cleanedToolName], // costrict change
                         ruleset: agent.permission,
                       })
                     }

@@ -529,8 +529,8 @@ export namespace Server {
         )
         .all("/*", async (c) => {
           let path = c.req.path
-          const appUrl = new URL(Flag.COSTRICT_APP_URL)
-          
+          const appUrl = new URL(await Flag.getAppUrlWithVersion())
+
           // 如果路径中包含会话ID（base64编码）和 /session/，需要移除它以便资源能够正确代理
           // 例如：/RDovY29kZS9ob3N0bWFu/session/assets/index.js -> /assets/index.js (静态资源)
           // /RDovY29kZS9ob3N0bWFu/session/ses_xxx -> / (前端路由，加载 index.html)
@@ -545,7 +545,7 @@ export namespace Server {
               path = '/'
             }
           }
-          
+
           const response = await proxy(`${appUrl.href.replace(/\/$/, '')}${path}`, {
             ...c.req,
             headers: {

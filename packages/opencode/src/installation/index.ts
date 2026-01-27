@@ -183,7 +183,8 @@ export namespace Installation {
 
   export const VERSION = typeof COSTRICT_VERSION === "string" ? COSTRICT_VERSION : "local"
   export const CHANNEL = typeof COSTRICT_CHANNEL === "string" ? COSTRICT_CHANNEL : "local"
-  export const USER_AGENT = `opencode/${CHANNEL}/${VERSION}/${Flag.COSTRICT_CLIENT}`
+  export const CLIENT = process.env["COSTRICT_CLIENT"] ?? "cli"
+  export const USER_AGENT = `opencode/${CHANNEL}/${VERSION}/${CLIENT}`
 
   /**
    * Generate stable installation ID based on machine information

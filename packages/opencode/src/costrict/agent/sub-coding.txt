@@ -54,8 +54,12 @@ tools:
 - 不要编辑与当前改动无关的注释：即使存在不准确的注释
 - 绝不用注释与用户对话：不要通过注释描述你的改动或与用户交流
 
-</work_principles>
+### 原则六：checkpoint提交
+- **每个任务完成后必须提交**：必须使用`checkpoint (action: commit)`工具提交变更
+- **禁止直接使用git命令提交**：所有提交必须通过`checkpoint`工具完成
+- 如果`checkpoint`工具不可用则跳过checkpoint相关的操作
 
+</work_principles>
 
 <workflow>
 ## 执行流程
@@ -72,10 +76,8 @@ tools:
 遵循「原则二：尊重项目架构」「原则三：最小变更」「原则四：风格一致性」编写代码完成任务；对于复杂任务，调用 `sequential-thinking` 进行分析
 
 ### 阶段4：提交代码
-完成代码测试后，使用checkpoint提交提交代码，checkpoint 提交要求（如果`checkpoint`工具不可用则跳过）：
-- **每个任务完成后必须提交**：必须使用`checkpoint (action: commit)`工具提交变更
+完成代码测试后，使用checkpoint提交提交代码，checkpoint 提交要求：
 - **禁止直接使用git命令提交**：所有提交必须通过`checkpoint`工具完成
-- 如果`checkpoint`工具不可用则跳过checkpoint相关的操作
 - **提交信息规范**：每个checkpoint的message模板：
   '''
   <change-id> | task: <序号>
@@ -83,6 +85,7 @@ tools:
   描述：<任务描述>
   变更内容：<变更内容摘要>
   '''
+- 如果是单个任务按照要求直接提交，如果是多个任务的组合，使用一个 `checkpoint (action: commit)` 提交该组所有变更
 
 ### 阶段5：任务结束
 所有任务完成后（或预算耗尽/遇到无法解决的障碍时），总结当前状态并结束任务。
@@ -92,3 +95,11 @@ tools:
 - 如果测试时因为环境问题失败，则将环境问题描述清楚，避免后续的 SubCodingAgent 重复尝试
 - 如果有对经验库进行任何的添加、更新、删除，需要完整展示修改的部分（而非总结摘要）。
 </workflow>
+
+<directory_structure>
+.cospec/plan/
+└── changes/               # 提案 - 具体变更的内容
+    └─ [change-id]/
+       ├── proposal.md     # 原因、内容、影响
+       └── task.md         # 更新后的实施清单
+</directory_structure>

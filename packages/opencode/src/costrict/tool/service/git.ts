@@ -1,10 +1,11 @@
-import { $ } from "bun"
 import path from "path"
 import fs from "fs/promises"
 import { Global } from "@/global"
 import { Instance } from "@/project/instance"
 import { Log } from "@/util/log"
 import { existsSync } from "fs"
+import type { SimpleGit } from "simple-git"
+import { simpleGit, CheckRepoActions } from "simple-git"
 
 const log = Log.create({ service: "git-service" })
 
@@ -56,8 +57,8 @@ export class GitService {
       await fs.writeFile(
         gitConfig,
         `[user]
-\tname = Costrict Agent
-\temail = agent@costrict.ai
+\tname = Costrict Cli
+\temail = zgsm@sangfor.com.cn
 [commit]
 \tgpgsign = false
 [core]
@@ -67,16 +68,55 @@ export class GitService {
 
       log.info("Initializing shadow repository", { path: this.shadowRepoPath })
 
-      // Initialize git repository (run directly in shadowRepoPath, not using execGit)
-      // because git init doesn't work with GIT_DIR pre-set
-      await $`git init`.cwd(this.shadowRepoPath).quiet()
-
-      // Try to set initial branch to main (Git 2.28.0+)
+      const repo = simpleGit(this.shadowRepoPath)
+      let isRepoDefined = false
       try {
-        await this.execGit(["branch", "-M", "main"])
-      } catch (e) {
-        // Fallback for older Git versions
-        log.warn("Could not set main branch, using default", { error: e })
+        isRepoDefined = await repo.checkIsRepo(CheckRepoActions.IS_REPO_ROOT)
+      } catch (error) {
+        // If checkIsRepo fails (e.g., on certain Git versions like macOS 2.39.5),
+        // log the error and assume repo is not defined, then proceed with initialization
+        log.debug(
+          `checkIsRepo failed, will initialize repository: ${error instanceof Error ? error.message : String(error)}`,
+        )
+      }
+
+      if (!isRepoDefined) {
+        try {
+          // Try to initialize with --initial-branch option (Git 2.28.0+)
+          await repo.init(false, {
+            "--initial-branch": "main",
+          })
+        } catch (error) {
+          // Fallback for older Git versions that don't support --initial-branch
+          log.debug(
+            `init with --initial-branch failed, using fallback: ${error instanceof Error ? error.message : String(error)}`,
+          )
+          await repo.init(false)
+          // For older Git versions, we need to rename the default branch to 'main'
+          // But we can only do this after creating the first commit
+        }
+
+        // After git init, use shadowGitRepository to add files from project root
+        const shadowRepo = this.shadowGitRepository
+
+        // Add all files from the project
+        await shadowRepo.add(".")
+
+        // Create initial commit with all files (allow empty in case no files were added)
+        await shadowRepo.commit("Initial commit", { "--allow-empty": null })
+
+        // Ensure we're on 'main' branch for older Git versions
+        try {
+          const currentBranch = await repo.raw(["branch", "--show-current"])
+          if (currentBranch.trim() !== "main") {
+            await repo.raw(["branch", "-M", "main"])
+          }
+        } catch (error) {
+          // If renaming fails, log but don't fail initialization
+          log.debug(
+            `Failed to rename branch to main: ${error instanceof Error ? error.message : String(error)}`,
+          )
+        }
       }
 
       // Copy .gitignore from project root if exists
@@ -86,16 +126,13 @@ export class GitService {
         await fs.copyFile(projectGitignore, shadowGitignore)
       }
 
-      // Create initial commit to establish main branch
-      await this.createInitialCommit()
-
       this.available = true
       log.info("Shadow repository initialized successfully")
     } catch (error) {
       // Don't throw error, just log warning so CLI can continue to work
       log.warn("Checkpoint feature unavailable", {
         error: error instanceof Error ? error.message : String(error),
-        hint: "Git is required for checkpoint functionality. Install Git to enable this feature."
+        hint: "Git is required for checkpoint functionality. Install Git to enable this feature.",
       })
       this.available = false
     }
@@ -103,55 +140,36 @@ export class GitService {
 
   private async checkGitAvailable(): Promise<void> {
     try {
-      await $`git --version`.quiet()
+      await simpleGit().raw(["--version"])
     } catch (error) {
       throw new Error("Git is not installed or not available in PATH")
     }
   }
 
-  private ensureAvailable(): void {
+  private async ensureAvailable(): Promise<void> {
     if (!this.available) {
-      throw new Error("Checkpoint feature is unavailable. Git is required for this functionality.")
+      // Try to initialize if not available
+      log.info("Git service not available, attempting to initialize...")
+      await this.initialize()
+
+      // Check again after initialization
+      if (!this.available) {
+        throw new Error("Checkpoint feature is unavailable. Git is required for this functionality.")
+      }
     }
-  }
-
-  private async createInitialCommit(): Promise<void> {
-    const readmePath = path.join(this.shadowRepoPath, ".checkpoint-readme")
-    await fs.writeFile(
-      readmePath,
-      `# Checkpoint Shadow Repository
-
-This is a shadow Git repository used by Costrict for checkpoint functionality.
-It tracks changes to your project without affecting your main repository.
-
-Project: ${this.projectRoot}
-Created: ${new Date().toISOString()}
-`,
-    )
-
-    await this.execGit(["add", ".checkpoint-readme"])
-    await this.execGit(["commit", "-m", "Initialize checkpoint repository"])
   }
 
   /**
-   * Execute git command in shadow repository context
+   * Get the shadow git repository instance
    */
-  private async execGit(args: string[]): Promise<string> {
-    const env = {
+  private get shadowGitRepository(): SimpleGit {
+    return simpleGit(this.projectRoot).env({
       GIT_DIR: path.join(this.shadowRepoPath, ".git"),
       GIT_WORK_TREE: this.projectRoot,
-      GIT_CONFIG_GLOBAL: path.join(this.shadowRepoPath, ".gitconfig"),
+      // Prevent git from using the user's global git config.
       HOME: this.shadowRepoPath,
       XDG_CONFIG_HOME: this.shadowRepoPath,
-    }
-
-    try {
-      const result = await $`git ${args}`.env(env).text()
-      return result
-    } catch (error: any) {
-      log.error("Git command failed", { args, error: error.stderr?.toString() || error.message })
-      throw error
-    }
+    })
   }
 
   /**
@@ -159,7 +177,7 @@ Created: ${new Date().toISOString()}
    */
   async getCurrentCommitHash(): Promise<string> {
     try {
-      const hash = await this.execGit(["rev-parse", "HEAD"])
+      const hash = await this.shadowGitRepository.raw("rev-parse", "HEAD")
       return hash.trim()
     } catch (error) {
       log.warn("Could not get current commit hash", { error })
@@ -171,28 +189,31 @@ Created: ${new Date().toISOString()}
    * Create a checkpoint (snapshot) of the current project state
    */
   async createCheckpoint(message: string): Promise<string> {
-    this.ensureAvailable()
+    await this.ensureAvailable()
     try {
+      const repo = this.shadowGitRepository
+
       // Stage all changes
-      await this.execGit(["add", "."])
+      await repo.add(".")
 
       // Check if there are any changes to commit
-      const status = await this.execGit(["status", "--porcelain"])
-      if (!status.trim()) {
+      const status = await repo.status()
+      if (status.isClean()) {
         log.info("No changes to checkpoint")
         return await this.getCurrentCommitHash()
       }
 
       // Create commit
-      await this.execGit(["commit", "-m", message])
+      const commitResult = await repo.commit(message, {
+        "--no-verify": null,
+      })
 
-      // Get the new commit hash
-      const hash = await this.getCurrentCommitHash()
+      const hash = commitResult.commit
       log.info("Checkpoint created", { hash, message })
       return hash
     } catch (error) {
       log.error("Failed to create checkpoint", { message, error })
-      throw new Error(`Failed to create checkpoint: ${error}`)
+      throw new Error(`Failed to create checkpoint: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -202,38 +223,36 @@ Created: ${new Date().toISOString()}
   async listCheckpoints(limit: number = 50): Promise<CommitInfo[]> {
     this.ensureAvailable()
     try {
-      const logOutput = await this.execGit([
-        "log",
-        `--max-count=${limit}`,
-        "--pretty=format:%H%n%s%n%b%n%aI%n---END---",
-      ])
+      const repo = this.shadowGitRepository
+      const logResult = await repo.log({ maxCount: limit })
 
-      const commits: CommitInfo[] = []
-      const entries = logOutput.split("---END---\n").filter((e) => e.trim())
-
-      for (const entry of entries) {
-        const lines = entry.split("\n")
-        if (lines.length >= 3) {
-          const hash = lines[0].trim()
-          // Combine subject and body, remove empty lines
-          const messageParts = lines.slice(1, -1).filter((l) => l.trim())
-          let message = messageParts.join(" ").trim()
-
-          // Truncate long messages
-          if (message.length > 200) {
-            message = message.substring(0, 197) + "..."
-          }
-
-          const date = lines[lines.length - 1].trim()
-
-          commits.push({ hash, message, date })
+      return logResult.all.map((commit) => {
+        // Combine message (first line) with body (rest of the message)
+        let fullMessage = commit.message
+        if (commit.body) {
+          fullMessage += "\n" + commit.body
         }
-      }
 
-      return commits
+        // Replace newlines with spaces and limit length
+        const singleLineMessage = fullMessage
+          .replace(/\n+/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+
+        const truncatedMessage =
+          singleLineMessage.length > 200
+            ? singleLineMessage.substring(0, 197) + "..."
+            : singleLineMessage
+
+        return {
+          hash: commit.hash,
+          message: truncatedMessage,
+          date: commit.date,
+        }
+      })
     } catch (error) {
       log.error("Failed to list checkpoints", { error })
-      throw new Error(`Failed to list checkpoints: ${error}`)
+      throw new Error(`Failed to list checkpoints: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -243,28 +262,14 @@ Created: ${new Date().toISOString()}
   async showCheckpointDiff(commitHash: string): Promise<string> {
     this.ensureAvailable()
     try {
-      // First, check if this commit has a parent
-      let hasParent = true
-      try {
-        await this.execGit(["rev-parse", `${commitHash}^`])
-      } catch (error) {
-        // No parent, this is the first commit
-        hasParent = false
-      }
+      const repo = this.shadowGitRepository
 
-      let diff: string
-      if (hasParent) {
-        // Show diff between commit and its parent
-        diff = await this.execGit(["diff", `${commitHash}^`, commitHash])
-      } else {
-        // For the first commit, show all changes introduced by this commit
-        diff = await this.execGit(["show", "--format=", commitHash])
-      }
-
+      // Get the diff between the commit and its parent
+      const diff = await repo.diff([`${commitHash}^`, commitHash])
       return diff
     } catch (error) {
       log.error("Failed to show checkpoint diff", { commitHash, error })
-      throw new Error(`Failed to show diff for checkpoint ${commitHash}: ${error}`)
+      throw new Error(`Failed to show diff for checkpoint ${commitHash}: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -274,21 +279,16 @@ Created: ${new Date().toISOString()}
   async restoreCheckpoint(commitHash: string, files?: string[]): Promise<void> {
     this.ensureAvailable()
     try {
-      if (files && files.length > 0) {
-        // Restore specific files
-        for (const file of files) {
-          await this.execGit(["restore", "--source", commitHash, file])
-        }
-        log.info("Restored specific files from checkpoint", { commitHash, files })
-      } else {
-        // Restore entire project (only tracked files)
-        await this.execGit(["restore", "--source", commitHash, "."])
+      const repo = this.shadowGitRepository
 
-        log.info("Restored entire project from checkpoint", { commitHash })
-      }
+      // If files are specified, restore only those files; otherwise restore all
+      const restorePath = files && files.length > 0 ? files : ["."]
+      await repo.raw(["restore", "--source", commitHash, ...restorePath])
+
+      log.info("Restored from checkpoint", { commitHash, files })
     } catch (error) {
       log.error("Failed to restore checkpoint", { commitHash, files, error })
-      throw new Error(`Failed to restore checkpoint ${commitHash}: ${error}`)
+      throw new Error(`Failed to restore checkpoint ${commitHash}: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -298,13 +298,18 @@ Created: ${new Date().toISOString()}
   async revertCheckpoint(commitHash: string): Promise<string> {
     this.ensureAvailable()
     try {
-      await this.execGit(["revert", "--no-edit", commitHash])
+      const repo = this.shadowGitRepository
+
+      // Use git revert to create a new commit that undoes the specified commit
+      await repo.raw(["revert", "--no-edit", commitHash])
+
+      // Get the hash of the revert commit
       const newHash = await this.getCurrentCommitHash()
       log.info("Checkpoint reverted", { originalHash: commitHash, newHash })
       return newHash
     } catch (error) {
       log.error("Failed to revert checkpoint", { commitHash, error })
-      throw new Error(`Failed to revert checkpoint ${commitHash}: ${error}`)
+      throw new Error(`Failed to revert checkpoint ${commitHash}: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 

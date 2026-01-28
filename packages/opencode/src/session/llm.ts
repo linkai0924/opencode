@@ -259,6 +259,15 @@ export namespace LLM {
       },
       async experimental_repairToolCall(failed) {
         const lower = failed.toolCall.toolName.toLowerCase()
+        let toolCall = failed.toolCall
+        if (lower === "todowrite" || lower === "question") {
+          let input = toolCall.input.replace(/'/g, '"').replace(/\b(False|True)\b/g, (match) => match.toLowerCase());
+          toolCall.input = input;
+          return {
+            ...failed.toolCall,
+            toolName: lower,
+          }
+        }
         if (lower !== failed.toolCall.toolName && tools[lower]) {
           l.info("repairing tool call", {
             tool: failed.toolCall.toolName,

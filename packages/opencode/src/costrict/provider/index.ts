@@ -246,7 +246,6 @@ export async function createCoStrictCustomLoader(provider: any) {
         },
         options: {},
         headers: {},
-        release_date: new Date().toISOString(),
       }
       return acc
     }, {})

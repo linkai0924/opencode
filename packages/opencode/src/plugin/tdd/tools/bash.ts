@@ -17,7 +17,7 @@
  * This enhanced version should be used when more robust shell handling is needed.
  */
 
-import { Log } from "@/util/log"
+import { Logger } from "../utils/logger"
 import { Instance } from "@/project/instance"
 import { Tool } from "@/tool/tool"
 import { z } from "zod"
@@ -31,7 +31,7 @@ import { fileURLToPath } from "url"
 import { Truncate } from "@/tool/truncation"
 import DESCRIPTION from "@/tool/bash.txt"
 
-const log = Log.create({ service: "bash-tool-enhanced" })
+const log = Logger.clone().tag("scope", "bash-tool-enhanced")
 
 const MAX_METADATA_LENGTH = 30_000
 const MAX_OUTPUT_LENGTH = 10 * 1024 * 1024
@@ -223,9 +223,10 @@ export const BashTool = Tool.define("bash", async () => {
         abortController.abort()
       }
 
-      ctx.abort.addEventListener("abort", () => {
+      const abortHandler = () => {
         abortController.abort()
-      })
+      }
+      ctx.abort.addEventListener("abort", abortHandler)
 
       let cumulativeOutput = ""
 
@@ -247,6 +248,9 @@ export const BashTool = Tool.define("bash", async () => {
       }
 
       const result = await invocation.execute(abortController.signal, updateMetadata, undefined)
+
+      // 清理事件监听器
+      ctx.abort.removeEventListener("abort", abortHandler)
 
       const resultMetadata: string[] = []
 

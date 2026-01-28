@@ -233,8 +233,8 @@ export async function createCoStrictCustomLoader(provider: any) {
           interleaved: false,
         },
         limit: {
-          context: 100000, // 默认上下文长度
-          output: 8192, // 默认输出长度
+          context: model.contextWindow ?? 128_000, // 默认上下文长度
+          output: model.maxTokens ?? 8192, // 默认输出长度
         },
         cost: {
           input: 0,

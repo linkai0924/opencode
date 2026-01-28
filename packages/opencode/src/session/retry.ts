@@ -1,5 +1,6 @@
 import type { NamedError } from "@opencode-ai/util/error"
 import { MessageV2 } from "./message-v2"
+import { CostrictError } from "@/costrict/error"
 import { iife } from "@/util/iife"
 
 export namespace SessionRetry {
@@ -58,7 +59,12 @@ export namespace SessionRetry {
     return Math.min(RETRY_INITIAL_DELAY * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1), RETRY_MAX_DELAY_NO_HEADERS)
   }
 
-  export function retryable(error: ReturnType<NamedError["toObject"]>) {
+  export function retryable(error: ReturnType<NamedError["toObject"]>, options?: { providerID: string }) {
+    if (options?.providerID === "costrict") {
+      const next = CostrictError.retryable(error)
+      if (next) return next
+    }
+
     if (MessageV2.APIError.isInstance(error)) {
       if (!error.data.isRetryable) return undefined
       return error.data.message.includes("Overloaded") ? "Provider is overloaded" : error.data.message

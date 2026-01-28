@@ -67,6 +67,7 @@ export namespace LLM {
       Auth.get(input.model.providerID),
     ])
     const isCodex = provider.id === "openai" && auth?.type === "oauth"
+    const isCostrict = provider.id === "costrict"
 
     const system = []
     system.push(
@@ -152,7 +153,10 @@ export namespace LLM {
       },
     )
 
-    const maxOutputTokens = isCodex ? undefined : undefined
+    let maxOutputTokens: number | undefined = isCodex ? undefined : undefined
+    if (isCostrict) {
+      maxOutputTokens = input.model.limit.output
+    }
     log.info("max_output_tokens", {
       tokens: ProviderTransform.maxOutputTokens(
         input.model.api.npm,

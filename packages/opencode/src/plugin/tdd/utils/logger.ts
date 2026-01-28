@@ -15,4 +15,4 @@ export const Logger = Log.create({ service: "tdd" })
 /**
  * 调试日志记录器，用于开发时的详细调试信息
  */
-export const debugLogger = Logger.tag("scope", "debug")
+export const debugLogger = Logger.clone().tag("scope", "debug")

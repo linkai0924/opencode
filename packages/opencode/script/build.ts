@@ -187,4 +187,23 @@ for (const item of targets) {
   binaries[name] = Script.version
 }
 
+// Compress built artifacts - Windows uses .zip, Linux/macOS uses .tar.gz
+console.log("Compressing artifacts...")
+for (const name of Object.keys(binaries)) {
+  const srcPath = path.join(dir, "dist", name)
+  const ext = name.includes("windows") ? ".zip" : ".tar.gz"
+  const destPath = path.join(dir, "dist", `${name}${ext}`)
+  
+  if (name.includes("windows")) {
+    console.log(`Compressing ${name} to ${name}${ext}`)
+    await $`(cd ${srcPath} && zip -r ${destPath} .)`
+  } else {
+    console.log(`Compressing ${name} to ${name}${ext}`)
+    await $`tar -czf ${destPath} -C ${srcPath} .`
+  }
+  
+  console.log(`Removing original folder ${name}`)
+  await $`rm -rf ${srcPath}`
+}
+
 export { binaries }

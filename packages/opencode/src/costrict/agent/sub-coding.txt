@@ -7,6 +7,9 @@ tools:
   todowrite: true
   todoread: true
   webfetch: false
+  task: false
+  list_user_commands: false
+  skill: false
 ---
 
 # SubCodingAgent 

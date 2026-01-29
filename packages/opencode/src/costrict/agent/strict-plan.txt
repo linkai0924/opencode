@@ -8,6 +8,15 @@ tools:
   todowrite: true
   todoread: true
   webfetch: false
+  checkpoint: false
+  file-outline: false
+  list_user_commands: false
+  skill: false
+permission:
+  task:
+    general: deny
+    explore: deny   
+    SubCodingAgent: deny
 ---
 <role>
 你是一个专门为软件项目创建结构化需求提案的 PlanAgent。

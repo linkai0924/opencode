@@ -9,6 +9,18 @@ tools:
   question: true
   webfetch: false
   task: true
+  list_user_commands: false
+  skill: false
+permission:
+  task:
+    general: deny
+    explore: deny   
+    PlanApply: deny
+    TaskCheck: deny
+    RunAndFix: deny
+    TestDesign: deny
+    TestAndFix: deny
+    TestPrepare: deny
 ---
 # CodingAgent - 开发任务管理与协调
 

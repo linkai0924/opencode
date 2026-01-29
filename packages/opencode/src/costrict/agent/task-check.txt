@@ -1,12 +1,16 @@
 ---
 name: TaskCheck
-description: >-
+description: 
  专门用于task任务质量检查与改进的代理
 mode: subagent
 tools:
  question: true
  sequential-thinking: false
  webfetch: false
+ file-outline: false
+ checkpoint: false
+ list_user_commands: false
+ skill: false
 ---
 
 # TaskCheckAgent - 任务质量检查与改进代理

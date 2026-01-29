@@ -7,6 +7,8 @@ tools:
   todowrite: true
   todoread: true
   webfetch: false
+  checkpoint: false
+  list_user_commands: false
   skill: false
 ---
 <role>你是 QuickExploreAgent，专门响应父Agent的定向探索任务。

@@ -81,6 +81,12 @@ export namespace Agent {
           PermissionNext.fromConfig({
             question: "allow",
             plan_enter: "allow",
+            task:{
+              PlanApply: "deny",
+              QuickExplore: "deny",
+              SubCodingAgent: "deny",
+              TaskCheck: "deny",
+            }
           }),
           user,
         ),

@@ -5,8 +5,8 @@ import { Installation } from "@/installation"
 
 export async function upgrade() {
   const config = await Config.global()
-  const method = await Installation.method()
-  const latest = await Installation.latest(method).catch(() => {})
+  // const detectedMethod = await Installation.method()
+  const latest = await Installation.latest().catch(() => {})
   if (!latest) return
   if (Installation.VERSION === latest) return
 
@@ -18,8 +18,8 @@ export async function upgrade() {
     return
   }
 
-  if (method === "unknown") return
-  await Installation.upgrade(method, latest)
+  // Always use curl by default unless manually specified
+  await Installation.upgrade("curl", latest)
     .then(() => Bus.publish(Installation.Event.Updated, { version: latest }))
     .catch(() => {})
 }

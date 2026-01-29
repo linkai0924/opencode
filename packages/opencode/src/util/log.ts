@@ -57,14 +57,11 @@ export namespace Log {
 
   export async function init(options: Options) {
     if (options.level) level = options.level
-    cleanup(Global.Path.log)
+    await cleanup(Global.Path.log)
     if (options.print) return
-    logpath = path.join(
-      Global.Path.log,
-      options.dev ? "dev.log" : new Date().toISOString().split(".")[0].replace(/:/g, "") + ".log",
-    )
+    const date = new Date().toISOString().split("T")[0]
+    logpath = path.join(Global.Path.log, options.dev ? "dev.log" : date + ".log")
     const logfile = Bun.file(logpath)
-    await fs.truncate(logpath).catch(() => {})
     const writer = logfile.writer()
     write = async (msg: any) => {
       const num = writer.write(msg)
@@ -74,14 +71,14 @@ export namespace Log {
   }
 
   async function cleanup(dir: string) {
-    const glob = new Bun.Glob("????-??-??T??????.log")
+    const glob = new Bun.Glob("????-??-??.log")
     const files = await Array.fromAsync(
       glob.scan({
         cwd: dir,
         absolute: true,
       }),
     )
-    if (files.length <= 5) return
+    if (files.length <= 10) return
 
     const filesToDelete = files.slice(0, -10)
     await Promise.all(filesToDelete.map((file) => fs.unlink(file).catch(() => {})))

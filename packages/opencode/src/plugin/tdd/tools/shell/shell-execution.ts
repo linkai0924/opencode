@@ -98,6 +98,7 @@ export class ShellExecutionService {
         let stderrDecoder: TextDecoder | null = null
         let outputChunks: Buffer[] = []
         let timeoutTriggered = false
+        let fixedEncoding: string | null = null
 
         const handleOutput = (data: Buffer, stream: "stdout" | "stderr") => {
           outputChunks.push(data)
@@ -108,11 +109,18 @@ export class ShellExecutionService {
             stderr.push(data)
           }
 
-          if (!stdoutDecoder || !stderrDecoder) {
+          if (!fixedEncoding) {
+            // 第一个检测到包含非 UTF-8 字符的 chunk，固定编码
             const encoding = getCachedEncodingForBuffer(data)
+            if (encoding !== "utf-8") {
+              fixedEncoding = encoding
+            }
+          }
+
+          if (!stdoutDecoder || !stderrDecoder) {
             try {
-              stdoutDecoder = new TextDecoder(encoding)
-              stderrDecoder = new TextDecoder(encoding)
+              stdoutDecoder = new TextDecoder(fixedEncoding || "utf-8")
+              stderrDecoder = new TextDecoder(fixedEncoding || "utf-8")
             } catch {
               stdoutDecoder = new TextDecoder("utf-8")
               stderrDecoder = new TextDecoder("utf-8")
@@ -138,7 +146,9 @@ export class ShellExecutionService {
           }
 
           const finalBuffer = Buffer.concat(outputChunks)
-          const combinedOutput = finalBuffer.toString("utf-8")
+          const detectedEncoding = getCachedEncodingForBuffer(finalBuffer)
+          const finalDecoder = new TextDecoder(detectedEncoding)
+          const combinedOutput = finalDecoder.decode(finalBuffer)
 
           resolve({
             rawOutput: finalBuffer,

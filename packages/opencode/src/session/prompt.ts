@@ -43,6 +43,8 @@ import { Tool } from "@/tool/tool"
 import { PermissionNext } from "@/permission/next"
 import { SessionStatus } from "./status"
 import { LLM } from "./llm"
+import { LLMQueue } from "./llm-queue"
+import { Config } from "@/config/config"
 import { iife } from "@/util/iife"
 import { Shell } from "@/shell/shell"
 import { Truncate } from "@/tool/truncation"
@@ -1781,26 +1783,29 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         (await Provider.getSmallModel(input.providerID)) ?? (await Provider.getModel(input.providerID, input.modelID))
       )
     })
-    const result = await LLM.stream({
-      agent,
-      user: firstRealUser.info as MessageV2.User,
-      system: [],
-      small: true,
-      tools: {},
-      model,
-      abort: new AbortController().signal,
-      sessionID: input.session.id,
-      retries: 2,
-      messages: [
-        {
-          role: "user",
-          content: "Generate a title for this conversation:\n",
-        },
-        ...(hasOnlySubtaskParts
-          ? [{ role: "user" as const, content: subtaskParts.map((p) => p.prompt).join("\n") }]
-          : MessageV2.toModelMessages(contextMessages, model)),
-      ],
-    })
+    const result = await LLMQueue.enqueue(
+      {
+        agent,
+        user: firstRealUser.info as MessageV2.User,
+        system: [],
+        small: true,
+        tools: {},
+        model,
+        abort: new AbortController().signal,
+        sessionID: input.session.id,
+        retries: 2,
+        messages: [
+          {
+            role: "user",
+            content: "Generate a title for this conversation:\n",
+          },
+          ...(hasOnlySubtaskParts
+            ? [{ role: "user" as const, content: subtaskParts.map((p) => p.prompt).join("\n") }]
+            : MessageV2.toModelMessages(contextMessages, model)),
+        ],
+      },
+      LLMQueue.Priority.TITLE,
+    )
     const text = await result.text.catch((err) => log.error("failed to generate title", { error: err }))
     if (text)
       return Session.update(

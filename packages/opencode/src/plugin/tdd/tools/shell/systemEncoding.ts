@@ -51,11 +51,13 @@ function isValidUtf8(buffer: Buffer): boolean {
  *
  * Strategy:
  * 1. Check if buffer is valid UTF-8 (UTF-8 has clear byte patterns)
- * 2. If not UTF-8, use system encoding (shell-specific)
- * 3. Final fallback to UTF-8
+ * 2. If not UTF-8 and on Windows, try Chinese encodings like GBK, GB2312, GB18030
+ * 3. Fall back to system encoding (shell-specific)
+ * 4. Final fallback to UTF-8
  *
  * This approach handles mixed environments where different programs output
- * different encodings (e.g., Go outputs UTF-8 even when PowerShell uses GBK).
+ * different encodings (e.g., Python on Windows outputs GBK despite CP 65001,
+ * Go outputs UTF-8 even when PowerShell uses GBK).
  *
  * Note: We don't use chardet for non-UTF-8 detection because it's unreliable
  * for short Chinese text (often misdetects GBK as ISO-8859-7 or other encodings).
@@ -63,15 +65,54 @@ function isValidUtf8(buffer: Buffer): boolean {
  * @param buffer A buffer to analyze for encoding.
  */
 export function getCachedEncodingForBuffer(buffer: Buffer): string {
-  // First, check if the buffer is valid UTF-8
-  // UTF-8 has a clear byte structure, so this is very reliable
-  if (isValidUtf8(buffer)) {
+  const isWindows = globalThis.process?.platform === "win32"
+
+  debugLogger.debug("getCachedEncodingForBuffer called", {
+    isWindows,
+    bufferLength: buffer.length,
+    bufferPreview: buffer.subarray(0, 50).toString("hex"),
+  })
+
+  if (isWindows) {
+    // 先检查是否是有效的 UTF-8，如果是则直接使用 UTF-8
+    if (isValidUtf8(buffer)) {
+      const utf8Decoder = new TextDecoder("utf-8")
+      const decoded = utf8Decoder.decode(buffer)
+      if (containsChineseText(decoded)) {
+        debugLogger.debug("Valid UTF-8 with Chinese detected on Windows", { encoding: "utf-8" })
+        return "utf-8"
+      }
+    }
+
+    // 如果不是 UTF-8，或者 UTF-8 中没有检测到中文，尝试其他中文编码
+    const encodingsToTry = ["gbk", "gb2312", "gb18030"]
+    for (const encoding of encodingsToTry) {
+      try {
+        const decoder = new TextDecoder(encoding)
+        const decoded = decoder.decode(buffer)
+        debugLogger.debug("Trying encoding", { encoding, decodedPreview: decoded.substring(0, 50) })
+
+        if (containsChineseText(decoded)) {
+          debugLogger.debug("Detected Chinese encoding on Windows", { encoding })
+          return encoding
+        }
+      } catch (e) {
+        debugLogger.debug("Encoding decode failed", { encoding, error: String(e) })
+        continue
+      }
+    }
+  }
+
+  // Not Windows or Chinese encodings failed, check if valid UTF-8
+  const isValid = isValidUtf8(buffer)
+  debugLogger.debug("Checking if valid UTF-8", { isValid })
+
+  if (isValid) {
     debugLogger.debug("Buffer is valid UTF-8, using utf-8 encoding")
     return "utf-8"
   }
 
   // Buffer is not UTF-8 - use system encoding
-  // This handles shells like PowerShell/cmd that output in system code page
   if (cachedSystemEncoding === undefined) {
     cachedSystemEncoding = getSystemEncoding()
   }
@@ -84,6 +125,32 @@ export function getCachedEncodingForBuffer(buffer: Buffer): string {
   // System encoding detection failed - fall back to UTF-8
   debugLogger.warn("System encoding detection failed, falling back to UTF-8")
   return "utf-8"
+}
+
+/**
+ * Checks if text contains Chinese characters.
+ * Using a simple threshold to handle buffers with mostly ASCII.
+ */
+function containsChineseText(text: string): boolean {
+  if (!text || text.length === 0) return false
+
+  let chineseCharCount = 0
+  let totalChars = 0
+
+  for (const char of text) {
+    const code = char.charCodeAt(0)
+    if (code >= 0x4e00 && code <= 0x9fff) {
+      chineseCharCount++
+      totalChars++
+    } else if (code >= 0x3400 && code <= 0x4dbf) {
+      chineseCharCount++
+      totalChars++
+    } else if (char.trim() !== "") {
+      totalChars++
+    }
+  }
+
+  return chineseCharCount > 0 && chineseCharCount / Math.max(1, totalChars) > 0.01
 }
 
 /**

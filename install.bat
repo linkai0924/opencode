@@ -75,8 +75,8 @@ if not "%BINARY_PATH%"=="" (
         echo Error: Binary not found at %BINARY_PATH%
         exit /b 1
     )
-    echo Installing costrict-cli from: %BINARY_PATH%
-    copy /Y "%BINARY_PATH%" "%INSTALL_DIR%\costrict-cli.exe" >nul
+    echo Installing cs from: %BINARY_PATH%
+    copy /Y "%BINARY_PATH%" "%INSTALL_DIR%\cs.exe" >nul
     if errorlevel 1 (
         echo Error: Failed to copy binary
         exit /b 1
@@ -122,7 +122,7 @@ set "ARCHIVE_EXT=.zip"
 set "DOWNLOAD_URL=%BASE_URL%/costrict/pkg/%REQUESTED_VERSION%/%TARGET%%ARCHIVE_EXT%"
 
 echo.
-echo Downloading costrict-cli version: %REQUESTED_VERSION%
+    echo Downloading cs version: %REQUESTED_VERSION%
 echo Target: %TARGET%
 echo URL: %DOWNLOAD_URL%
 echo.
@@ -163,14 +163,14 @@ if errorlevel 1 (
     exit /b 1
 )
 
-set "BINARY_SOURCE=%TEMP_DIR%\bin\costrict-cli.exe"
+set "BINARY_SOURCE=%TEMP_DIR%\bin\cs.exe"
 if not exist "%BINARY_SOURCE%" (
     echo Error: Binary not found in extracted archive
     rmdir /S /Q "%TEMP_DIR%"
     exit /b 1
 )
 
-move /Y "%BINARY_SOURCE%" "%INSTALL_DIR%\costrict-cli.exe" >nul
+move /Y "%BINARY_SOURCE%" "%INSTALL_DIR%\cs.exe" >nul
 if errorlevel 1 (
     echo Error: Failed to move file to %INSTALL_DIR%
     rmdir /S /Q "%TEMP_DIR%"
@@ -179,7 +179,7 @@ if errorlevel 1 (
 
 rmdir /S /Q "%TEMP_DIR%"
 
-echo [OK] Installed successfully to: %INSTALL_DIR%\costrict-cli.exe
+echo [OK] Installed successfully to: %INSTALL_DIR%\cs.exe
 
 :add_to_path
 :: Check if INSTALL_DIR is already in PATH
@@ -204,7 +204,7 @@ if "%PROFILE_FILE%"=="" (
     echo   $env:PATH += ";%INSTALL_DIR%"
 ) else (
     :: Check if PATH already configured in profile
-    findstr /i "costrict" "%PROFILE_FILE%" >nul 2>&1
+    findstr /i "cs" "%PROFILE_FILE%" >nul 2>&1
     if not errorlevel 1 (
         echo.
         echo PATH already configured in %PROFILE_FILE%
@@ -214,7 +214,7 @@ if "%PROFILE_FILE%"=="" (
         echo # costrict >> "%PROFILE_FILE%"
         echo $env:PATH += ";%INSTALL_DIR%" >> "%PROFILE_FILE%"
         echo.
-        echo [OK] Added costrict to PATH in %PROFILE_FILE%
+        echo [OK] Added cs to PATH in %PROFILE_FILE%
         echo Please restart your shell or run: . %PROFILE_FILE%
     )
 )
@@ -246,7 +246,7 @@ echo.
 echo To start:
 echo.
 echo   cd ^<project^>    # Open directory
-echo   costrict-cli       # Run command
+    echo   cs       # Run command
 echo.
 echo For more information visit https://costrict.ai/docs
 echo.

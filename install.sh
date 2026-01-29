@@ -26,7 +26,7 @@ Examples:
     curl -fsSL ${BASE_URL}/costrict/install | bash
     curl -fsSL ${BASE_URL}/costrict/install | bash -s -- --version 1.0.180
     COSTRICT_BASE_URL=https://custom.com curl -fsSL https://example.com/install | bash
-    ./install.sh --binary /path/to/costrict-cli
+    ./install.sh --binary /path/to/cs
 EOF
 }
 
@@ -72,9 +72,9 @@ if [ -n "$binary_path" ]; then
         echo -e "${RED}Error: Binary not found at ${binary_path}${NC}"
         exit 1
     fi
-    echo -e "${MUTED}Installing ${NC}costrict-cli ${MUTED}from: ${NC}$binary_path"
-    cp "$binary_path" "${INSTALL_DIR}/costrict-cli"
-    chmod 755 "${INSTALL_DIR}/costrict-cli"
+    echo -e "${MUTED}Installing ${NC}cs ${MUTED}from: ${NC}$binary_path"
+    cp "$binary_path" "${INSTALL_DIR}/cs"
+    chmod 755 "${INSTALL_DIR}/cs"
     echo -e "${GREEN}✓ Installed successfully${NC}"
     exit 0
 fi
@@ -138,7 +138,7 @@ requested_version="${requested_version#v}"
 archive_ext=".tar.gz"
 download_url="${BASE_URL}/costrict/pkg/${requested_version}/${target}${archive_ext}"
 
-echo -e "${MUTED}Downloading costrict-cli version: ${NC}${requested_version}"
+echo -e "${MUTED}Downloading cs version: ${NC}${requested_version}"
 echo -e "${MUTED}Target: ${NC}${target}"
 echo -e "${MUTED}URL: ${NC}${download_url}"
 
@@ -161,18 +161,18 @@ fi
 echo -e "${MUTED}Extracting archive...${NC}"
 tar -xzf "$archive_path" -C "$tmp_dir"
 
-binary_source="${tmp_dir}/bin/costrict-cli"
-if [ ! -f "$binary_source" ]; then
-    echo -e "${RED}Error: Binary not found in extracted archive${NC}"
+binary_source="${tmp_dir}/bin/cs"
+    if [ ! -f "$binary_source" ]; then
+        echo -e "${RED}Error: Binary not found in extracted archive${NC}"
+        rm -rf "$tmp_dir"
+        exit 1
+    fi
+
+    mv "$binary_source" "${INSTALL_DIR}/cs"
+    chmod 755 "${INSTALL_DIR}/cs"
     rm -rf "$tmp_dir"
-    exit 1
-fi
 
-mv "$binary_source" "${INSTALL_DIR}/costrict-cli"
-chmod 755 "${INSTALL_DIR}/costrict-cli"
-rm -rf "$tmp_dir"
-
-echo -e "${GREEN}✓ Installed successfully to: ${NC}${INSTALL_DIR}/costrict-cli"
+    echo -e "${GREEN}✓ Installed successfully to: ${NC}${INSTALL_DIR}/cs"
 
 XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
 current_shell=$(basename "$SHELL")
@@ -193,7 +193,7 @@ add_to_path() {
         if [[ -n "$base_url_export" ]]; then
             echo "$base_url_export" >> "$config_file"
         fi
-        echo -e "${GREEN}✓ Added costrict to PATH in ${NC}$config_file"
+        echo -e "${GREEN}✓ Added cs to PATH in ${NC}$config_file"
         echo -e "${MUTED}Please restart your shell or run: ${NC}source $config_file"
     else
         echo -e "${MUTED}Manually add to $config_file:${NC}"
@@ -262,7 +262,7 @@ echo ""
 echo -e "${MUTED}To start:${NC}"
 echo ""
 echo -e "cd <project>  ${MUTED}# Open directory${NC}"
-echo -e "costrict-cli      ${MUTED}# Run command${NC}"
+    echo -e "cs      ${MUTED}# Run command${NC}"
 echo ""
 echo -e "${MUTED}For more information visit ${NC}https://costrict.ai/docs"
 echo ""

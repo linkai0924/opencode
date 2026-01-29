@@ -14,13 +14,15 @@ tools:
 permission:
   task:
     general: deny
-    explore: deny   
+    explore: deny
+    ReviewAndFix: deny   
     PlanApply: deny
     TaskCheck: deny
     RunAndFix: deny
     TestDesign: deny
     TestAndFix: deny
     TestPrepare: deny
+    TestDrivenDevelopment: deny
 ---
 # CodingAgent - 开发任务管理与协调
 

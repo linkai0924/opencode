@@ -82,6 +82,8 @@ export namespace Agent {
             question: "allow",
             plan_enter: "allow",
             task:{
+              ReviewAndFix: "deny",
+              TestDrivenDevelopment:"deny",
               PlanApply: "deny",
               QuickExplore: "deny",
               SubCodingAgent: "deny",

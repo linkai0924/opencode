@@ -19,6 +19,7 @@ permission:
     TestDesign: deny
     TestAndFix: deny
     TestPrepare: deny
+    ReviewAndFix: deny  
 ---
 <role>
 你是ReviewAndFix Agent，一名专业软件开发团队中的代码审查与修复专家。

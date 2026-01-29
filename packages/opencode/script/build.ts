@@ -206,4 +206,59 @@ for (const name of Object.keys(binaries)) {
   await $`rm -rf ${srcPath}`
 }
 
+// Generate latest.json from dist directory artifacts
+console.log("Generating latest.json...")
+const BASE_URL = process.env.COSTRICT_BASE_URL || "https://zgsm.sangfor.com"
+
+try {
+  const distPath = path.join(dir, "dist")
+  const entries = fs.readdirSync(distPath)
+  
+  // Filter for .zip and .tar.gz files
+  const artifactNames = entries.filter((name) =>
+    name.endsWith(".zip") || name.endsWith(".tar.gz")
+  )
+  
+  if (artifactNames.length === 0) {
+    console.warn("No artifacts found in dist directory")
+  }
+  
+  // Calculate sha256 for each artifact
+  const assets = await Promise.all(
+    artifactNames.map(async (name) => {
+      const filePath = path.join(distPath, name)
+      const fileBuffer = await Bun.file(filePath).arrayBuffer()
+      const hashBuffer = await crypto.subtle.digest("SHA-256", fileBuffer)
+      const hashArray = Array.from(new Uint8Array(hashBuffer))
+      const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
+      const file = Bun.file(filePath)
+      const fileSize = file.size
+      
+      return {
+        name,
+        size: fileSize,
+        browser_download_url: `${BASE_URL}/costrict/pkg/${Script.version}/${name}`,
+        digest: `sha256:${hashHex}`
+      }
+    })
+  )
+  
+  // Generate latest.json
+  const latestInfo = {
+    tag_name: Script.version,
+    name: Script.version,
+    html_url: "",
+    published_at: new Date().toISOString(),
+    assets
+  }
+  
+  // Write latest.json to dist folder
+  const LATEST_JSON_PATH = path.join(dir, "dist", "latest.json")
+  await Bun.write(LATEST_JSON_PATH, JSON.stringify(latestInfo, null, 2))
+  console.log(`Generated latest.json at ${LATEST_JSON_PATH}`)
+} catch (error) {
+  console.error("Error generating latest.json:", error)
+  // Don't fail build if latest.json generation fails
+}
+
 export { binaries }

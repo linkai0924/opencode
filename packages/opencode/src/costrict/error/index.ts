@@ -8,9 +8,49 @@ const COSTRICT_FINISH_REASON = {
 }
 
 export namespace CostrictError {
+  const RETRY_MESSAGE = "Service unavailable"
+
+  const RULES = [
+    {
+      match: (message: string) => /code\s*:\s*503/i.test(message),
+      make: (message: string) =>
+        new MessageV2.APIError({
+          message: RETRY_MESSAGE,
+          statusCode: 503,
+          isRetryable: true,
+          responseBody: message,
+        }).toObject(),
+    },
+    {
+      match: (message: string) => /status\s*:\s*503/i.test(message),
+      make: (message: string) =>
+        new MessageV2.APIError({
+          message: RETRY_MESSAGE,
+          statusCode: 503,
+          isRetryable: true,
+          responseBody: message,
+        }).toObject(),
+    },
+  ]
+
+  export function fromError(error: unknown) {
+    const message = typeof error === "string" ? error : error instanceof Error ? error.message : ""
+    if (message === "") return
+    for (const rule of RULES) {
+      if (!rule.match(message)) continue
+      return rule.make(message)
+    }
+  }
+
   export function retryable(error: ReturnType<NamedError["toObject"]>) {
     if (MessageV2.OutputLengthError.isInstance(error)) {
       return "Output length reached"
+    }
+    if (MessageV2.APIError.isInstance(error)) {
+      const status = error.data.statusCode
+      if (status === 503) {
+        return RETRY_MESSAGE
+      }
     }
   }
 

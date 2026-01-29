@@ -12,6 +12,7 @@ import { STATUS_CODES } from "http"
 import { iife } from "@/util/iife"
 import { type SystemError } from "bun"
 import type { Provider } from "@/provider/provider"
+import { CostrictError } from "@/costrict/error"
 
 export namespace MessageV2 {
   export const OutputLengthError = NamedError.create("MessageOutputLengthError", z.object({}))
@@ -664,6 +665,8 @@ export namespace MessageV2 {
   }
 
   export function fromError(e: unknown, ctx: { providerID: string }) {
+    const mapped = ctx.providerID === "costrict" ? CostrictError.fromError(e) : undefined
+    if (mapped) return mapped
     switch (true) {
       case e instanceof DOMException && e.name === "AbortError":
         return new MessageV2.AbortedError(

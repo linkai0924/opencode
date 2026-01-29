@@ -85,7 +85,7 @@ export namespace SessionSummary {
       const all = await Session.messages({ sessionID: input.sessionID })
       await Promise.all([
         summarizeSession({ sessionID: input.sessionID, messages: all }),
-        // summarizeMessage({ messageID: input.messageID, messages: all }),
+        summarizeMessage({ messageID: input.messageID, messages: all }),
       ])
     },
   )

@@ -24,8 +24,8 @@ Environment Variables:
     COSTRICT_BASE_URL       Base URL for downloading (default: https://zgsm.sangfor.com)
 
 Examples:
-    curl -fsSL ${BASE_URL}/costrict/install | bash
-    curl -fsSL ${BASE_URL}/costrict/install | bash -s -- --version 1.0.180
+    curl -fsSL ${BASE_URL}/costrict-cli/install | bash
+    curl -fsSL ${BASE_URL}/costrict-cli/install | bash -s -- --version 1.0.180
     COSTRICT_BASE_URL=https://custom.com curl -fsSL https://example.com/install | bash
     ./install.sh --binary /path/to/cs
 EOF
@@ -130,14 +130,27 @@ if [ "$os" = "linux" ]; then
 fi
 
 if [ -z "$requested_version" ]; then
-  echo -e "${RED}Error: --version is required (e.g., 1.0.180)${NC}"
-  exit 1
+  echo -e "${MUTED}No version specified, fetching latest version from server...${NC}"
+  latest_url="${BASE_URL}/costrict-cli/pkg/latest.json"
+  
+  # Fetch latest version from latest.json
+  if command -v curl >/dev/null 2>&1; then
+    requested_version=$(curl -fsSL "${latest_url}" 2>/dev/null | grep -o '"tag_name":[[:space:]]*"[^"]*"' | cut -d'"' -f4)
+  elif command -v wget >/dev/null 2>&1; then
+    requested_version=$(wget -qO- "${latest_url}" 2>/dev/null | grep -o '"tag_name":[[:space:]]*"[^"]*"' | cut -d'"' -f4)
+  fi
+  
+  if [ -z "$requested_version" ]; then
+    echo -e "${RED}Error: Failed to fetch latest version from ${latest_url}${NC}"
+    exit 1
+  fi
+  echo -e "${MUTED}Using latest version: ${NC}${requested_version}"
 fi
 
 requested_version="${requested_version#v}"
 
 archive_ext=".tar.gz"
-download_url="${BASE_URL}/costrict/pkg/${requested_version}/${target}${archive_ext}"
+download_url="${BASE_URL}/costrict-cli/pkg/${requested_version}/${target}${archive_ext}"
 
 echo -e "${MUTED}Downloading cs version: ${NC}${requested_version}"
 echo -e "${MUTED}Target: ${NC}${target}"
@@ -253,10 +266,9 @@ if [ -n "${GITHUB_ACTIONS-}" ] && [ "${GITHUB_ACTIONS}" == "true" ]; then
 fi
 
 echo ""
-echo -e "${MUTED}                   ${NC}             ▄     "
-echo -e "${MUTED}█▀▀█ █▀▀█ █▀▀█ █▀▀▄ ${NC}█▀▀▀ █▀▀█ █▀▀█ █▀▀█"
-echo -e "${MUTED}█░░█ █░░█ █▀▀▀ █░░█ ${NC}█░░░ █░░█ █░░█ █▀▀▀"
-echo -e "${MUTED}▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀  ▀ ${NC}▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀"
+echo -e "${GREEN}========================================${NC}"
+echo -e "${GREEN}  CoStrict CLI Installation Complete${NC}"
+echo -e "${GREEN}========================================${NC}"
 echo ""
 echo -e "${MUTED}To start:${NC}"
 echo ""

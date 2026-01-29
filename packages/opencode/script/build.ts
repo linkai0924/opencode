@@ -156,7 +156,7 @@ for (const item of targets) {
       autoloadPackageJson: true,
       target: name.replace(pkg.name, "bun") as any,
       outfile: `dist/${name}/bin/cs`,
-      execArgv: [`--user-agent=opencode/${Script.version}`, "--use-system-ca", "--"],
+      execArgv: [`--smol`,`--user-agent=opencode/${Script.version}`, "--use-system-ca", "--"],
       windows: {},
     },
     entrypoints: ["./src/index.ts", parserWorker, workerPath, callGraphWorkerPath, fileImportanceWorkerPath],
@@ -237,7 +237,7 @@ try {
       return {
         name,
         size: fileSize,
-        browser_download_url: `${BASE_URL}/costrict/pkg/${Script.version}/${name}`,
+        browser_download_url: `${BASE_URL}/costrict-cli/pkg/${Script.version}/${name}`,
         digest: `sha256:${hashHex}`
       }
     })

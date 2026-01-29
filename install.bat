@@ -1,17 +1,15 @@
 @echo off
 setlocal enabledelayedexpansion
-set "COSTRICT_BASE_URL=https://zgsm.sangfor.com"
 
-set "BASE_URL=https://zgsm.sangfor.com"
-if not "%COSTRICT_BASE_URL%"=="" (
-    set "BASE_URL=%COSTRICT_BASE_URL%"
+if not defined COSTRICT_BASE_URL (
+    set COSTRICT_BASE_URL=https://zgsm.sangfor.com
 )
+set BASE_URL=%COSTRICT_BASE_URL%
 
 :usage
 if "%~1"=="-h" goto :show_help
 if "%~1"=="--help" goto :show_help
 if "%~1"=="-v" goto :check_version_arg
-if "%~1"=="--version" goto :check_version_arg
 if "%~1"=="-b" goto :check_binary_arg
 if "%~1"=="--binary" goto :check_binary_arg
 goto :main
@@ -32,7 +30,7 @@ echo     COSTRICT_BASE_URL       Base URL for downloading (default: https://zgsm
 echo.
 echo Examples:
 echo     install.bat -v 1.0.180
-echo     COSTRICT_BASE_URL=https://custom.com install.bat -v 1.0.180
+echo     COSTRICT_BASE_URL=https://zgsm.sangfor.com install.bat -v 1.0.180
 echo     install.bat -b C:\path\to\costrict-cli.exe
 echo.
 exit /b 0
@@ -60,7 +58,6 @@ goto :main
 if "%~1"=="-h" goto :show_help
 if "%~1"=="--help" goto :show_help
 if "%~1"=="-v" goto :check_version_arg
-if "%~1"=="--version" goto :check_version_arg
 if "%~1"=="-b" goto :check_binary_arg
 if "%~1"=="--binary" goto :check_binary_arg
 echo Warning: Unknown option '%~1'
@@ -87,8 +84,22 @@ if not "%BINARY_PATH%"=="" (
 )
 
 if "%REQUESTED_VERSION%"=="" (
-    echo Error: --version is required (e.g., 1.0.180)
-    exit /b 1
+    echo No version specified, fetching latest version from server...
+    set "LATEST_URL=%BASE_URL%/costrict-cli/pkg/latest.json"
+    echo Fetching from: !LATEST_URL!
+    
+    :: Download latest.json and extract version using PowerShell
+    for /f "delims=" %%V in ('powershell -NoProfile -ExecutionPolicy Bypass -Command "$url='!LATEST_URL!'; try { $response = Invoke-WebRequest -Uri $url -UseBasicParsing; $json = $response.Content | ConvertFrom-Json; if ($json.tag_name) { Write-Output $json.tag_name } } catch { }"') do (
+        set "REQUESTED_VERSION=%%V"
+    )
+    
+    if "!REQUESTED_VERSION!"=="" (
+        echo Error: Failed to fetch latest version from !LATEST_URL!
+        echo.
+        echo Please specify a version manually using: install.bat -v VERSION
+        exit /b 1
+    )
+    echo Using latest version: !REQUESTED_VERSION!
 )
 
 :: Remove leading 'v' if present
@@ -99,92 +110,178 @@ if "%REQUESTED_VERSION:~0,1%"=="v" (
 :: Detect CPU architecture
 set "ARCH=x64"
 
-:: Check if we can detect AVX2 support
-set "TARGET=opencode-windows-%ARCH%"
-reg query "HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "FeatureSet" >nul 2>&1
-if errorlevel 1 (
-    :: If FeatureSet check fails, assume baseline
-    set "TARGET=opencode-windows-%ARCH%-baseline"
-) else (
-    :: Try to detect AVX2 support via CPUID
-    :: This is a simplified check - may not work on all systems
-    wmic cpu get Name | findstr /i "AMD" >nul 2>&1
-    if errorlevel 1 (
-        :: Not AMD, check Intel
-        wmic cpu get Name | findstr /i "Intel" >nul 2>&1
-        if errorlevel 1 (
-            :: Unknown CPU, use baseline
-            set "TARGET=opencode-windows-%ARCH%-baseline"
-        )
+:: Detect AVX2 support using PowerShell
+:: Default to baseline for safety
+set "TARGET=opencode-windows-!ARCH!-baseline"
+
+echo Detecting CPU features...
+for /f "usebackq delims=" %%A in (`powershell -NoProfile -Command "try { Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class CPUID { [DllImport(\"kernel32.dll\")] public static extern IntPtr GetModuleHandle(string lpModuleName); [DllImport(\"kernel32.dll\")] public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName); public static bool IsProcessorFeaturePresent(int feature) { IntPtr hKernel32 = GetModuleHandle(\"kernel32.dll\"); if (hKernel32 == IntPtr.Zero) return false; IntPtr pIsProcessorFeaturePresent = GetProcAddress(hKernel32, \"IsProcessorFeaturePresent\"); if (pIsProcessorFeaturePresent == IntPtr.Zero) return false; var func = (Func<int, bool>)Marshal.GetDelegateForFunctionPointer(pIsProcessorFeaturePresent, typeof(Func<int, bool>)); return func(feature); } }'; if ([CPUID]::IsProcessorFeaturePresent(40)) { Write-Output 'AVX2' } else { Write-Output 'BASELINE' } } catch { Write-Output 'BASELINE' }"`) do (
+    if "%%A"=="AVX2" (
+        set "TARGET=opencode-windows-!ARCH!"
+        echo CPU supports AVX2, using optimized build
+    ) else (
+        echo CPU does not support AVX2 or detection failed, using baseline build
     )
 )
 
 set "ARCHIVE_EXT=.zip"
-set "DOWNLOAD_URL=%BASE_URL%/costrict/pkg/%REQUESTED_VERSION%/%TARGET%%ARCHIVE_EXT%"
+set "DOWNLOAD_URL=!BASE_URL!/costrict-cli/pkg/!REQUESTED_VERSION!/!TARGET!!ARCHIVE_EXT!"
 
 echo.
-    echo Downloading cs version: %REQUESTED_VERSION%
-echo Target: %TARGET%
-echo URL: %DOWNLOAD_URL%
+echo Downloading cs version: !REQUESTED_VERSION!
+echo Target: !TARGET!
+echo URL: !DOWNLOAD_URL!
 echo.
 
-set "TEMP_DIR=%TEMP%\costrict-cli-%RANDOM%"
-mkdir "%TEMP_DIR%"
-set "ARCHIVE_PATH=%TEMP_DIR%\%TARGET%%ARCHIVE_EXT%"
+:: Use USERPROFILE if TEMP is not available
+if not defined TEMP (
+    set "TEMP=%USERPROFILE%\AppData\Local\Temp"
+)
 
-:: Download using PowerShell
-powershell -Command "try { Invoke-WebRequest -Uri '%DOWNLOAD_URL%' -OutFile '%ARCHIVE_PATH%' -UseBasicParsing; exit 0 } catch { Write-Host 'Download failed:' $_.Exception.Message; exit 1 }"
-
-if errorlevel 1 (
-    echo Error: Download failed
-    rmdir /S /Q "%TEMP_DIR%" 2>nul
+set "TEMP_DIR=!TEMP!\costrict-cli-!RANDOM!"
+echo Creating temp directory: !TEMP_DIR!
+mkdir "!TEMP_DIR!" 2>nul
+if not exist "!TEMP_DIR!" (
+    echo Error: Failed to create temp directory
     exit /b 1
 )
 
-if not exist "%ARCHIVE_PATH%" (
+set "ARCHIVE_PATH=!TEMP_DIR!\!TARGET!!ARCHIVE_EXT!"
+
+:: Download using PowerShell in background with progress monitoring
+echo Downloading from: !DOWNLOAD_URL!
+echo Saving to: !ARCHIVE_PATH!
+echo.
+
+:: Create a PowerShell script for background download
+set "DOWNLOAD_SCRIPT=!TEMP_DIR!\download.ps1"
+echo $ProgressPreference = 'SilentlyContinue' > "!DOWNLOAD_SCRIPT!"
+echo try { >> "!DOWNLOAD_SCRIPT!"
+echo     $webClient = New-Object System.Net.WebClient >> "!DOWNLOAD_SCRIPT!"
+echo     $webClient.Headers.Add('User-Agent', 'CoStrict-Installer') >> "!DOWNLOAD_SCRIPT!"
+echo     $webClient.DownloadFile('!DOWNLOAD_URL!', '!ARCHIVE_PATH!') >> "!DOWNLOAD_SCRIPT!"
+echo     exit 0 >> "!DOWNLOAD_SCRIPT!"
+echo } catch { >> "!DOWNLOAD_SCRIPT!"
+echo     Write-Host $_.Exception.Message >> "!DOWNLOAD_SCRIPT!"
+echo     exit 1 >> "!DOWNLOAD_SCRIPT!"
+echo } >> "!DOWNLOAD_SCRIPT!"
+
+:: Start download in background
+start /B powershell -NoProfile -ExecutionPolicy Bypass -File "!DOWNLOAD_SCRIPT!" > "!TEMP_DIR!\download.log" 2>&1
+
+:: Monitor download progress
+echo Downloading...
+set /a LAST_SIZE=0
+set /a RETRY_COUNT=0
+:download_loop
+timeout /t 2 /nobreak >nul 2>&1
+
+:: Check if file exists and get size
+if exist "!ARCHIVE_PATH!" (
+    for %%A in ("!ARCHIVE_PATH!") do set CURRENT_SIZE=%%~zA
+    
+    :: Display progress
+    set /a SIZE_MB=!CURRENT_SIZE! / 1048576
+    echo   Downloaded: !SIZE_MB! MB ^(!CURRENT_SIZE! bytes^)
+    
+    :: Check if download is still progressing
+    if !CURRENT_SIZE! GTR !LAST_SIZE! (
+        set LAST_SIZE=!CURRENT_SIZE!
+        set RETRY_COUNT=0
+        goto :download_loop
+    )
+    
+    :: Check if download is complete (file size stable for multiple checks)
+    set /a RETRY_COUNT+=1
+    if !RETRY_COUNT! LSS 3 (
+        goto :download_loop
+    )
+) else (
+    :: File doesn't exist yet, wait
+    echo   Initializing download...
+    goto :download_loop
+)
+
+:: Check download result
+if exist "!TEMP_DIR!\download.log" (
+    for /f "usebackq delims=" %%L in ("!TEMP_DIR!\download.log") do (
+        echo Download error: %%L
+        rmdir /S /Q "!TEMP_DIR!" 2>nul
+        exit /b 1
+    )
+)
+
+echo.
+echo Download completed successfully
+echo.
+
+if not exist "!ARCHIVE_PATH!" (
     echo Error: Download failed - file not created
-    rmdir /S /Q "%TEMP_DIR%" 2>nul
+    rmdir /S /Q "!TEMP_DIR!" 2>nul
     exit /b 1
 )
 
-:: Check if file has content
-for %%A in ("%ARCHIVE_PATH%") do set FILE_SIZE=%%~zA
-if %FILE_SIZE% LSS 1024 (
-    echo Error: Downloaded file is too small (%FILE_SIZE% bytes)
-    rmdir /S /Q "%TEMP_DIR%"
+:: Check if file has content and size
+echo Verifying downloaded file...
+for %%A in ("!ARCHIVE_PATH!") do (
+    set FILE_SIZE=%%~zA
+)
+
+:: Ensure FILE_SIZE is set
+if not defined FILE_SIZE (
+    echo Error: Could not determine file size
+    rmdir /S /Q "!TEMP_DIR!"
     exit /b 1
 )
 
+echo File size: !FILE_SIZE! bytes
+
+:: Check minimum size (1KB)
+if !FILE_SIZE! LSS 1024 (
+    echo Error: Downloaded file is too small ^(!FILE_SIZE! bytes^)
+    echo Minimum required: 1024 bytes
+    rmdir /S /Q "!TEMP_DIR!"
+    exit /b 1
+)
+
+echo File verification passed
+echo.
 echo Extracting archive...
-powershell -Command "try { Expand-Archive -Path '%ARCHIVE_PATH%' -DestinationPath '%TEMP_DIR%' -Force; exit 0 } catch { Write-Host 'Extract failed:' $_.Exception.Message; exit 1 }"
+echo.
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Write-Host 'Starting extraction...'; Expand-Archive -Path '!ARCHIVE_PATH!' -DestinationPath '!TEMP_DIR!' -Force; Write-Host 'Extraction completed successfully'; exit 0 } catch { Write-Host 'Extract failed:' $_.Exception.Message; if ($_.Exception.InnerException) { Write-Host 'Inner exception:' $_.Exception.InnerException.Message }; exit 1 }"
 
 if errorlevel 1 (
+    echo.
     echo Error: Failed to extract archive
-    rmdir /S /Q "%TEMP_DIR%"
+    echo Please check if the downloaded file is a valid ZIP archive
+    rmdir /S /Q "!TEMP_DIR!"
     exit /b 1
 )
 
-set "BINARY_SOURCE=%TEMP_DIR%\bin\cs.exe"
-if not exist "%BINARY_SOURCE%" (
+echo.
+
+set "BINARY_SOURCE=!TEMP_DIR!\bin\cs.exe"
+if not exist "!BINARY_SOURCE!" (
     echo Error: Binary not found in extracted archive
-    rmdir /S /Q "%TEMP_DIR%"
+    rmdir /S /Q "!TEMP_DIR!"
     exit /b 1
 )
 
-move /Y "%BINARY_SOURCE%" "%INSTALL_DIR%\cs.exe" >nul
+move /Y "!BINARY_SOURCE!" "!INSTALL_DIR!\cs.exe" >nul
 if errorlevel 1 (
-    echo Error: Failed to move file to %INSTALL_DIR%
-    rmdir /S /Q "%TEMP_DIR%"
+    echo Error: Failed to move file to !INSTALL_DIR!
+    rmdir /S /Q "!TEMP_DIR!"
     exit /b 1
 )
 
-rmdir /S /Q "%TEMP_DIR%"
+rmdir /S /Q "!TEMP_DIR!"
 
-echo [OK] Installed successfully to: %INSTALL_DIR%\cs.exe
+echo [OK] Installed successfully to: !INSTALL_DIR!\cs.exe
 
 :add_to_path
 :: Check if INSTALL_DIR is already in PATH
-echo %PATH% | findstr /i "%INSTALL_DIR%" >nul 2>&1
+echo !PATH! | findstr /i "!INSTALL_DIR!" >nul 2>&1
 if not errorlevel 1 (
     echo.
     echo [OK] PATH already configured
@@ -193,30 +290,30 @@ if not errorlevel 1 (
 
 :: Detect PowerShell profile location
 set "PROFILE_FILE="
-if exist "%USERPROFILE%\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1" (
-    set "PROFILE_FILE=%USERPROFILE%\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
-) else if exist "%USERPROFILE%\Documents\WindowsPowerShell\profile.ps1" (
-    set "%PROFILE_FILE=%USERPROFILE%\Documents\WindowsPowerShell\profile.ps1"
+if exist "!USERPROFILE!\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1" (
+    set "PROFILE_FILE=!USERPROFILE!\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+) else if exist "!USERPROFILE!\Documents\WindowsPowerShell\profile.ps1" (
+    set "PROFILE_FILE=!USERPROFILE!\Documents\WindowsPowerShell\profile.ps1"
 )
 
-if "%PROFILE_FILE%"=="" (
+if "!PROFILE_FILE!"=="" (
     echo.
     echo No PowerShell profile found. You may need to manually add to PATH:
-    echo   $env:PATH += ";%INSTALL_DIR%"
+    echo   $env:PATH += ";!INSTALL_DIR!"
 ) else (
     :: Check if PATH already configured in profile
-    findstr /i "cs" "%PROFILE_FILE%" >nul 2>&1
+    findstr /i "cs" "!PROFILE_FILE!" >nul 2>&1
     if not errorlevel 1 (
         echo.
-        echo PATH already configured in %PROFILE_FILE%
+        echo PATH already configured in !PROFILE_FILE!
     ) else (
         :: Add PATH to profile
-        echo. >> "%PROFILE_FILE%"
-        echo # costrict >> "%PROFILE_FILE%"
-        echo $env:PATH += ";%INSTALL_DIR%" >> "%PROFILE_FILE%"
+        echo. >> "!PROFILE_FILE!"
+        echo # costrict >> "!PROFILE_FILE!"
+        echo $env:PATH += ";!INSTALL_DIR!" >> "!PROFILE_FILE!"
         echo.
-        echo [OK] Added cs to PATH in %PROFILE_FILE%
-        echo Please restart your shell or run: . %PROFILE_FILE%
+        echo [OK] Added cs to PATH in !PROFILE_FILE!
+        echo Please restart your shell or run: . !PROFILE_FILE!
     )
 )
 
@@ -226,26 +323,26 @@ echo.
 echo Setting COSTRICT_BASE_URL environment variable...
 
 :: Use setx to add to user environment variables
-setx COSTRICT_BASE_URL "%COSTRICT_BASE_URL%" >nul
+setx COSTRICT_BASE_URL "!COSTRICT_BASE_URL!" >nul
 
 if errorlevel 1 (
     echo Warning: Failed to set COSTRICT_BASE_URL permanently
     echo You may need to set it manually:
-    echo   setx COSTRICT_BASE_URL "%COSTRICT_BASE_URL%"
+    echo   setx COSTRICT_BASE_URL "!COSTRICT_BASE_URL!"
 ) else (
     echo [OK] Added COSTRICT_BASE_URL to user environment variables
     echo Please restart your terminal for the change to take effect
 )
 
 echo.
-echo ╔════════════════════════════════════════╗
-echo ║       CoStrict CLI Installation Complete  ║
-echo ╚════════════════════════════════════════╝
+echo ========================================
+echo   CoStrict CLI Installation Complete
+echo ========================================
 echo.
 echo To start:
 echo.
 echo   cd ^<project^>    # Open directory
-    echo   cs       # Run command
+echo   cs       # Run command
 echo.
 echo For more information visit https://costrict.ai/docs
 echo.

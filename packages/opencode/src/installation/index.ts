@@ -151,7 +151,8 @@ export namespace Installation {
         cmd = $`npm install -g costrict-ai${version}`
         break
       case "pnpm":
-        cmd = $`pnpm install -g costrict-ai@${target}`
+        const pnpmVersion = targetVersion.startsWith("v") ? `@${targetVersion}` : `@${targetVersion}`
+        cmd = $`pnpm install -g costrict-ai${pnpmVersion}`
         break
       case "bun":
         const bunVersion = targetVersion.startsWith("v") ? `@${targetVersion}` : `@${targetVersion}`
@@ -238,7 +239,7 @@ export namespace Installation {
 
   export async function latest(installMethod?: Method) {
     const baseUrl = Flag.COSTRICT_BASE_URL || "https://zgsm.sangfor.com"
-    return fetch(`${baseUrl}/costrict/pkg/latest.json`)
+    return fetch(`${baseUrl}/costrict-cli/pkg/latest.json`)
       .then((res) => {
         if (!res.ok) throw new Error(res.statusText)
         return res.json()

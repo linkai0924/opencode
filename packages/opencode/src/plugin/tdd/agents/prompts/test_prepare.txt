@@ -31,20 +31,21 @@
  <workflow>
 执行流程：
 
-**使用 todowrite 工具管理任务进度**：
+  **使用 todowrite 工具管理任务进度**：
 
-在开始工作前，必须使用 `todowrite` 工具创建任务列表：
-1. Get user custom commands
-2. Check TEST_GUIDE.md completeness
-3. Identify runnability verification commands
-4. Identify test case management methods
-5. Identify test execution methods
-6. Confirm with user (question tool)
-7. Update TEST_GUIDE.md
+  在开始工作前，必须使用 `todowrite` 工具创建任务列表：
+  1. Get user custom commands
+  2. Check TEST_GUIDE.md completeness
+  3. Ask user if auto-search needed
+  4. Identify runnability verification commands
+  5. Identify test case management methods
+  6. Identify test execution methods
+  7. Confirm with user (question tool)
+  8. Update TEST_GUIDE.md
 
-在每个 phase 执行时：
-- 开始前标记对应任务为 `in_progress`
-- 完成后标记为 `completed`
+  在每个 phase 执行时：
+  - 开始前标记对应任务为 `in_progress`
+  - 完成后标记为 `completed`
 
 Phase 0：获取用户自定义命令（一次性执行）
 1. 使用 `list_user_commands` 工具获取所有用户自定义命令
@@ -56,7 +57,22 @@ Phase 1：检查 TEST_GUIDE.md 完整性
 2. 分析三大核心内容的完整性
 3. 如果都完整，退出并说明
 
-Phase 2：搜索项目文件（仅使用 Read、Glob、Grep 等只读工具）
+Phase 1.5：询问是否自动搜索
+- 使用 `question` 工具询问用户是否需要自动搜索项目文件
+- header: "搜索方式"
+- question: "TEST_GUIDE.md 内容不完整，是否自动搜索项目文件以分析测试命令？（支持在后续确认时自定义输入）"
+- options: [
+  - "自动搜索（推荐）" (description: "搜索项目文件、配置文件自动识别命令"),
+  - "跳过" (description: "跳过此任务，不执行测试")
+]
+- custom: true, multiple: false
+
+**处理用户选择**：
+- "自动搜索"：继续执行 Phase 2 搜索项目文件
+- 用户自定义输入：标记搜索任务为 completed，在后续确认问题中直接使用用户自定义的方法
+- "跳过"：标记搜索任务为 completed，直接退出 agent，输出"用户选择跳过测试准备"
+
+Phase 2：搜索项目文件（仅当用户选择"自动搜索"时执行，使用 Read、Glob、Grep 等只读工具）
 
 **可运行性验证命令识别**（查找 build、compile、typecheck、lint 相关）：
 - 优先级1：复用 Phase 0 的 `list_user_commands` 结果，查找验证相关的自定义命令

@@ -1,5 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
+set "COSTRICT_BASE_URL=https://zgsm.sangfor.com"
 
 set "BASE_URL=https://zgsm.sangfor.com"
 if not "%COSTRICT_BASE_URL%"=="" (
@@ -221,21 +222,19 @@ if "%PROFILE_FILE%"=="" (
 
 :install_base_url
 :: Add COSTRICT_BASE_URL to system environment variables (user level)
-if not "%COSTRICT_BASE_URL%"=="" (
-    echo.
-    echo Setting COSTRICT_BASE_URL environment variable...
-    
-    :: Use setx to add to user environment variables
-    setx COSTRICT_BASE_URL "%COSTRICT_BASE_URL%" >nul
-    
-    if errorlevel 1 (
-        echo Warning: Failed to set COSTRICT_BASE_URL permanently
-        echo You may need to set it manually:
-        echo   setx COSTRICT_BASE_URL "%COSTRICT_BASE_URL%"
-    ) else (
-        echo [OK] Added COSTRICT_BASE_URL to user environment variables
-        echo Please restart your terminal for the change to take effect
-    )
+echo.
+echo Setting COSTRICT_BASE_URL environment variable...
+
+:: Use setx to add to user environment variables
+setx COSTRICT_BASE_URL "%COSTRICT_BASE_URL%" >nul
+
+if errorlevel 1 (
+    echo Warning: Failed to set COSTRICT_BASE_URL permanently
+    echo You may need to set it manually:
+    echo   setx COSTRICT_BASE_URL "%COSTRICT_BASE_URL%"
+) else (
+    echo [OK] Added COSTRICT_BASE_URL to user environment variables
+    echo Please restart your terminal for the change to take effect
 )
 
 echo.

@@ -7,6 +7,7 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 
 BASE_URL=${COSTRICT_BASE_URL:-"https://zgsm.sangfor.com"}
+export COSTRICT_BASE_URL=${COSTRICT_BASE_URL:-"https://zgsm.sangfor.com"}
 
 usage() {
     cat <<EOF
@@ -231,9 +232,7 @@ if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
     if [[ -z $config_file ]]; then
         echo -e "${MUTED}No config file found. Please add to PATH:${NC}"
         echo "  export PATH=$INSTALL_DIR:\$PATH"
-        if [[ -n "$COSTRICT_BASE_URL" ]]; then
-            echo "  export COSTRICT_BASE_URL=$COSTRICT_BASE_URL"
-        fi
+        echo "  export COSTRICT_BASE_URL=$COSTRICT_BASE_URL"
     else
         case $current_shell in
             fish)

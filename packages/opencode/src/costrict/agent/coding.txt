@@ -2,7 +2,7 @@
 name: PlanApply
 description: >-
   基于制定好的计划，使用编程语言实现功能、修复错误、或进行代码改进
-mode: all
+mode: subagent
 tools:
   todowrite: true
   todoread: true

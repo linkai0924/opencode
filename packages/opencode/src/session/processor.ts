@@ -16,6 +16,7 @@ import { SessionCompaction } from "./compaction"
 import { PermissionNext } from "@/permission/next"
 import { Question } from "@/question"
 import { toolInputFormatter, toolNameFormatter } from "@/costrict/utils/tool-transform-v2" // costrict change
+import { CostrictError } from "@/costrict/error"
 
 export namespace SessionProcessor {
   const DOOM_LOOP_THRESHOLD = 3
@@ -47,13 +48,18 @@ export namespace SessionProcessor {
         log.info("process")
         needsCompaction = false
         const shouldBreak = (await Config.get()).experimental?.continue_loop_on_deny !== true
+        const baseMessages = streamInput.messages
+        const state = { messages: streamInput.messages }
         // Extract available tool names for alias resolution with custom tool priority
         const availableTools = new Set(Object.keys(streamInput.tools))
         while (true) {
           try {
             let currentText: MessageV2.TextPart | undefined
             let reasoningMap: Record<string, MessageV2.ReasoningPart> = {}
-            const stream = await LLM.stream(streamInput)
+            const stream = await LLM.stream({
+              ...streamInput,
+              messages: state.messages,
+            })
 
             for await (const value of stream.fullStream) {
               input.abort.throwIfAborted()
@@ -131,7 +137,7 @@ export namespace SessionProcessor {
                   if (match) {
                     const cleanedToolName = toolNameFormatter(value.toolName, availableTools) // costrict change
                     const cleanedInput = toolInputFormatter(value.input, value.toolCallId) // costrict change
-                    
+
                     const part = await Session.updatePart({
                       ...match,
                       tool: cleanedToolName, // costrict change
@@ -245,9 +251,22 @@ export namespace SessionProcessor {
                     usage: value.usage,
                     metadata: value.providerMetadata,
                   })
-                  input.assistantMessage.finish = value.finishReason
                   input.assistantMessage.cost += usage.cost
                   input.assistantMessage.tokens = usage.tokens
+                  if (input.model.providerID === "costrict") {
+                    const next = await CostrictError.finish({
+                      reason: value.finishReason,
+                      message: input.assistantMessage,
+                      model: input.model,
+                      messages: baseMessages,
+                    })
+                    if (next) {
+                      await Session.updateMessage(input.assistantMessage)
+                      state.messages = next.messages
+                      throw next.error
+                    }
+                  }
+                  input.assistantMessage.finish = value.finishReason
                   await Session.updatePart({
                     id: Identifier.ascending("part"),
                     reason: value.finishReason,
@@ -360,7 +379,7 @@ export namespace SessionProcessor {
             })
 
             const error = MessageV2.fromError(e, { providerID: input.model.providerID })
-            const retry = SessionRetry.retryable(error)
+            const retry = SessionRetry.retryable(error, { providerID: input.model.providerID })
             if (retry !== undefined) {
               attempt++
               const delay = SessionRetry.delay(attempt, error.name === "APIError" ? error : undefined)

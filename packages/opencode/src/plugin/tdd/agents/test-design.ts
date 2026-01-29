@@ -29,6 +29,7 @@ export async function createTestDesignAgent(_: string): Promise<Config.Agent & {
     description:
       "Specialized agent for test point design and test case planning. Designs comprehensive test points based on functional requirements or code, and generates structured test plan documents in Markdown format.",
     mode: "subagent",
+    hidden: true,
     // model,
     temperature: 0.1,
     prompt: PROMPT + testGuideSuffix,

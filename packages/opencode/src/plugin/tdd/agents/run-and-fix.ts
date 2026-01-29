@@ -30,6 +30,7 @@ export async function createRunAndFixAgent(_: string): Promise<Config.Agent & { 
       "Finds and executes verification commands, and fixes coding issues to ensure project runs or compiles successfully",
     mode: "subagent",
     // model,
+    hidden: true,
     temperature: 0.1,
     prompt: PROMPT + testGuideSuffix,
     permission: {

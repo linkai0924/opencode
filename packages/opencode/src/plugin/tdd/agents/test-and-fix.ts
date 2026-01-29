@@ -25,6 +25,7 @@ export async function createTestAndFixAgent(_: string): Promise<Config.Agent & {
     description:
       "Specialized agent for executing tests and automatically diagnosing and fixing test failures. Analyzes test output, locates issues, applies fixes, and validates results.",
     mode: "subagent",
+    hidden: true,
     // model,
     temperature: 0.1,
     prompt: PROMPT + testGuideSuffix,

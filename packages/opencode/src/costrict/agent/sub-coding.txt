@@ -3,6 +3,7 @@ name: SubCodingAgent
 description: >-
  你具备高度的预算意识，能够在高效率、低成本的前提下完成开发任务
 mode: subagent
+hidden: true
 tools:
   todowrite: true
   todoread: true

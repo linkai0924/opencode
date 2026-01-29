@@ -31,6 +31,7 @@ export async function createTestPrepareAgent(_: string): Promise<Config.Agent & 
     description:
       "Specialized agent for checking and filling TEST_GUIDE.md. Ensures TEST_GUIDE.md contains runnability verification commands, test case management methods, and test execution methods. Only locates commands without executing them.",
     mode: "subagent",
+    hidden: true,
     // model,
     temperature: 0.1,
     prompt: PROMPT + testGuideContext,

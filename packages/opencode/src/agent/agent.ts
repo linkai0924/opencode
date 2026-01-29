@@ -109,6 +109,7 @@ export namespace Agent {
         ),
         mode: "primary",
         native: true,
+        hidden: true,
       },
       general: {
         name: "general",

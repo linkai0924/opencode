@@ -10,8 +10,8 @@ process.chdir(dir)
 const { binaries } = await import("./build.ts")
 {
   const name = `${pkg.name}-${process.platform}-${process.arch}`
-  console.log(`smoke test: running dist/${name}/bin/opencode --version`)
-  await $`./dist/${name}/bin/opencode --version`
+  console.log(`smoke test: running dist/${name}/bin/cs --version`)
+  await $`./dist/${name}/bin/cs --version`
 }
 
 await $`mkdir -p ./dist/${pkg.name}`
@@ -21,9 +21,9 @@ await $`cp ./script/postinstall.mjs ./dist/${pkg.name}/postinstall.mjs`
 await Bun.file(`./dist/${pkg.name}/package.json`).write(
   JSON.stringify(
     {
-      name: pkg.name + "-ai",
+      name: pkg.name,
       bin: {
-        [pkg.name]: `./bin/${pkg.name}`,
+        cs: `./bin/cs`,
       },
       scripts: {
         postinstall: "bun ./postinstall.mjs || node ./postinstall.mjs",
@@ -55,16 +55,17 @@ for (const tag of tags) {
 if (!Script.preview) {
   // Create archives for GitHub release
   for (const key of Object.keys(binaries)) {
+    const archiveName = key.replace(/\//g, "-")
     if (key.includes("linux")) {
-      await $`tar -czf ../../${key}.tar.gz *`.cwd(`dist/${key}/bin`)
+      await $`tar -czf ${archiveName}.tar.gz -C dist/${key}/bin .`
     } else {
-      await $`zip -r ../../${key}.zip *`.cwd(`dist/${key}/bin`)
+      await $`cd dist/${key}/bin && zip -r ../../../${archiveName}.zip *`
     }
   }
 
-  const image = "ghcr.io/zgsm-ai/costrict-cli"
+  const image = "docker.io/zgsm/costrict-cli"
   const platforms = "linux/amd64,linux/arm64"
-  const tags = [`${image}:${Script.version}`, `${image}:latest`]
-  const tagFlags = tags.flatMap((t) => ["-t", t])
-  await $`docker buildx build --platform ${platforms} ${tagFlags} --push .`
+  const imageTags = [`${image}:${Script.version}`, `${image}:latest`]
+  const tagFlags = imageTags.flatMap((t) => ["-t", t])
+  await $`docker buildx build --platform=${platforms} ${tagFlags} --push .`
 }

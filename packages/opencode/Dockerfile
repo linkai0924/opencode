@@ -8,22 +8,11 @@ ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 RUN apk add libgcc libstdc++ ripgrep
 
-
 FROM base AS build-amd64
-# COPY dist/opencode-linux-x64-baseline-musl/bin/opencode /usr/local/bin/opencode
-COPY dist/cs-linux-x64-baseline-musl.tar.gz /tmp/cs.tar.gz
-RUN mkdir -p /tmp/cs && tar -xzf /tmp/cs.tar.gz -C /tmp/cs && \
-    mv /tmp/cs/bin/cs /usr/local/bin/cs && \
-    chmod +x /usr/local/bin/cs && \
-    rm -rf /cs/cs.tar.gz /tmp/cs
+COPY dist/@costrict/cs-linux-x64-baseline-musl/bin/cs /usr/local/bin/cs
 
 FROM base AS build-arm64
-# COPY dist/opencode-linux-arm64-musl/bin/opencode /usr/local/bin/opencode
-COPY dist/cs-linux-arm64-musl.tar.gz /tmp/cs.tar.gz
-RUN mkdir -p /tmp/cs && tar -xzf /tmp/cs.tar.gz -C /tmp/cs && \
-    mv /tmp/cs/bin/cs /usr/local/bin/cs && \
-    chmod +x /usr/local/bin/cs && \
-    rm -rf /tmp/cs.tar.gz /tmp/cs
+COPY dist/@costrict/cs-linux-arm64-musl/bin/cs /usr/local/bin/cs
 
 ARG TARGETARCH
 FROM build-${TARGETARCH}

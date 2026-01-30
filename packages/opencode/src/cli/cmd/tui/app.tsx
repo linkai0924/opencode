@@ -653,7 +653,7 @@ function App() {
     toast.show({
       variant: "info",
       title: "Update Available",
-      message: `CoStrict v${evt.properties.version} is available. Run 'costrict-cli upgrade' to update manually.`,
+      message: `CoStrict v${evt.properties.version} is available. Run 'cs upgrade' to update manually.`,
       duration: 10000,
     })
   })

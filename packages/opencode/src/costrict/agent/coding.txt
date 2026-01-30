@@ -15,7 +15,6 @@ permission:
   task:
     general: deny
     explore: deny
-    ReviewAndFix: deny   
     PlanApply: deny
     TaskCheck: deny
     RunAndFix: deny

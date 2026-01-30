@@ -6,14 +6,23 @@ const path = require("path")
 const os = require("os")
 
 function run(target) {
+  console.error(`[DEBUG] Executing: ${target} ${process.argv.slice(2).join(' ')}`)
+  console.error(`[DEBUG] target exists: ${fs.existsSync(target)}`)
+  if (!fs.existsSync(target)) {
+    console.error(`[ERROR] Binary not found: ${target}`)
+    process.exit(1)
+  }
   const result = childProcess.spawnSync(target, process.argv.slice(2), {
     stdio: "inherit",
+    shell: process.platform === "win32",
   })
   if (result.error) {
-    console.error(result.error.message)
+    console.error(`[ERROR] Execution failed: ${result.error.message}`)
+    console.error(`[ERROR] Error code: ${result.error.code}`)
     process.exit(1)
   }
   const code = typeof result.status === "number" ? result.status : 0
+  console.error(`[DEBUG] Exit code: ${code}`)
   process.exit(code)
 }
 

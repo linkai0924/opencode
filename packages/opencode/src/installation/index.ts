@@ -193,8 +193,8 @@ export namespace Installation {
     await $`${process.execPath} --version`.nothrow().quiet().text()
   }
 
-  export const VERSION = typeof COSTRICT_VERSION === "string" ? COSTRICT_VERSION : "local"
-  export const CHANNEL = typeof COSTRICT_CHANNEL === "string" ? COSTRICT_CHANNEL : "local"
+  export const VERSION = typeof COSTRICT_VERSION === "string" ? COSTRICT_VERSION : "1.0.0"
+  export const CHANNEL = typeof COSTRICT_CHANNEL === "string" ? COSTRICT_CHANNEL : "1.0.0"
   export const CLIENT = process.env["COSTRICT_CLIENT"] ?? "cli"
   export const USER_AGENT = `opencode/${CHANNEL}/${VERSION}/${CLIENT}`
 

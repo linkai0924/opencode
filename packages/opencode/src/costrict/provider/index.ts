@@ -244,7 +244,13 @@ export async function createCoStrictCustomLoader(provider: any) {
             write: 0,
           },
         },
-        options: {},
+        options: {
+          temperature: 0.6,
+          top_p: 0.95,
+          top_k: 64,
+          repetition_penalty: 1.02,
+          tool_choice: "auto",
+        },
         headers: {},
       }
       return acc

@@ -5,7 +5,7 @@ import { Installation } from "../../installation"
 
 export const UpgradeCommand = {
   command: "upgrade [target]",
-  describe: "upgrade costrict-cli to the latest or a specific version",
+  describe: "upgrade cs to the latest or a specific version",
   builder: (yargs: Argv) => {
     return yargs
       .positional("target", {
@@ -24,8 +24,8 @@ export const UpgradeCommand = {
     UI.println(UI.logo("  "))
     UI.empty()
     prompts.intro("Upgrade")
-    // const detectedMethod = await Installation.method()
-    const method = (args.method as Installation.Method) ?? "curl"
+    const detectedMethod = await Installation.method()
+    const method = (args.method as Installation.Method) ?? detectedMethod
     if (method === "unknown") {
       prompts.log.error(`opencode is installed to ${process.execPath} and may be managed by a package manager`)
       const install = await prompts.select({

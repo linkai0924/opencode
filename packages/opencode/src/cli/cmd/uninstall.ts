@@ -23,7 +23,7 @@ interface RemovalTargets {
 
 export const UninstallCommand = {
   command: "uninstall",
-  describe: "uninstall costrict-cli and remove all related files",
+  describe: "uninstall cs and remove all related files",
   builder: (yargs: Argv) =>
     yargs
       .option("keep-config", {

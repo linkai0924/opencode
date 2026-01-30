@@ -3,7 +3,6 @@ name: ReviewAndFix
 description: >-
   专门用于审查和修复代码问题的代理。能够发现问题、理解问题、实施修复，并管理修复过程。
 mode: subagent
-hidden: true
 tools:
   question: true
   task: true

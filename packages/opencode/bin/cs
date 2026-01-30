@@ -44,8 +44,8 @@ let arch = archMap[os.arch()]
 if (!arch) {
   arch = os.arch()
 }
-const base = "costrict-cli-" + platform + "-" + arch
-const binary = platform === "windows" ? "costrict-cli.exe" : "costrict-cli"
+const base = "@costrict/cs-" + platform + "-" + arch
+const binary = platform === "windows" ? "cs.exe" : "cs"
 
 function findBinary(startDir) {
   let current = startDir
@@ -54,12 +54,31 @@ function findBinary(startDir) {
     if (fs.existsSync(modules)) {
       const entries = fs.readdirSync(modules)
       for (const entry of entries) {
-        if (!entry.startsWith(base)) {
-          continue
-        }
-        const candidate = path.join(modules, entry, "bin", binary)
-        if (fs.existsSync(candidate)) {
-          return candidate
+        // Handle scoped packages (e.g., @costrict/cs-darwin-arm64)
+        if (entry.startsWith("@")) {
+          const scopeDir = path.join(modules, entry)
+          if (fs.existsSync(scopeDir)) {
+            const scopedPackages = fs.readdirSync(scopeDir)
+            for (const pkg of scopedPackages) {
+              const fullName = entry + "/" + pkg
+              if (!fullName.startsWith(base)) {
+                continue
+              }
+              const candidate = path.join(scopeDir, pkg, "bin", binary)
+              if (fs.existsSync(candidate)) {
+                return candidate
+              }
+            }
+          }
+        } else {
+          // Handle non-scoped packages
+          if (!entry.startsWith(base)) {
+            continue
+          }
+          const candidate = path.join(modules, entry, "bin", binary)
+          if (fs.existsSync(candidate)) {
+            return candidate
+          }
         }
       }
     }

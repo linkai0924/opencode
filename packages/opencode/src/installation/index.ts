@@ -60,8 +60,6 @@ export namespace Installation {
   }
 
   export async function method() {
-    if (process.execPath.includes(path.join(".costrict", "bin"))) return "curl"
-    if (process.execPath.includes(path.join(".local", "bin"))) return "curl"
     const exec = process.execPath.toLowerCase()
 
     const checks = [
@@ -111,6 +109,10 @@ export namespace Installation {
         return check.name
       }
     }
+
+    // Only use curl as fallback if installed in specific curl-based installation paths
+    if (process.execPath.includes(path.join(".costrict", "bin"))) return "curl"
+    if (process.execPath.includes(path.join(".local", "bin"))) return "curl"
 
     return "unknown"
   }

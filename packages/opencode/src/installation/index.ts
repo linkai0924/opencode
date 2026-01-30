@@ -60,8 +60,6 @@ export namespace Installation {
   }
 
   export async function method() {
-    if (process.execPath.includes(path.join(".costrict", "bin"))) return "curl"
-    if (process.execPath.includes(path.join(".local", "bin"))) return "curl"
     const exec = process.execPath.toLowerCase()
 
     const checks = [
@@ -112,6 +110,10 @@ export namespace Installation {
       }
     }
 
+    // Only use curl as fallback if installed in specific curl-based installation paths
+    if (process.execPath.includes(path.join(".costrict", "bin"))) return "curl"
+    if (process.execPath.includes(path.join(".local", "bin"))) return "curl"
+
     return "unknown"
   }
 
@@ -130,33 +132,27 @@ export namespace Installation {
     return "opencode"
   }
 
-  export async function upgrade(method: Method | undefined, targetVersion: string) {
-    // Always default to curl for upgrade unless explicitly specified
-    const upgradeMethod = method || "curl"
-    
+  export async function upgrade(method: Method, target: string) {
     let cmd
-    switch (upgradeMethod) {
+    switch (method) {
       case "curl": {
         const baseUrl = Flag.COSTRICT_BASE_URL || "https://zgsm.sangfor.com"
-        const version = targetVersion.startsWith("v") ? targetVersion : `v${targetVersion}`
+        // const version = targetVersion.startsWith("v") ? targetVersion : `v${targetVersion}`
         cmd = $`curl -fsSL ${baseUrl}/costrict/install.sh | bash`.env({
           ...process.env,
-          VERSION: version,
+          VERSION: target,
           COSTRICT_BASE_URL: baseUrl,
         })
         break
       }
       case "npm":
-        const version = targetVersion.startsWith("v") ? `@${targetVersion}` : `@${targetVersion}`
-        cmd = $`npm install -g costrict-ai${version}`
+        cmd = $`npm install -g @costrict/cs@${target}`
         break
       case "pnpm":
-        const pnpmVersion = targetVersion.startsWith("v") ? `@${targetVersion}` : `@${targetVersion}`
-        cmd = $`pnpm install -g costrict-ai${pnpmVersion}`
+        cmd = $`pnpm install -g @costrict/cs@${target}`
         break
       case "bun":
-        const bunVersion = targetVersion.startsWith("v") ? `@${targetVersion}` : `@${targetVersion}`
-        cmd = $`bun install -g opencode-ai${bunVersion}`
+        cmd = $`bun install -g @costrict/cs@${target}`
         break
       case "brew": {
         const formula = await getBrewFormula()
@@ -167,15 +163,13 @@ export namespace Installation {
         break
       }
       case "choco":
-        const chocoVersion = targetVersion.startsWith("v") ? targetVersion.replace(/^v/, "") : targetVersion
-        cmd = $`echo Y | choco upgrade costrict-cli --version=${chocoVersion}`
+        cmd = $`echo Y | choco upgrade opencode --version=${target}`
         break
       case "scoop":
-        const scoopVersion = targetVersion.startsWith("v") ? `@${targetVersion}` : `@${targetVersion}`
-        cmd = $`scoop install opencode${scoopVersion}`
+        cmd = $`scoop install opencode@${target}`
         break
       default:
-        throw new Error(`Unknown upgrade method: ${method}`)
+        throw new Error(`Unknown method: ${method}`)
     }
     const result = await cmd.quiet().throws(false)
     if (result.exitCode !== 0) {
@@ -185,8 +179,8 @@ export namespace Installation {
       })
     }
     log.info("upgraded", {
-      method: upgradeMethod,
-      version: targetVersion,
+      method,
+      target,
       stdout: result.stdout.toString(),
       stderr: result.stderr.toString(),
     })
@@ -238,6 +232,58 @@ export namespace Installation {
   }
 
   export async function latest(installMethod?: Method) {
+    const detectedMethod = installMethod || (await method())
+
+    if (detectedMethod === "brew") {
+      const formula = await getBrewFormula()
+      if (formula === "opencode") {
+        return fetch("https://formulae.brew.sh/api/formula/opencode.json")
+          .then((res) => {
+            if (!res.ok) throw new Error(res.statusText)
+            return res.json()
+          })
+          .then((data: any) => data.versions.stable)
+      }
+    }
+
+    if (detectedMethod === "npm" || detectedMethod === "bun" || detectedMethod === "pnpm") {
+      const registry = await iife(async () => {
+        const r = (await $`npm config get registry`.quiet().nothrow().text()).trim()
+        const reg = r || "https://registry.npmjs.org"
+        return reg.endsWith("/") ? reg.slice(0, -1) : reg
+      })
+      const channel = CHANNEL
+      return fetch(`${registry}/@costrict/cs/${channel}`)
+        .then((res) => {
+          if (!res.ok) throw new Error(res.statusText)
+          return res.json()
+        })
+        .then((data: any) => data.version)
+    }
+
+    if (detectedMethod === "choco") {
+      return fetch(
+        "https://community.chocolatey.org/api/v2/Packages?$filter=Id%20eq%20%27opencode%27%20and%20IsLatestVersion&$select=Version",
+        { headers: { Accept: "application/json;odata=verbose" } },
+      )
+        .then((res) => {
+          if (!res.ok) throw new Error(res.statusText)
+          return res.json()
+        })
+        .then((data: any) => data.d.results[0].Version)
+    }
+
+    if (detectedMethod === "scoop") {
+      return fetch("https://raw.githubusercontent.com/ScoopInstaller/Main/master/bucket/opencode.json", {
+        headers: { Accept: "application/json" },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(res.statusText)
+          return res.json()
+        })
+        .then((data: any) => data.version)
+    }
+
     const baseUrl = Flag.COSTRICT_BASE_URL || "https://zgsm.sangfor.com"
     return fetch(`${baseUrl}/costrict-cli/pkg/latest.json`)
       .then((res) => {

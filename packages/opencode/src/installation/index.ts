@@ -103,16 +103,24 @@ export namespace Installation {
 
     for (const check of checks) {
       const output = await check.command()
-      const installedName =
-        check.name === "brew" || check.name === "choco" || check.name === "scoop" ? "opencode" : "opencode-ai"
-      if (output.includes(installedName)) {
-        return check.name
+      // Check for multiple possible package names
+      const possibleNames = check.name === "brew" || check.name === "choco" || check.name === "scoop"
+        ? ["opencode"]
+        : ["@costrict/cs", "opencode-ai", "@costrict/cs-darwin-arm64", "@costrict/cs-linux-x64", "@costrict/cs-darwin-x64"]
+      
+      for (const name of possibleNames) {
+        if (output.includes(name)) {
+          return check.name
+        }
       }
     }
 
     // Only use curl as fallback if installed in specific curl-based installation paths
     if (process.execPath.includes(path.join(".costrict", "bin"))) return "curl"
     if (process.execPath.includes(path.join(".local", "bin"))) return "curl"
+    
+    // Check for npm-like installation paths (e.g., node_modules/@costrict/...)
+    if (process.execPath.includes("node_modules/@costrict")) return "npm"
 
     return "unknown"
   }
@@ -253,12 +261,24 @@ export namespace Installation {
         return reg.endsWith("/") ? reg.slice(0, -1) : reg
       })
       const channel = CHANNEL
-      return fetch(`${registry}/@costrict/cs/${channel}`)
+      // Try to get channel-specific version first, fallback to latest
+      const channelVersion = await fetch(`${registry}/@costrict/cs/${channel}`)
         .then((res) => {
           if (!res.ok) throw new Error(res.statusText)
           return res.json()
         })
         .then((data: any) => data.version)
+        .catch(() => null)
+      
+      if (channelVersion) return channelVersion
+      
+      // Fallback to latest dist-tag
+      return fetch(`${registry}/@costrict/cs`)
+        .then((res) => {
+          if (!res.ok) throw new Error(res.statusText)
+          return res.json()
+        })
+        .then((data: any) => data["dist-tags"].latest)
     }
 
     if (detectedMethod === "choco") {

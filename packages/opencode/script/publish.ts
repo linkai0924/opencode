@@ -13,6 +13,8 @@ const { binaries } = await import("./build.ts")
   console.log(`smoke test: running dist/${name}/bin/cs --version`)
   await $`./dist/${name}/bin/cs --version`
 }
+console.log("binaries", binaries)
+const version = Object.values(binaries)[0]
 
 await $`mkdir -p ./dist/${pkg.name}`
 await $`cp -r ./bin ./dist/${pkg.name}/bin`
@@ -28,7 +30,7 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
       scripts: {
         postinstall: "bun ./postinstall.mjs || node ./postinstall.mjs",
       },
-      version: Script.version,
+      version: version,
       optionalDependencies: binaries,
     },
     null,
@@ -36,22 +38,23 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
   ),
 )
 
-const tags = [Script.channel]
-
 const tasks = Object.entries(binaries).map(async ([name]) => {
   if (process.platform !== "win32") {
     await $`chmod -R 755 .`.cwd(`./dist/${name}`)
   }
   await $`bun pm pack`.cwd(`./dist/${name}`)
-  for (const tag of tags) {
-    await $`npm publish *.tgz --access public --tag ${tag}`.cwd(`./dist/${name}`)
-  }
+  await $`npm publish *.tgz --access public --tag ${Script.channel}`.cwd(`./dist/${name}`)
 })
 await Promise.all(tasks)
-for (const tag of tags) {
-  await $`cd ./dist/${pkg.name} && bun pm pack && npm publish *.tgz --access public --tag ${tag}`
-}
+await $`cd ./dist/${pkg.name} && bun pm pack && npm publish *.tgz --access public --tag ${Script.channel}`
 
+const image = "ghcr.io/anomalyco/opencode"
+const platforms = "linux/amd64,linux/arm64"
+const tags = [`${image}:${version}`, `${image}:${Script.channel}`]
+const tagFlags = tags.flatMap((t) => ["-t", t])
+await $`docker buildx build --platform ${platforms} ${tagFlags} --push .`
+
+// registries
 if (!Script.preview) {
   // Create archives for GitHub release
   for (const key of Object.keys(binaries)) {

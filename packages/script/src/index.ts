@@ -20,6 +20,7 @@ const env = {
   COSTRICT_CHANNEL: process.env["COSTRICT_CHANNEL"],
   COSTRICT_BUMP: process.env["COSTRICT_BUMP"],
   COSTRICT_VERSION: process.env["COSTRICT_VERSION"],
+  OPENCODE_RELEASE: process.env["OPENCODE_RELEASE"],
 }
 const CHANNEL = await (async () => {
   if (env.COSTRICT_CHANNEL) return env.COSTRICT_CHANNEL
@@ -54,6 +55,9 @@ export const Script = {
   },
   get preview() {
     return IS_PREVIEW
+  },
+  get release() {
+    return env.OPENCODE_RELEASE
   },
 }
 console.log(`opencode script`, JSON.stringify(Script, null, 2))

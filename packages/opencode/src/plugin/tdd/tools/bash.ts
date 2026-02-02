@@ -354,7 +354,9 @@ function EnhancedBashToolDescription(shellConfig: {
 - Output longer than ${MAX_METADATA_LENGTH} characters in metadata will be truncated
 `
 
+  const versionInfo = shellConfig.version ? ` (version ${shellConfig.version})` : ""
+
   return `${baseDescription}
 
-**Detected Shell:** ${shellConfig.shell} (${shellConfig.executable})${shellSpecific}${parameters}`
+**Detected Shell:** ${shellConfig.shell} (${shellConfig.executable})${versionInfo}${shellSpecific}${parameters}`
 }

@@ -31,6 +31,16 @@ export namespace CostrictError {
           responseBody: message,
         }).toObject(),
     },
+    {
+      match: (message: string) => /try again/i.test(message),
+      make: (message: string) =>
+        new MessageV2.APIError({
+          message: RETRY_MESSAGE,
+          statusCode: 503,
+          isRetryable: true,
+          responseBody: message,
+        }).toObject(),
+    },
   ]
 
   export function fromError(error: unknown) {

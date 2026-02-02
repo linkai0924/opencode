@@ -94,8 +94,6 @@ export class ShellExecutionService {
         let error: Error | null = null
         let exited = false
 
-        let stdoutDecoder: TextDecoder | null = null
-        let stderrDecoder: TextDecoder | null = null
         let outputChunks: Buffer[] = []
         let timeoutTriggered = false
         let fixedEncoding: string | null = null
@@ -109,25 +107,16 @@ export class ShellExecutionService {
             stderr.push(data)
           }
 
-          if (!fixedEncoding) {
-            // 第一个检测到包含非 UTF-8 字符的 chunk，固定编码
-            const encoding = getCachedEncodingForBuffer(data)
-            if (encoding !== "utf-8") {
-              fixedEncoding = encoding
-            }
+          // 对每个 chunk 单独检测编码并解码（流式输出）
+          const chunkEncoding = getCachedEncodingForBuffer(data)
+          let decoder: TextDecoder
+
+          try {
+            decoder = new TextDecoder(chunkEncoding)
+          } catch {
+            decoder = new TextDecoder("utf-8")
           }
 
-          if (!stdoutDecoder || !stderrDecoder) {
-            try {
-              stdoutDecoder = new TextDecoder(fixedEncoding || "utf-8")
-              stderrDecoder = new TextDecoder(fixedEncoding || "utf-8")
-            } catch {
-              stdoutDecoder = new TextDecoder("utf-8")
-              stderrDecoder = new TextDecoder("utf-8")
-            }
-          }
-
-          const decoder = stream === "stdout" ? stdoutDecoder : stderrDecoder
           const decodedChunk = decoder.decode(data, { stream: true })
 
           if (decodedChunk.length > 0) {
@@ -137,13 +126,6 @@ export class ShellExecutionService {
 
         const handleExit = (code: number | null, signal: NodeJS.Signals | null) => {
           exited = true
-
-          if (stdoutDecoder) {
-            const remaining = stdoutDecoder.decode()
-            if (remaining) {
-              onOutputEvent({ type: "data", chunk: remaining })
-            }
-          }
 
           const finalBuffer = Buffer.concat(outputChunks)
           const detectedEncoding = getCachedEncodingForBuffer(finalBuffer)

@@ -305,12 +305,11 @@ function EnhancedBashToolDescription(shellConfig: {
   const shellSpecific =
     shellConfig.shell === "bash"
       ? `
-**Shell-Specific Notes (bash):**
-- Use forward slashes (/) for file paths
-- Use && to chain commands (only runs next if previous succeeds)
-- Use || for command fallback (runs next if previous fails)
-- Use & at end to run in background
-- For multi-line commands, use backslash (\\) to continue on next line
+**Shell Environment:** bash (Unix-like shell)
+**Path Separators:** ALWAYS use forward slash (/) for file paths. NEVER use backslash (\\)
+**Command Chaining:** Supports && and || operators
+**Background Processes:** Set is_background: true, or manually use & to run commands in background
+**Multi-line Commands:** Use backslash (\\) to continue on next line
   Example: \\
   command1 \\
     && command2 \\
@@ -318,27 +317,55 @@ function EnhancedBashToolDescription(shellConfig: {
 `
       : shellConfig.shell === "powershell"
         ? `
-**Shell-Specific Notes (PowerShell):**
-- Both forward slashes (/) and backslashes (\\) work for paths
-- PowerShell 7+ (pwsh.exe) supports && and || operators
-- PowerShell 5.x (powershell.exe) does NOT support && or ||; use semicolon (;) instead
-- Use Start-Job for background processes
-- For multi-line commands, use backtick (\`) to continue on next line
+**Shell Environment:** PowerShell (pwsh or powershell.exe)
+**Path Separators:** Use forward slash (/) or backslash (\\)
+**Command Chaining:** Supports && and || operators (pwsh/PowerShell 7+) or ; for all versions
+**Background Processes:** Set is_background: true to use Start-Job
+**Directory Listing:** Use \`ls\` to list directory contents. In PowerShell, \`ls\` is an alias for Get-ChildItem. Note that PowerShell does not support Unix-style flags like \`-la\`. Use \`ls -Force\` to show hidden files instead.
+**Multi-line Commands:** Use backtick (\`) to continue on next line
   Example: \\
   command1 \` \\
     -and command2 \` \\
     -and command3
 `
         : `
-**Shell-Specific Notes (cmd):**
-- Use backslashes (\\) for file paths
-- Use && to chain commands and || for fallback
-- Use START /B to run in background
-- For multi-line commands, use caret (^) to continue on next line
+**Shell Environment:** Windows Command Prompt (cmd.exe)
+**Path Separators:** Use backslash (\\) for file paths
+**Command Chaining:** Supports && and || operators
+**Background Processes:** Set is_background: true to use START /B
+**Multi-line Commands:** Use caret (^) to continue on next line
   Example: \\
   command1 ^ \\
   && command2 ^ \\
   && command3
+`
+
+  const backgroundGuidance = `
+**Background vs Foreground Execution:**
+You should decide whether commands should run in background or foreground based on their nature:
+
+**Use background execution (is_background: true) for:**
+- Long-running development servers: \`npm run start\`, \`npm run dev\`, \`yarn dev\`, \`python manage.py runserver\`
+- Build watchers: \`npm run watch\`, \`webpack --watch\`, \`tsc --watch\`
+- Database servers: \`mongod\`, \`mysql\`, \`redis-server\`, \`postgres\`
+- Web servers: \`python -m http.server\`, \`php -S localhost:8000\`
+- Any command expected to run indefinitely until manually stopped
+
+**Use foreground execution (is_background: false, default) for:**
+- One-time commands: \`ls\`, \`cat\`, \`grep\`, \`find\`
+- Build commands: \`npm run build\`, \`make\`, \`cargo build\`
+- Installation commands: \`npm install\`, \`pip install\`, \`apt-get install\`
+- Git operations: \`git commit\`, \`git push\`, \`git clone\`
+- Test runs: \`npm test\`, \`pytest\`, \`cargo test\`
+- Scripts with defined end points
+
+**Background Implementation by Shell:**
+- bash: Appends \` &\` to run command in background
+- cmd.exe: Wraps with \`START /B <command>\` to run without new window
+- PowerShell: Wraps with \`Start-Job -ScriptBlock { <command> }\` to run as background job
+
+**Note**: If your command already contains background syntax (e.g., ends with &, starts with START /B,
+or uses Start-Job), it will be preserved regardless of the is_background parameter value.
 `
 
   const parameters = `
@@ -358,5 +385,5 @@ function EnhancedBashToolDescription(shellConfig: {
 
   return `${baseDescription}
 
-**Detected Shell:** ${shellConfig.shell} (${shellConfig.executable})${versionInfo}${shellSpecific}${parameters}`
+**Detected Shell:** ${shellConfig.shell} (${shellConfig.executable})${versionInfo}${shellSpecific}${backgroundGuidance}${parameters}`
 }

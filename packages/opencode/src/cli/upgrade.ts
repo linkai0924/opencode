@@ -10,6 +10,12 @@ export async function upgrade() {
   if (!latest) return
   if (Installation.VERSION === latest) return
 
+  // Prevent downgrade: skip if target version is older than current
+  const versionComparison = Installation.compareVersions(latest, Installation.VERSION)
+  if (versionComparison < 0) {
+    return
+  }
+
   if (config.autoupdate === false || Flag.COSTRICT_DISABLE_AUTOUPDATE) {
     return
   }

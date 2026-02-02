@@ -355,9 +355,25 @@ You should decide whether commands should run in background or foreground based 
 - One-time commands: \`ls\`, \`cat\`, \`grep\`, \`find\`
 - Build commands: \`npm run build\`, \`make\`, \`cargo build\`
 - Installation commands: \`npm install\`, \`pip install\`, \`apt-get install\`
-- Git operations: \`git commit\`, \`git push\`, \`git clone\`
+- Git operations: \`git commit\`, \`git push\`, \`git clone\`, \`git checkout\`, \`git add\`
 - Test runs: \`npm test\`, \`pytest\`, \`cargo test\`
 - Scripts with defined end points
+
+**Important: Git Operations and Line Endings**
+When executing git commands that may trigger line ending conversion, ALWAYS add \`-c core.autocrlf=false\` to prevent unexpected line ending changes. This is especially important on Windows.
+
+Required for these git operations:
+- \`git add\`, \`git commit\` - add \`-c core.autocrlf=false\` before the command
+- \`git checkout\` - add \`-c core.autocrlf=false\` before the command
+- \`git reset --hard\` - add \`-c core.autocrlf=false\` before the command
+- \`git clone\` - add \`-c core.autocrlf=false\` before the command
+
+Correct usage:
+- \`git -c core.autocrlf=false add .\`
+- \`git -c core.autocrlf=false commit -m "message"\`
+- \`git -c core.autocrlf=false checkout main\`
+- \`git -c core.autocrlf=false reset --hard HEAD\`
+- \`git -c core.autocrlf=false clone https://github.com/user/repo.git\`
 
 **Background Implementation by Shell:**
 - bash: Appends \` &\` to run command in background

@@ -24,6 +24,7 @@ import { SystemPrompt } from "./system"
 import { Flag } from "@/flag/flag"
 import { PermissionNext } from "@/permission/next"
 import { Auth } from "@/auth"
+import os from "node:os"
 
 export namespace LLM {
   const log = Log.create({ service: "llm" })

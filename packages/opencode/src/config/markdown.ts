@@ -68,7 +68,7 @@ export namespace ConfigMarkdown {
   }
 
   export async function parseString(template: string) {
-    const processed = preprocessFrontmatter(template)
+    const processed = fallbackSanitization(template)
     try {
       const md = matter(processed)
       return md

@@ -1237,9 +1237,18 @@ export namespace Provider {
     const cfg = await Config.get()
     if (cfg.model) return parseModel(cfg.model)
 
-    const provider = await list()
-      .then((val) => Object.values(val))
-      .then((x) => x.find((p) => !cfg.provider || Object.keys(cfg.provider).includes(p.id)))
+    // Try costrict provider first as the default for new users
+    const providers = await list()
+    const costrictProvider = providers["costrict"]
+    if (costrictProvider && costrictProvider.models["Auto"]) {
+      return {
+        providerID: "costrict",
+        modelID: "Auto",
+      }
+    }
+
+    // Fallback to original logic
+    const provider = Object.values(providers).find((p) => !cfg.provider || Object.keys(cfg.provider).includes(p.id))
     if (!provider) throw new Error("no providers found")
     const [model] = sort(Object.values(provider.models))
     if (!model) throw new Error("no models found")

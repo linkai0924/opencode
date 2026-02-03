@@ -208,6 +208,14 @@ export const BashTool = Tool.define("bash", async () => {
 
       const invocation = new ShellToolInvocation(shellParams, normalizedWorkdir)
 
+      log.info("Executing bash command", {
+        command: params.command,
+        workdir: normalizedWorkdir,
+        shell: shellConfig.shell,
+        timeout: params.timeout,
+        is_background: params.is_background,
+      })
+
       ctx.metadata({
         metadata: {
           command: params.command,

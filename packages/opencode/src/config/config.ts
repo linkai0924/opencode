@@ -97,13 +97,13 @@ export namespace Config {
     if (Flag.COSTRICT_ENABLE_OPENCODE_CONFIG) {
       // Load OpenCode global config
       result = mergeConfigConcatArrays(result, await opencodeGlobal())
-      
+
       // Load OpenCode custom config path
       if (Flag.OPENCODE_CONFIG) {
         result = mergeConfigConcatArrays(result, await loadFile(Flag.OPENCODE_CONFIG))
         log.debug("loaded OpenCode custom config", { path: Flag.OPENCODE_CONFIG })
       }
-      
+
       // Load OpenCode project config
       if (!Flag.COSTRICT_DISABLE_PROJECT_CONFIG) {
         for (const file of ["opencode.jsonc", "opencode.json"]) {
@@ -113,7 +113,7 @@ export namespace Config {
           }
         }
       }
-      
+
       // Load OpenCode inline config content
       if (Flag.OPENCODE_CONFIG_CONTENT) {
         result = mergeConfigConcatArrays(result, JSON.parse(Flag.OPENCODE_CONFIG_CONTENT))
@@ -204,7 +204,10 @@ export namespace Config {
 
     for (const dir of unique(directories)) {
       // Load OpenCode config files first (lower priority)
-      if (Flag.COSTRICT_ENABLE_OPENCODE_CONFIG && (dir.endsWith(".opencode") || dir.endsWith("opencode") || dir === Flag.OPENCODE_CONFIG_DIR)) {
+      if (
+        Flag.COSTRICT_ENABLE_OPENCODE_CONFIG &&
+        (dir.endsWith(".opencode") || dir.endsWith("opencode") || dir === Flag.OPENCODE_CONFIG_DIR)
+      ) {
         for (const file of ["opencode.jsonc", "opencode.json"]) {
           log.debug(`loading OpenCode config from ${path.join(dir, file)}`)
           result = mergeConfigConcatArrays(result, await loadFile(path.join(dir, file)))
@@ -214,7 +217,7 @@ export namespace Config {
           result.plugin ??= []
         }
       }
-      
+
       // Load CoStrict config files (higher priority, overrides OpenCode)
       if (dir.endsWith(".costrict") || dir === Flag.COSTRICT_CONFIG_DIR) {
         for (const file of ["costrict.jsonc", "costrict.json"]) {
@@ -1033,7 +1036,25 @@ export namespace Config {
         })
         .optional(),
       plugin: z.string().array().optional(),
-      snapshot: z.boolean().optional(),
+      snapshot: z
+        .union([
+          z.boolean(),
+          z
+            .object({
+              enabled: z.boolean().optional().describe("Enable snapshot functionality"),
+              minFreeSpace: z
+                .union([z.string(), z.number()])
+                .optional()
+                .describe("Minimum free disk space required (e.g., '1GB' or 1073741824 bytes)"),
+              checkInterval: z
+                .number()
+                .optional()
+                .describe("Interval in seconds between disk space checks (default: 60)"),
+            })
+            .strict(),
+        ])
+        .optional()
+        .describe("Snapshot configuration for project state tracking"),
       share: z
         .enum(["manual", "auto", "disabled"])
         .optional()
@@ -1208,7 +1229,9 @@ export namespace Config {
           autoSelectFirstOption: z
             .boolean()
             .optional()
-            .describe("Automatically select the first option for each question (default: false). Useful for CI/CD and automated scripts."),
+            .describe(
+              "Automatically select the first option for each question (default: false). Useful for CI/CD and automated scripts.",
+            ),
         })
         .optional()
         .describe("Question tool behavior configuration"),
@@ -1552,17 +1575,14 @@ export namespace Config {
   export async function resolveConfigFile(baseDir: string, global: boolean): Promise<string> {
     if (global) {
       // Global config: use costrict.json (not opencode.json) for consistency
-      const candidates = [
-        path.join(baseDir, "costrict.jsonc"),
-        path.join(baseDir, "costrict.json"),
-      ]
-      
+      const candidates = [path.join(baseDir, "costrict.jsonc"), path.join(baseDir, "costrict.json")]
+
       for (const candidate of candidates) {
         if (await Bun.file(candidate).exists()) {
           return candidate
         }
       }
-      
+
       // Default to costrict.json if none exist
       return candidates[1]
     } else {
@@ -1573,13 +1593,13 @@ export namespace Config {
         path.join(baseDir, ".opencode", "costrict.jsonc"),
         path.join(baseDir, ".opencode", "costrict.json"),
       ]
-      
+
       for (const candidate of projectCandidates) {
         if (await Bun.file(candidate).exists()) {
           return candidate
         }
       }
-      
+
       // Default to costrict.json if none exist
       return projectCandidates[1]
     }

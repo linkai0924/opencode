@@ -7,11 +7,95 @@ import z from "zod"
 import { Config } from "../config/config"
 import { Instance } from "../project/instance"
 import { Scheduler } from "../scheduler"
+import { Disk } from "../util/disk"
+import { Bus } from "@/bus"
+import { TuiEvent } from "../cli/cmd/tui/event"
 
 export namespace Snapshot {
   const log = Log.create({ service: "snapshot" })
   const hour = 60 * 60 * 1000
   const prune = "7.days"
+  const DEFAULT_MIN_FREE_SPACE = "5GB"
+  const DEFAULT_CHECK_INTERVAL = 60
+
+  interface SnapshotConfig {
+    enabled?: boolean
+    minFreeSpace?: string | number
+    checkInterval?: number
+  }
+
+  let lastCheckTime = 0
+  let lastCheckResult: boolean | null = null
+
+  async function getConfig(): Promise<SnapshotConfig> {
+    const cfg = await Config.get()
+    const snapshotConfig = cfg.snapshot
+
+    if (typeof snapshotConfig === "boolean") {
+      return {
+        enabled: snapshotConfig,
+        minFreeSpace: DEFAULT_MIN_FREE_SPACE,
+        checkInterval: DEFAULT_CHECK_INTERVAL,
+      }
+    }
+
+    return {
+      enabled: snapshotConfig?.enabled ?? true,
+      minFreeSpace: snapshotConfig?.minFreeSpace ?? DEFAULT_MIN_FREE_SPACE,
+      checkInterval: snapshotConfig?.checkInterval ?? DEFAULT_CHECK_INTERVAL,
+    }
+  }
+
+  async function checkDiskSpace(): Promise<boolean> {
+    const now = Date.now()
+    const config = await getConfig()
+    const checkInterval = (config.checkInterval ?? DEFAULT_CHECK_INTERVAL) * 1000
+
+    if (lastCheckResult !== null && now - lastCheckTime < checkInterval) {
+      return lastCheckResult
+    }
+
+    const snapshotDir = gitdir()
+    const result = await Disk.checkDiskSpace(snapshotDir, config.minFreeSpace ?? DEFAULT_MIN_FREE_SPACE)
+
+    lastCheckTime = now
+    lastCheckResult = result.hasEnoughSpace
+
+    const diskLocation = process.platform === "win32" ? result.path.split(":")[0] + ":" : result.path
+
+    log.info("Disk space check result", {
+      free: Disk.formatBytes(result.free),
+      threshold: Disk.formatBytes(result.threshold),
+      hasEnoughSpace: result.hasEnoughSpace,
+      path: result.path,
+    })
+
+    if (!result.hasEnoughSpace) {
+      log.warn("Snapshot disabled due to insufficient disk space", {
+        free: Disk.formatBytes(result.free),
+        threshold: Disk.formatBytes(result.threshold),
+        path: result.path,
+      })
+
+      Bus.publish(TuiEvent.ToastShow, {
+        title: "快照已禁用",
+        message: `磁盘空间不足（${diskLocation}）。当前剩余: ${Disk.formatBytes(result.free)}，所需空间: ${Disk.formatBytes(result.threshold)}`,
+        variant: "warning",
+        duration: 8000,
+      }).catch((e) => log.debug("failed to show toast", { error: e }))
+    }
+
+    return result.hasEnoughSpace
+  }
+
+  async function isSnapshotEnabled(): Promise<boolean> {
+    const config = await getConfig()
+    if (config.enabled === false) return false
+
+    if (Instance.project.vcs !== "git") return false
+
+    return checkDiskSpace()
+  }
 
   export function init() {
     Scheduler.register({
@@ -23,9 +107,7 @@ export namespace Snapshot {
   }
 
   export async function cleanup() {
-    if (Instance.project.vcs !== "git") return
-    const cfg = await Config.get()
-    if (cfg.snapshot === false) return
+    // if (!(await isSnapshotEnabled())) return
     const git = gitdir()
     const exists = await fs
       .stat(git)
@@ -48,9 +130,7 @@ export namespace Snapshot {
   }
 
   export async function track() {
-    if (Instance.project.vcs !== "git") return
-    const cfg = await Config.get()
-    if (cfg.snapshot === false) return
+    if (!(await isSnapshotEnabled())) return
     const git = gitdir()
     if (await fs.mkdir(git, { recursive: true })) {
       await $`git init`
@@ -61,7 +141,6 @@ export namespace Snapshot {
         })
         .quiet()
         .nothrow()
-      // Configure git to not convert line endings on Windows
       await $`git --git-dir ${git} config core.autocrlf false`.quiet().nothrow()
       log.info("initialized")
     }

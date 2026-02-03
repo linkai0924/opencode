@@ -65,7 +65,18 @@ export namespace SessionRetry {
       if (next) return next
     }
 
+    if (MessageV2.ReasoningOnlyError.isInstance(error)) {
+      return "Response only contains reasoning content"
+    }
+
     if (MessageV2.APIError.isInstance(error)) {
+      // Check for connection error messages (always retry, regardless of isRetryable flag)
+      // This handles errors from OpenAI SDK and other clients that throw generic "Connection error."
+      const message = error.data.message?.toLowerCase() || ""
+      if (message.includes("connection error")) {
+        return "Connection error"
+      }
+
       if (!error.data.isRetryable) return undefined
       return error.data.message.includes("Overloaded") ? "Provider is overloaded" : error.data.message
     }

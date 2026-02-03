@@ -56,6 +56,9 @@ export namespace SessionProcessor {
           try {
             let currentText: MessageV2.TextPart | undefined
             let reasoningMap: Record<string, MessageV2.ReasoningPart> = {}
+            let hasTextContent = false
+            let hasToolCalls = false
+            let hasReasoningContent = false
             const stream = await LLM.stream({
               ...streamInput,
               messages: state.messages,
@@ -106,6 +109,7 @@ export namespace SessionProcessor {
                     if (value.providerMetadata) part.metadata = value.providerMetadata
                     await Session.updatePart(part)
                     delete reasoningMap[value.id]
+                    hasReasoningContent = true
                   }
                   break
 
@@ -133,6 +137,7 @@ export namespace SessionProcessor {
                   break
 
                 case "tool-call": {
+                  hasToolCalls = true
                   const match = toolcalls[value.toolCallId]
                   if (match) {
                     const cleanedToolName = toolNameFormatter(value.toolName, availableTools) // costrict change
@@ -299,9 +304,18 @@ export namespace SessionProcessor {
                   if (await SessionCompaction.isOverflow({ tokens: usage.tokens, model: input.model })) {
                     needsCompaction = true
                   }
+
+                  // Check if response only contains reasoning content (no text or tool calls)
+                  // This is an exception scenario that requires retry with thinking disabled
+                  const isReasoningOnly = !hasTextContent && !hasToolCalls && hasReasoningContent
+                  if (isReasoningOnly) {
+                    throw new MessageV2.ReasoningOnlyError({}).toObject()
+                  }
+
                   break
 
                 case "text-start":
+                  hasTextContent = true
                   currentText = {
                     id: Identifier.ascending("part"),
                     messageID: input.assistantMessage.id,
@@ -390,6 +404,15 @@ export namespace SessionProcessor {
                 next: Date.now() + delay,
               })
               await SessionRetry.sleep(delay, input.abort).catch(() => {})
+
+              // If error is ReasoningOnlyError, disable thinking for retry
+              if (MessageV2.ReasoningOnlyError.isInstance(error)) {
+                streamInput.providerOptions = {
+                  ...streamInput.providerOptions,
+                  enableThinking: false,
+                }
+              }
+
               continue
             }
             input.assistantMessage.error = error

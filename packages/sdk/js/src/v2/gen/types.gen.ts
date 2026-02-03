@@ -144,6 +144,13 @@ export type MessageOutputLengthError = {
   }
 }
 
+export type MessageReasoningOnlyError = {
+  name: "MessageReasoningOnlyError"
+  data: {
+    [key: string]: unknown
+  }
+}
+
 export type MessageAbortedError = {
   name: "MessageAbortedError"
   data: {
@@ -175,7 +182,7 @@ export type AssistantMessage = {
     created: number
     completed?: number
   }
-  error?: ProviderAuthError | UnknownError | MessageOutputLengthError | MessageAbortedError | ApiError
+  error?: ProviderAuthError | UnknownError | MessageOutputLengthError | MessageAbortedError | ApiError | MessageReasoningOnlyError
   parentID: string
   modelID: string
   providerID: string

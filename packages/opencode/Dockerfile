@@ -9,10 +9,10 @@ ENV LC_ALL=C.UTF-8
 RUN apk add libgcc libstdc++ ripgrep xdg-utils
 
 FROM base AS build-amd64
-COPY dist/@costrict/cs-linux-x64-baseline-musl/bin/cs /usr/local/bin/cs
+COPY packages/opencode/dist/@costrict/cs-linux-x64-baseline-musl/bin/cs /usr/local/bin/cs
 
 FROM base AS build-arm64
-COPY dist/@costrict/cs-linux-arm64-musl/bin/cs /usr/local/bin/cs
+COPY packages/opencode/dist/@costrict/cs-linux-arm64-musl/bin/cs /usr/local/bin/cs
 
 ARG TARGETARCH
 FROM build-${TARGETARCH}

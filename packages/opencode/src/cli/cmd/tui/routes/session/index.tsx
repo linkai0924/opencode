@@ -1604,13 +1604,20 @@ function BlockTool(props: { title: string; children: JSX.Element; onClick?: () =
 function Bash(props: ToolProps<typeof BashTool>) {
   const { theme } = useTheme()
   const sync = useSync()
+  const ctx = use()
   const output = createMemo(() => stripAnsi(props.metadata.output?.trim() ?? ""))
   const [expanded, setExpanded] = createSignal(false)
   const lines = createMemo(() => output().split("\n"))
-  const overflow = createMemo(() => lines().length > 10)
+  const wrap = createMemo(() => Math.max(20, ctx.width - 8))
+  const rows = createMemo(() => {
+    const width = wrap()
+    return lines().reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / width)), 0)
+  })
+  const limit = 10
+  const overflow = createMemo(() => rows() > limit)
   const limited = createMemo(() => {
     if (expanded() || !overflow()) return output()
-    return [...lines().slice(0, 10), "…"].join("\n")
+    return [...lines().slice(0, limit), "…"].join("\n")
   })
 
   const workdirDisplay = createMemo(() => {
@@ -1638,7 +1645,7 @@ function Bash(props: ToolProps<typeof BashTool>) {
     return `# ${desc} in ${wd}`
   })
 
-  return (
+    return (
     <Switch>
       <Match when={props.metadata.output !== undefined}>
         <BlockTool
@@ -1649,7 +1656,18 @@ function Bash(props: ToolProps<typeof BashTool>) {
           <box gap={1}>
             <text fg={theme.text}>$ {props.input.command}</text>
             <Show when={output()}>
-              <text fg={theme.text}>{limited()}</text>
+              <Show
+                when={overflow() && !expanded()}
+                fallback={<text fg={theme.text}>{output()}</text>}
+              >
+                <scrollbox
+                  maxHeight={limit}
+                  scrollbarOptions={{ visible: false }}
+                  verticalScrollbarOptions={{ visible: false }}
+                >
+                  <text fg={theme.text}>{limited()}</text>
+                </scrollbox>
+              </Show>
             </Show>
             <Show when={overflow()}>
               <text fg={theme.textMuted}>{expanded() ? "Click to collapse" : "Click to expand"}</text>

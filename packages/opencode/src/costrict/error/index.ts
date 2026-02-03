@@ -41,6 +41,15 @@ export namespace CostrictError {
           responseBody: message,
         }).toObject(),
     },
+    {
+      match: (message: string) => /connection error/i.test(message),
+      make: (message: string) =>
+        new MessageV2.APIError({
+          message: "Connection error",
+          isRetryable: true,
+          responseBody: message,
+        }).toObject(),
+    },
   ]
 
   export function fromError(error: unknown) {
@@ -55,6 +64,9 @@ export namespace CostrictError {
   export function retryable(error: ReturnType<NamedError["toObject"]>) {
     if (MessageV2.OutputLengthError.isInstance(error)) {
       return "Output length reached"
+    }
+    if (MessageV2.ReasoningOnlyError.isInstance(error)) {
+      return "Response only contains reasoning content"
     }
     if (MessageV2.APIError.isInstance(error)) {
       const status = error.data.statusCode

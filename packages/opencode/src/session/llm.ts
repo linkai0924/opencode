@@ -42,6 +42,7 @@ export namespace LLM {
     small?: boolean
     tools: Record<string, Tool>
     retries?: number
+    providerOptions?: Record<string, any>
   }
 
   export type StreamOutput = StreamTextResult<ToolSet, unknown>
@@ -107,7 +108,7 @@ export namespace LLM {
       : ProviderTransform.options({
           model: input.model,
           sessionID: input.sessionID,
-          providerOptions: provider.options,
+          providerOptions: { ...provider.options, ...input.providerOptions },
         })
     const options: Record<string, any> = pipe(
       base,
@@ -265,8 +266,8 @@ export namespace LLM {
         const lower = failed.toolCall.toolName.toLowerCase()
         let toolCall = failed.toolCall
         if (lower === "todowrite" || lower === "question") {
-          let input = toolCall.input.replace(/'/g, '"').replace(/\b(False|True)\b/g, (match) => match.toLowerCase());
-          toolCall.input = input;
+          let input = toolCall.input.replace(/'/g, '"').replace(/\b(False|True)\b/g, (match) => match.toLowerCase())
+          toolCall.input = input
           return {
             ...failed.toolCall,
             toolName: lower,

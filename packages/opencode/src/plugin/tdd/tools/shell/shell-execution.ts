@@ -8,6 +8,9 @@ import os from "node:os"
 import { spawn } from "node:child_process"
 import { getCachedEncodingForBuffer } from "./systemEncoding.js"
 import { getShellConfiguration } from "./shell-utils.js"
+import { debugLogger } from "../../utils/logger.js"
+
+const log = debugLogger.clone().tag("scope", "shell-execution")
 
 const SIGKILL_TIMEOUT_MS = 200
 
@@ -73,6 +76,13 @@ export class ShellExecutionService {
       const { executable, argsPrefix } = shellConfig
       const shellArgs = [...argsPrefix, commandToExecute]
 
+      log.info("Starting shell process", {
+        executable,
+        args: shellArgs,
+        cwd,
+        timeout: timeoutMs,
+      })
+
       const child = spawn(executable, shellArgs, {
         cwd,
         stdio: ["ignore", "pipe", "pipe"],
@@ -131,6 +141,13 @@ export class ShellExecutionService {
           const detectedEncoding = getCachedEncodingForBuffer(finalBuffer)
           const finalDecoder = new TextDecoder(detectedEncoding)
           const combinedOutput = finalDecoder.decode(finalBuffer)
+
+          log.info("Shell process exited", {
+            exitCode: code,
+            signal,
+            aborted: abortSignal.aborted || timeoutTriggered,
+            outputLength: combinedOutput.length,
+          })
 
           resolve({
             rawOutput: finalBuffer,

@@ -9,9 +9,9 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Default values
-IMAGE_NAME="${IMAGE_NAME:-opencode}"
+IMAGE_NAME="${IMAGE_NAME:-zgsm/costrict-cli}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
-REGISTRY="${REGISTRY:-}"
+REGISTRY="${REGISTRY:-docker.io}"
 PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64}"
 PUSH="${PUSH:-false}"
 

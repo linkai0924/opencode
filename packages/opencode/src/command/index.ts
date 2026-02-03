@@ -5,6 +5,7 @@ import { Instance } from "../project/instance"
 import { Identifier } from "../id/id"
 import PROMPT_INITIALIZE from "../costrict/command/template/enhanced-initialize.txt" // costrict change
 import PROMPT_REVIEW from "./template/review.txt"
+import PROMPT_PROJECT_WIKI from "../costrict/command/template/project-wiki.txt" // project-wiki command
 import { MCP } from "../mcp"
 import { getCommands } from "../plugin/tdd"
 
@@ -55,6 +56,7 @@ export namespace Command {
     INIT: "init",
     REVIEW: "review",
     TEST: "test",
+    PROJECT_WIKI: "project-wiki",
   } as const
 
   const state = Instance.state(async () => {
@@ -77,6 +79,14 @@ export namespace Command {
         },
         subtask: true,
         hints: hints(PROMPT_REVIEW),
+      },
+      [Default.PROJECT_WIKI]: {
+        name: Default.PROJECT_WIKI,
+        description: "generate comprehensive project wiki documentation",
+        get template() {
+          return PROMPT_PROJECT_WIKI.replace(/\$\{path\}/g, Instance.worktree)
+        },
+        hints: hints(PROMPT_PROJECT_WIKI),
       },
     }
 

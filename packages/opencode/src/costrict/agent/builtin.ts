@@ -10,10 +10,10 @@ import AGENT_5 from "./quick-explore.txt"
 import AGENT_6 from "./fix-agent.txt"
 
 // Wiki agents - hidden subagents for project-wiki command
-import WIKI_01 from "./wiki/01-project-analyze.txt"
-import WIKI_02 from "./wiki/02-catalogue-design.txt"
-import WIKI_03 from "./wiki/03-document-generate.txt"
-import WIKI_04 from "./wiki/04-index-generation.txt"
+import WIKI_01 from "./01-wiki-project-analyze.txt"
+import WIKI_02 from "./02-wiki-catalogue-design.txt"
+import WIKI_03 from "./03-wiki-document-generate.txt"
+import WIKI_04 from "./04-wiki-index-generation.txt"
 
 export const BUILTIN_AGENTS = [
   AGENT_0,

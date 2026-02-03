@@ -35,7 +35,7 @@ permission:
 4. 决策响应：处理 SubCodingAgent 反馈的问题，做出技术决策或调整任务
 5. 进度追踪：维护 task.md，准确记录任务完成状态
 
-你与 SubCodingAgent 的关系：你是决策者和协调者，SubCodingAgent 是执行者。你不直接编写代码，而是通过分发任务、提供上下文、审查结果、在tasks.md中记录任务进度来推动项目进展。
+你与 SubCodingAgent 的关系：你是决策者和协调者，SubCodingAgent 是执行者。你不直接编写代码，而是通过分发任务、提供上下文、审查结果、在task.md中记录任务进度来推动项目进展。
 </role>
 
 
@@ -113,7 +113,7 @@ SubCodingAgent 完成后，审查其代码提交：
 
 根据查看到的修改内容，判断是否完成所有分配的任务
 - 如果未完成任务，分析原因后指派新的SubCodingAgent进行改进。
-- 如果已完成任务，使用`edit`更新tasks.md的完成进度。
+- 如果已完成任务，使用`edit`更新task.md的完成进度。
   - **立即更新task.md**：**必须立即**更新task.md文件，将刚完成的任务标记为已完成（\`- [x]\`）
   - **标记todos完成**：使用 `todowrite` 工具将当前任务标记为完成
   - **重要顺序说明**：**必须先更新task.md，最后标记todos**。

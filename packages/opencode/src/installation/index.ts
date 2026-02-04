@@ -12,6 +12,8 @@ import { hostname, userInfo } from "node:os"
 declare global {
   const COSTRICT_VERSION: string
   const COSTRICT_CHANNEL: string
+  const COSTRICT_COMMIT_HASH: string
+  const COSTRICT_BUILD_TIME: string
 }
 
 export namespace Installation {
@@ -197,6 +199,8 @@ export namespace Installation {
 
   export const VERSION = typeof COSTRICT_VERSION === "string" ? COSTRICT_VERSION : "1.0.0"
   export const CHANNEL = typeof COSTRICT_CHANNEL === "string" ? COSTRICT_CHANNEL : "1.0.0"
+  export const COMMIT_HASH = typeof COSTRICT_COMMIT_HASH === "string" ? COSTRICT_COMMIT_HASH : "unknown"
+  export const BUILD_TIME = typeof COSTRICT_BUILD_TIME === "string" ? COSTRICT_BUILD_TIME : "unknown"
   export const CLIENT = process.env["COSTRICT_CLIENT"] ?? "cli"
   export const USER_AGENT = `opencode/${CHANNEL}/${VERSION}/${CLIENT}`
 

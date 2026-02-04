@@ -46,6 +46,24 @@ const VERSION = await (async () => {
   return `${major}.${minor}.${patch + 1}`
 })()
 
+const COMMIT_HASH = await (async () => {
+  try {
+    return await $`git rev-parse --short HEAD`.text().then((x) => x.trim())
+  } catch {
+    return "unknown"
+  }
+})()
+
+const BUILD_TIME = new Date().toLocaleString("zh-CN", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+})
+
 const team = [
   "actions-user",
   "opencode",
@@ -75,6 +93,12 @@ export const Script = {
   },
   get team() {
     return team
+  },
+  get commitHash() {
+    return COMMIT_HASH
+  },
+  get buildTime() {
+    return BUILD_TIME
   },
 }
 console.log(`opencode script`, JSON.stringify(Script, null, 2))

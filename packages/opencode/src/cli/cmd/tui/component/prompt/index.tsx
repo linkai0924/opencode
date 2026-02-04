@@ -74,6 +74,7 @@ export function Prompt(props: PromptProps) {
   const renderer = useRenderer()
   const { theme, syntax } = useTheme()
   const kv = useKV()
+  const yolo = createMemo(() => kv.get("yolo_mode", false))
 
   function promptModelWarning() {
     toast.show({
@@ -1108,6 +1109,11 @@ export function Prompt(props: PromptProps) {
                   <Show when={local.model.variant.list().length > 0}>
                     <text fg={theme.text}>
                       {keybind.print("variant_cycle")} <span style={{ fg: theme.textMuted }}>variants</span>
+                    </text>
+                  </Show>
+                  <Show when={yolo()}>
+                    <text fg={theme.text}>
+                      {keybind.print("yolo_mode")} <span style={{ fg: theme.warning }}>YOLO</span>
                     </text>
                   </Show>
                   <text fg={theme.text}>

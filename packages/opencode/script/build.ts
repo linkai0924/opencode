@@ -162,6 +162,8 @@ for (const item of targets) {
     entrypoints: ["./src/index.ts", parserWorker, workerPath, callGraphWorkerPath, fileImportanceWorkerPath],
     define: {
       COSTRICT_VERSION: `'${Script.version}'`,
+      COSTRICT_COMMIT_HASH: `'${Script.commitHash}'`,
+      COSTRICT_BUILD_TIME: `'${Script.buildTime}'`,
       OTUI_TREE_SITTER_WORKER_PATH: bunfsRoot + workerRelativePath,
       COSTRICT_WORKER_PATH: workerPath,
       COSTRICT_CALL_GRAPH_WORKER_PATH: callGraphWorkerPath,

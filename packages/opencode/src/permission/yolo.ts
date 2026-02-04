@@ -3,6 +3,8 @@ import { BusEvent } from "@/bus/bus-event"
 import { Bus } from "@/bus"
 import { Instance } from "@/project/instance"
 import { TuiEvent } from "@/cli/cmd/tui/event"
+import { Global } from "@/global"
+import path from "path"
 
 export namespace YoloMode {
   const Event = {
@@ -28,7 +30,15 @@ export namespace YoloMode {
     Bus.publish(Event.Toggled, { enabled })
   }
 
-  export function init() {
+  export async function init() {
+    const kvFile = Bun.file(path.join(Global.Path.state, "kv.json"))
+    try {
+      const kv = await kvFile.json()
+      if (kv.yolo_mode !== undefined) {
+        setEnabled(kv.yolo_mode)
+      }
+    } catch {}
+
     Bus.subscribe(TuiEvent.CommandExecute, (evt) => {
       if (evt.properties.command === "yolo.toggle") {
         toggle()

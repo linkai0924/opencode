@@ -514,6 +514,16 @@ export function Session() {
       },
     },
     {
+      title: kv.get("yolo_mode", false) ? "Disable YOLO mode" : "Enable YOLO mode",
+      value: "session.yolo.toggle",
+      keybind: "yolo_mode",
+      category: "Session",
+      onSelect: async (dialog) => {
+        await sdk.client.tui.executeCommand({ command: "yolo_toggle" })
+        dialog.clear()
+      },
+    },
+    {
       title: conceal() ? "Disable code concealment" : "Enable code concealment",
       value: "session.toggle.conceal",
       keybind: "messages_toggle_conceal" as any,

@@ -698,6 +698,7 @@ export type EventTuiCommandExecute = {
       | "prompt.clear"
       | "prompt.submit"
       | "agent.cycle"
+      | "yolo.toggle"
       | string
   }
 }
@@ -722,6 +723,13 @@ export type EventTuiSessionSelect = {
      * Session ID to navigate to
      */
     sessionID: string
+  }
+}
+
+export type EventYoloToggled = {
+  type: "yolo.toggled"
+  properties: {
+    enabled: boolean
   }
 }
 
@@ -918,6 +926,7 @@ export type Event =
   | EventTuiCommandExecute
   | EventTuiToastShow
   | EventTuiSessionSelect
+  | EventYoloToggled
   | EventMcpToolsChanged
   | EventMcpBrowserOpenFailed
   | EventCommandExecuted
@@ -959,6 +968,10 @@ export type KeybindsConfig = {
    * List available themes
    */
   theme_list?: string
+  /**
+   * Toggle YOLO mode
+   */
+  yolo_mode?: string
   /**
    * Toggle sidebar
    */

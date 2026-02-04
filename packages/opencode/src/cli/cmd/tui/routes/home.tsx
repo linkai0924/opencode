@@ -14,6 +14,7 @@ import { usePromptRef } from "../context/prompt"
 import { Installation } from "@/installation"
 import { useKV } from "../context/kv"
 import { useCommandDialog } from "../component/dialog-command"
+import { useSDK } from "../context/sdk"
 
 // TODO: what is the best way to do this?
 let once = false
@@ -25,6 +26,7 @@ export function Home() {
   const route = useRouteData("home")
   const promptRef = usePromptRef()
   const command = useCommandDialog()
+  const sdk = useSDK()
   const mcp = createMemo(() => Object.keys(sync.data.mcp).length > 0)
   const mcpError = createMemo(() => {
     return Object.values(sync.data.mcp).some((x) => x.status === "failed")
@@ -50,6 +52,16 @@ export function Home() {
       category: "System",
       onSelect: (dialog) => {
         kv.set("tips_hidden", !tipsHidden())
+        dialog.clear()
+      },
+    },
+    {
+      title: kv.get("yolo_mode", false) ? "Disable YOLO mode" : "Enable YOLO mode",
+      value: "session.yolo.toggle",
+      keybind: "yolo_mode",
+      category: "Session",
+      onSelect: async (dialog) => {
+        await sdk.client.tui.executeCommand({ command: "yolo_toggle" })
         dialog.clear()
       },
     },

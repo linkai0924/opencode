@@ -7,6 +7,7 @@ import { Storage } from "@/storage/storage"
 import { fn } from "@/util/fn"
 import { Log } from "@/util/log"
 import { Wildcard } from "@/util/wildcard"
+import { YoloMode } from "@/permission/yolo"
 import os from "os"
 import z from "zod"
 
@@ -229,6 +230,9 @@ export namespace PermissionNext {
   )
 
   export function evaluate(permission: string, pattern: string, ...rulesets: Ruleset[]): Rule {
+    if (YoloMode.isEnabled()) {
+      return { action: "allow", permission, pattern }
+    }
     const merged = merge(...rulesets)
     log.info("evaluate", { permission, pattern, ruleset: merged })
     const match = merged.findLast(

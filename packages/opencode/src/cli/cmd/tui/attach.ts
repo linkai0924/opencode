@@ -11,6 +11,16 @@ export const AttachCommand = cmd({
         describe: "http://localhost:4096",
         demandOption: true,
       })
+      .option("plain", {
+        type: "boolean",
+        describe: "disable TUI (plain text output mode)",
+        default: false,
+      })
+      .option("no-tui", {
+        type: "boolean",
+        describe: "alias for --plain",
+        default: false,
+      })
       .option("dir", {
         type: "string",
         description: "directory to run in",
@@ -26,6 +36,11 @@ export const AttachCommand = cmd({
         describe: "basic auth password (defaults to OPENCODE_SERVER_PASSWORD)",
       }),
   handler: async (args) => {
+    // Handle --plain / --no-tui flags
+    if (args.plain || args.noTui) {
+      process.env.OPENCODE_NO_TUI = "1"
+    }
+
     const directory = (() => {
       if (!args.dir) return undefined
       try {

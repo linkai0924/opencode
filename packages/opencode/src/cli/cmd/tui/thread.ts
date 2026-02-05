@@ -49,6 +49,16 @@ export const TuiThreadCommand = cmd({
         type: "string",
         describe: "path to start opencode in",
       })
+      .option("plain", {
+        type: "boolean",
+        describe: "disable TUI (plain text output mode)",
+        default: false,
+      })
+      .option("no-tui", {
+        type: "boolean",
+        describe: "alias for --plain",
+        default: false,
+      })
       .option("model", {
         type: "string",
         alias: ["m"],
@@ -73,6 +83,11 @@ export const TuiThreadCommand = cmd({
         describe: "agent to use",
       }),
   handler: async (args) => {
+    // Handle --plain / --no-tui flags
+    if (args.plain || args.noTui) {
+      process.env.OPENCODE_NO_TUI = "1"
+    }
+
     // Resolve relative paths against PWD to preserve behavior when using --cwd flag
     const baseCwd = process.env.PWD ?? process.cwd()
     const cwd = args.project ? path.resolve(baseCwd, args.project) : process.cwd()

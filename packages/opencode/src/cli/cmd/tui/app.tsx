@@ -115,18 +115,17 @@ export function tui(input: {
 
   // Check if TUI is available (Windows-safe check)
   if (!TTYCheck.canUseTUI()) {
-    console.error("Error: TUI is not available in this terminal environment.")
-    console.error("")
-    console.error("Possible reasons:")
-    console.error("  - Not running in a TTY (check: process.stdout.isTTY)")
-    console.error("  - NO_COLOR=1 or OPENCODE_NO_TUI=1 is set")
-    console.error("  - On Windows: not in Windows Terminal, VSCode, or ConEmu")
-    console.error("")
-    console.error("Solutions:")
-    console.error("  - Use 'cs run' for non-interactive mode")
-    console.error("  - Run in Windows Terminal: https://aka.ms/terminal")
-    console.error("  - Set OPENCODE_DEBUG_TTY=1 for diagnostics")
-    process.exit(1)
+    console.debug("Error: TUI is not available in this terminal environment.")
+    console.debug("")
+    console.debug("Possible reasons:")
+    console.debug("  - Not running in a TTY (check: process.stdout.isTTY)")
+    console.debug("  - NO_COLOR=1 or OPENCODE_NO_TUI=1 is set")
+    console.debug("  - On Windows: not in Windows Terminal, VSCode, or ConEmu")
+    console.debug("")
+    console.debug("Solutions:")
+    console.debug("  - Use 'cs run' for non-interactive mode")
+    console.debug("  - Run in Windows Terminal: https://aka.ms/terminal")
+    console.debug("  - Set OPENCODE_DEBUG_TTY=1 for diagnostics")
   }
 
   // promise to prevent immediate exit

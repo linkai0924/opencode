@@ -1,8 +1,9 @@
 import { render, useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid"
 import { Clipboard } from "@tui/util/clipboard"
 import { TextAttributes } from "@opentui/core"
+import { TTYCheck } from "@tui/util/tty-check"
 import { RouteProvider, useRoute } from "@tui/context/route"
-import { Switch, Match, createEffect, untrack, ErrorBoundary, createSignal, onMount, batch, Show, on } from "solid-js"
+import { Switch, Match, createEffect, untrack, ErrorBoundary, createSignal, onMount, batch, on } from "solid-js"
 import { Installation } from "@/installation"
 import { Flag } from "@/flag/flag"
 import { DialogProvider, useDialog } from "@tui/ui/dialog"
@@ -109,6 +110,25 @@ export function tui(input: {
   events?: EventSource
   onExit?: () => Promise<void>
 }) {
+  // Output diagnostics if debug mode is enabled
+  TTYCheck.logDiagnostics()
+
+  // Check if TUI is available (Windows-safe check)
+  if (!TTYCheck.canUseTUI()) {
+    console.error("Error: TUI is not available in this terminal environment.")
+    console.error("")
+    console.error("Possible reasons:")
+    console.error("  - Not running in a TTY (check: process.stdout.isTTY)")
+    console.error("  - NO_COLOR=1 or OPENCODE_NO_TUI=1 is set")
+    console.error("  - On Windows: not in Windows Terminal, VSCode, or ConEmu")
+    console.error("")
+    console.error("Solutions:")
+    console.error("  - Use 'cs run' for non-interactive mode")
+    console.error("  - Run in Windows Terminal: https://aka.ms/terminal")
+    console.error("  - Set OPENCODE_DEBUG_TTY=1 for diagnostics")
+    process.exit(1)
+  }
+
   // promise to prevent immediate exit
   return new Promise<void>(async (resolve) => {
     const mode = await getTerminalBackgroundColor()
@@ -117,7 +137,20 @@ export function tui(input: {
       resolve()
     }
 
-    render(
+    // Runtime health check and circuit breaker
+    let tuiDisabled = false
+    const healthCheck = setInterval(() => {
+      if (tuiDisabled) return
+      if (!TTYCheck.isTTYHealthy()) {
+        console.warn("\n[Warning] TTY health check failed, disabling TUI...")
+        tuiDisabled = true
+        clearInterval(healthCheck)
+        onExit()
+      }
+    }, 5000) // Check every 5 seconds
+
+    try {
+      render(
       () => {
         return (
           <ErrorBoundary
@@ -181,6 +214,17 @@ export function tui(input: {
         },
       },
     )
+    } catch (error) {
+      // Catch render exceptions, permanently downgrade
+      console.error("\n[Error] TUI render failed:", error)
+      console.error("Falling back to plain output mode. Please report this issue.")
+      tuiDisabled = true
+      clearInterval(healthCheck)
+      await onExit()
+      process.exit(1)
+    } finally {
+      clearInterval(healthCheck)
+    }
   })
 }
 

@@ -46,7 +46,9 @@ export namespace Plugin {
     }
 
     const plugins = [...(config.plugin ?? [])]
-    if (!Flag.COSTRICT_DISABLE_DEFAULT_PLUGINS) {
+    // Default behavior: do NOT load built-in plugins (opencode-anthropic-auth, gitlab-auth)
+    // Only load them when explicitly enabled via environment variable
+    if (Flag.COSTRICT_ENABLE_DEFAULT_PLUGINS || Flag.OPENCODE_ENABLE_DEFAULT_PLUGINS) {
       plugins.push(...BUILTIN)
     }
 

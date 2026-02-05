@@ -237,9 +237,13 @@ export namespace Config {
         }
       }
 
-      const shouldInstall = await needsInstall(dir)
-      if (shouldInstall) {
-        await installDependencies(dir)
+      // Only install dependencies when explicitly enabled via environment variable
+      // Default behavior is to skip installation
+      if (Flag.COSTRICT_ENABLE_INSTALL_DEPENDENCIES || Flag.OPENCODE_ENABLE_INSTALL_DEPENDENCIES) {
+        const shouldInstall = await needsInstall(dir)
+        if (shouldInstall) {
+          await installDependencies(dir)
+        }
       }
 
       result.command = mergeDeep(result.command ?? {}, await loadCommand(dir))
@@ -764,7 +768,7 @@ export namespace Config {
       permission: Permission.optional(),
     })
     .catchall(z.any())
-    .transform((agent, ctx) => {
+    .transform((agent, _ctx) => {
       const knownKeys = new Set([
         "name",
         "model",

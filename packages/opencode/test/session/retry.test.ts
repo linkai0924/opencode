@@ -160,6 +160,24 @@ describe("session.retry.retryable", () => {
     const retryable = SessionRetry.retryable(error)
     expect(retryable).toBeUndefined()
   })
+
+  test("retries on costrict official limit errors", () => {
+    const message = "The number of reguests to the model or the number of tokens has reached the official limit."
+    const error = MessageV2.fromError(message, { providerID: "costrict" }) as MessageV2.APIError
+
+    expect(error.data.statusCode).toBe(429)
+    expect(error.data.isRetryable).toBe(true)
+    expect(SessionRetry.retryable(error, { providerID: "costrict" })).toBe("Too Many Requests")
+  })
+
+  test("retries on costrict limit wording variants", () => {
+    const message = "Reached official limit."
+    const error = MessageV2.fromError(message, { providerID: "costrict" }) as MessageV2.APIError
+
+    expect(error.data.statusCode).toBe(429)
+    expect(error.data.isRetryable).toBe(true)
+    expect(SessionRetry.retryable(error, { providerID: "costrict" })).toBe("Too Many Requests")
+  })
 })
 
 describe("session.message-v2.fromError", () => {

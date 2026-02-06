@@ -55,8 +55,8 @@ export namespace Snapshot {
       return lastCheckResult
     }
 
-    const snapshotDir = gitdir()
-    const result = await Disk.checkDiskSpace(snapshotDir, config.minFreeSpace ?? DEFAULT_MIN_FREE_SPACE)
+    // 检查 costrict 数据目录,该目录肯定存在,避免检查不存在的 snapshot 子目录
+    const result = await Disk.checkDiskSpace(Global.Path.data, config.minFreeSpace ?? DEFAULT_MIN_FREE_SPACE)
 
     lastCheckTime = now
     lastCheckResult = result.hasEnoughSpace

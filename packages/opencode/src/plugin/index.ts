@@ -13,18 +13,20 @@ import { NamedError } from "@opencode-ai/util/error"
 import { CopilotAuthPlugin } from "./copilot"
 import { CoStrictAuthPlugin } from "../costrict/plugin"
 import { TDDPlugin } from "./tdd"
+import { gitlabAuthPlugin as GitlabAuthPlugin } from "@gitlab/opencode-gitlab-auth"
 
 export namespace Plugin {
   const log = Log.create({ service: "plugin" })
 
-  const BUILTIN = ["opencode-anthropic-auth@0.0.13", "@gitlab/opencode-gitlab-auth@1.3.2"]
+  const BUILTIN = ["opencode-anthropic-auth@0.0.13"]
 
   // Built-in plugins that are directly imported (not installed from npm)
-  const INTERNAL_PLUGINS: PluginInstance[] = [CodexAuthPlugin, CopilotAuthPlugin, CoStrictAuthPlugin, TDDPlugin]
+  const INTERNAL_PLUGINS: PluginInstance[] = [CodexAuthPlugin, CopilotAuthPlugin, CoStrictAuthPlugin, TDDPlugin, GitlabAuthPlugin]
 
   const state = Instance.state(async () => {
     const client = createOpencodeClient({
       baseUrl: "http://localhost:4096",
+      directory: Instance.directory,
       // @ts-ignore - fetch type incompatibility
       fetch: async (...args) => Server.App().fetch(...args),
     })
@@ -46,6 +48,7 @@ export namespace Plugin {
     }
 
     const plugins = [...(config.plugin ?? [])]
+    if (plugins.length) await Config.waitForDependencies()
     // Default behavior: do NOT load built-in plugins (opencode-anthropic-auth, gitlab-auth)
     // Only load them when explicitly enabled via environment variable
     if (Flag.COSTRICT_ENABLE_DEFAULT_PLUGINS || Flag.OPENCODE_ENABLE_DEFAULT_PLUGINS) {

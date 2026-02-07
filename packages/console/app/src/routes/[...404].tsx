@@ -3,8 +3,12 @@ import { Title } from "@solidjs/meta"
 import { HttpStatusCode } from "@solidjs/start"
 import logoLight from "../asset/logo-ornate-light.svg"
 import logoDark from "../asset/logo-ornate-dark.svg"
+import { useI18n } from "~/context/i18n"
+import { useLanguage } from "~/context/language"
 
 export default function NotFound() {
+  const i18n = useI18n()
+  const language = useLanguage()
   return (
     <main data-page="not-found">
       <Title>Not Found | costrict</Title>
@@ -15,21 +19,21 @@ export default function NotFound() {
             <img data-slot="logo light" src={logoLight} alt="costrict logo light" />
             <img data-slot="logo dark" src={logoDark} alt="costrict logo dark" />
           </a>
-          <h1 data-slot="title">404 - Page Not Found</h1>
+          <h1 data-slot="title">{i18n.t("notFound.heading")}</h1>
         </section>
 
         <section data-component="actions">
           <div data-slot="action">
-            <a href="/">Home</a>
+            <a href={language.route("/")}>{i18n.t("notFound.home")}</a>
           </div>
           <div data-slot="action">
-            <a href="/docs">Docs</a>
+            <a href={language.route("/docs")}>{i18n.t("notFound.docs")}</a>
           </div>
           <div data-slot="action">
             <a href="https://github.com/zgsm-ai/costrict-cli">GitHub</a>
           </div>
           <div data-slot="action">
-            <a href="/discord">Discord</a>
+            <a href={language.route("/discord")}>{i18n.t("notFound.discord")}</a>
           </div>
         </section>
       </div>

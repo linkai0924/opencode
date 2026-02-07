@@ -1,6 +1,6 @@
 import "./index.css"
 import { createAsync, query, redirect } from "@solidjs/router"
-import { Title, Meta } from "@solidjs/meta"
+import { Title, Meta, Link } from "@solidjs/meta"
 //import { HttpHeader } from "@solidjs/start"
 import zenLogoLight from "../../asset/zen-ornate-light.svg"
 import zenLogoDark from "../../asset/zen-ornate-dark.svg"
@@ -21,6 +21,7 @@ import { IconGemini, IconMiniMax, IconZai } from "~/component/icon"
 import { useI18n } from "~/context/i18n"
 import { useLanguage } from "~/context/language"
 import { LocaleLinks } from "~/component/locale-links"
+import { config } from "~/config"
 
 const checkLoggedIn = query(async () => {
   "use server"

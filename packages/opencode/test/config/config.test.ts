@@ -191,10 +191,13 @@ test("handles file inclusion with replacement tokens", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Bun.write(path.join(dir, "included.md"), "const out = await Bun.$`echo hi`")
-      await writeConfig(dir, {
-        $schema: "https://opencode.ai/config.json",
-        theme: "{file:included.md}",
-      })
+      await Bun.write(
+        path.join(dir, "opencode.json"),
+        JSON.stringify({
+          $schema: "https://opencode.ai/config.json",
+          theme: "{file:included.md}",
+        }),
+      )
     },
   })
   await Instance.provide({

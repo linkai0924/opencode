@@ -52,13 +52,8 @@ export function NewUserSection() {
             <p>{i18n.t("workspace.newUser.feature.quality.body")}</p>
           </div>
           <div data-slot="feature">
-<<<<<<< HEAD
-            <h3>No Lock-in</h3>
-            <p>Use Zen with any coding agent, and continue using other providers with costrict whenever you want.</p>
-=======
             <h3>{i18n.t("workspace.newUser.feature.lockin.title")}</h3>
             <p>{i18n.t("workspace.newUser.feature.lockin.body")}</p>
->>>>>>> upstream/dev
           </div>
         </div>
 
@@ -97,12 +92,6 @@ export function NewUserSection() {
           <ol>
             <li>{i18n.t("workspace.newUser.step.enableBilling")}</li>
             <li>
-<<<<<<< HEAD
-              Run <code>costrict auth login</code> and select costrict </li>
-            <li>Paste your API key</li>
-            <li>
-              Start costrict and run <code>/models</code> to select a model
-=======
               {i18n.t("workspace.newUser.step.login.before")} <code>opencode auth login</code>{" "}
               {i18n.t("workspace.newUser.step.login.after")}
             </li>
@@ -110,7 +99,6 @@ export function NewUserSection() {
             <li>
               {i18n.t("workspace.newUser.step.models.before")} <code>/models</code>{" "}
               {i18n.t("workspace.newUser.step.models.after")}
->>>>>>> upstream/dev
             </li>
           </ol>
         </div>

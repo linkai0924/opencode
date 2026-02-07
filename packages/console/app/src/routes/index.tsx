@@ -1,5 +1,5 @@
 import "./index.css"
-import { Title, Meta } from "@solidjs/meta"
+import { Title, Meta, Link } from "@solidjs/meta"
 //import { HttpHeader } from "@solidjs/start"
 import video from "../asset/lander/opencode-min.mp4"
 import videoPoster from "../asset/lander/opencode-poster.png"
@@ -173,13 +173,8 @@ export default function Home() {
 
           <section data-component="what">
             <div data-slot="section-title">
-<<<<<<< HEAD
-              <h3>What is CoStrict?</h3>
-              <p>CoStrict is an open source agent that helps you write code in your terminal, IDE, or desktop.</p>
-=======
               <h3>{i18n.t("home.what.title")}</h3>
               <p>{i18n.t("home.what.body")}</p>
->>>>>>> upstream/dev
             </div>
             <ul>
               <li>
@@ -243,14 +238,6 @@ export default function Home() {
               <h3>{i18n.t("home.growth.title")}</h3>
               <div>
                 <span>[*]</span>
-<<<<<<< HEAD
-                <p>
-                  With over <strong>{config.github.starsFormatted.full}</strong> GitHub stars,{" "}
-                  <strong>{config.stats.contributors}</strong> contributors, and over{" "}
-                  <strong>{config.stats.commits}</strong> commits, CoStrict is used and trusted by over{" "}
-                  <strong>{config.stats.monthlyUsers}</strong> developers every month.
-                </p>
-=======
                 <p
                   innerHTML={i18n.t("home.growth.body", {
                     stars: config.github.starsFormatted.full,
@@ -259,7 +246,6 @@ export default function Home() {
                     monthlyUsers: config.stats.monthlyUsers,
                   })}
                 />
->>>>>>> upstream/dev
               </div>
 
               <div data-component="growth-stats">
@@ -673,13 +659,8 @@ export default function Home() {
                 <span>[*]</span>
 
                 <p>
-<<<<<<< HEAD
-                  CoStrict does not store any of your code or context data, so that it can operate in privacy sensitive
-                  environments. Learn more about <a href="/docs/enterprise/ ">privacy</a>.
-=======
                   {i18n.t("home.privacy.body")} {i18n.t("home.privacy.learnMore")}{" "}
                   <a href={language.route("/docs/enterprise/")}>{i18n.t("home.privacy.link")}</a>.
->>>>>>> upstream/dev
                 </p>
               </div>
             </div>
@@ -691,26 +672,6 @@ export default function Home() {
             </div>
             <ul>
               <li>
-<<<<<<< HEAD
-                <Faq question="What is CoStrict?">
-                  CoStrict is an open source agent that helps you write and run code with any AI model. It's available
-                  as a terminal-based interface, desktop app, or IDE extension.
-                </Faq>
-              </li>
-              <li>
-                <Faq question="How do I use CoStrict?">
-                  The easiest way to get started is to read the <a href="/docs">intro</a>.
-                </Faq>
-              </li>
-              <li>
-                <Faq question="Do I need extra AI subscriptions to use CoStrict?">
-                  Not necessarily, CoStrict comes with a set of free models that you can use without creating an
-                  account. Aside from these, you can use any of the popular coding models by creating a{" "}
-                  <A href="/zen">Zen</A> account. While we encourage users to use Zen, CoStrict also works with all
-                  popular providers such as OpenAI, Anthropic, xAI etc. You can even connect your{" "}
-                  <a href="/docs/providers/#lm-studio" target="_blank">
-                    local models
-=======
                 <Faq question={i18n.t("home.faq.q1")}>{i18n.t("home.faq.a1")}</Faq>
               </li>
               <li>
@@ -725,42 +686,11 @@ export default function Home() {
                   {i18n.t("home.faq.a3.p2.afterZen")} {i18n.t("home.faq.a3.p3")} {i18n.t("home.faq.a3.p4.beforeLocal")}{" "}
                   <a href={language.route("/docs/providers/#lm-studio")} target="_blank">
                     {i18n.t("home.faq.a3.p4.localLink")}
->>>>>>> upstream/dev
                   </a>
                   .
                 </Faq>
               </li>
               <li>
-<<<<<<< HEAD
-                <Faq question="Can I use my existing AI subscriptions with CoStrict?">
-                  Yes, CoStrict supports subscription plans from all major providers. You can use your Claude Pro/Max,
-                  ChatGPT Plus/Pro, or GitHub Copilot subscriptions. <a href="/docs/providers/#directory">Learn more</a>
-                  .
-                </Faq>
-              </li>
-              <li>
-                <Faq question="Can I only use CoStrict in the terminal?">
-                  Not anymore! CoStrict is now available as an app for your <a href="/download">desktop</a> and{" "}
-                  <a href="/docs/web">web</a>!
-                </Faq>
-              </li>
-              <li>
-                <Faq question="How much does CoStrict cost?">
-                  CoStrict is 100% free to use. It also comes with a set of free models. There might be additional costs
-                  if you connect any other provider.
-                </Faq>
-              </li>
-              <li>
-                <Faq question="What about data and privacy?">
-                  Your data and information is only stored when you use our free models or create sharable links. Learn
-                  more about <a href="/docs/zen/#privacy">our models</a> and{" "}
-                  <a href="/docs/share/#privacy">share pages</a>.
-                </Faq>
-              </li>
-              <li>
-                <Faq question="Is CoStrict open source?">
-                  Yes, CoStrict is fully open source. The source code is public on{" "}
-=======
                 <Faq question={i18n.t("home.faq.q4")}>
                   {i18n.t("home.faq.a4.p1")}{" "}
                   <a href={language.route("/docs/providers/#directory")}>{i18n.t("common.learnMore")}</a>.
@@ -787,7 +717,6 @@ export default function Home() {
               <li>
                 <Faq question={i18n.t("home.faq.q8")}>
                   {i18n.t("home.faq.a8.p1")}{" "}
->>>>>>> upstream/dev
                   <a href={config.github.repoUrl} target="_blank">
                     {i18n.t("nav.github")}
                   </a>{" "}
@@ -803,17 +732,8 @@ export default function Home() {
 
           <section data-component="zen-cta">
             <div data-slot="zen-cta-copy">
-<<<<<<< HEAD
-              <strong>Access reliable optimized models for coding agents</strong>
-              <p>
-                Zen gives you access to a handpicked set of AI models that CoStrict has tested and benchmarked
-                specifically for coding agents. No need to worry about inconsistent performance and quality across
-                providers, use validated models that work.
-              </p>
-=======
               <strong>{i18n.t("home.zenCta.title")}</strong>
               <p>{i18n.t("home.zenCta.body")}</p>
->>>>>>> upstream/dev
               <div data-slot="model-logos">
                 <div>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

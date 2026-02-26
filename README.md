@@ -27,11 +27,14 @@
   <a href="README.ja.md">日本語</a> |
   <a href="README.pl.md">Polski</a> |
   <a href="README.ru.md">Русский</a> |
+  <a href="README.bs.md">Bosanski</a> |
   <a href="README.ar.md">العربية</a> |
   <a href="README.no.md">Norsk</a> |
   <a href="README.br.md">Português (Brasil)</a> |
   <a href="README.th.md">ไทย</a> |
-  <a href="README.tr.md">Türkçe</a>
+  <a href="README.tr.md">Türkçe</a> |
+  <a href="README.uk.md">Українська</a> |
+  <a href="README.bn.md">বাংলা</a>
 </p>
 
 [![OpenCode Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://opencode.ai)
@@ -46,13 +49,14 @@ curl -fsSL https://costrict.ai/install | bash
 
 # Package managers
 npm i -g costrict-ai@latest        # or bun/pnpm/yarn
-scoop bucket add extras; scoop install extras/costrict-cli  # Windows
-choco install costrict-cli             # Windows
-brew install anomalyco/tap/costrict-cli # macOS and Linux (recommended, always up to date)
-brew install costrict-cli              # macOS and Linux (official brew formula, updated less)
-paru -S opencode-bin               # Arch Linux
-mise use -g costrict-cli               # Any OS
-nix run nixpkgs#costrict-cli           # or github:anomalyco/costrict-cli for latest dev branch
+scoop install costrict             # Windows
+choco install costrict             # Windows
+brew install anomalyco/tap/costrict # macOS and Linux (recommended, always up to date)
+brew install costrict              # macOS and Linux (official brew formula, updated less)
+sudo pacman -S costrict            # Arch Linux (Stable)
+paru -S costrict-bin               # Arch Linux (Latest from AUR)
+mise use -g costrict               # Any OS
+nix run nixpkgs#costrict           # or github:anomalyco/costrict for latest dev branch
 ```
 
 > [!TIP]

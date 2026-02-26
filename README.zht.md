@@ -31,7 +31,9 @@
   <a href="README.no.md">Norsk</a> |
   <a href="README.br.md">Português (Brasil)</a> |
   <a href="README.th.md">ไทย</a> |
-  <a href="README.tr.md">Türkçe</a>
+  <a href="README.tr.md">Türkçe</a> |
+  <a href="README.uk.md">Українська</a> |
+  <a href="README.bn.md">বাংলা</a>
 </p>
 
 [![OpenCode Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://opencode.ai)
@@ -45,12 +47,13 @@
 curl -fsSL https://costrict.ai/install | bash
 
 # 套件管理員
-npm i -g costrict-ai@latest        # 也可使用 bun/pnpm/yarn
-scoop bucket add extras; scoop install extras/costrict-cli  # Windows
-choco install costrict-cli             # Windows
-brew install anomalyco/tap/costrict-cli # macOS 與 Linux（推薦，始終保持最新）
-brew install costrict-cli              # macOS 與 Linux（官方 brew formula，更新頻率較低）
-paru -S opencode-bin               # Arch Linux
+npm i -g opencode-ai@latest        # 也可使用 bun/pnpm/yarn
+scoop install opencode             # Windows
+choco install opencode             # Windows
+brew install anomalyco/tap/opencode # macOS 與 Linux（推薦，始終保持最新）
+brew install opencode              # macOS 與 Linux（官方 brew formula，更新頻率較低）
+sudo pacman -S opencode            # Arch Linux (Stable)
+paru -S opencode-bin               # Arch Linux (Latest from AUR)
 mise use -g opencode               # 任何作業系統
 nix run nixpkgs#opencode           # 或使用 github:anomalyco/opencode 以取得最新開發分支
 ```

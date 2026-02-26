@@ -160,6 +160,15 @@ describe("session.retry.retryable", () => {
     const retryable = SessionRetry.retryable(error)
     expect(retryable).toBeUndefined()
   })
+  
+  test("does not retry context overflow errors", () => {
+    const error = new MessageV2.ContextOverflowError({
+      message: "Input exceeds context window of this model",
+      responseBody: '{"error":{"code":"context_length_exceeded"}}',
+    }).toObject() as ReturnType<NamedError["toObject"]>
+
+    expect(SessionRetry.retryable(error)).toBeUndefined()
+  })
 })
 
 describe("session.message-v2.fromError", () => {

@@ -133,6 +133,7 @@ describe("TDD Plugin", () => {
         tool: "test-tool",
         sessionID: "session-123",
         callID: "call-456",
+        args: "",
       }
 
       const output = {
@@ -153,6 +154,7 @@ describe("TDD Plugin", () => {
         tool: "test-tool",
         sessionID: "session-123",
         callID: "call-456",
+        args: "",
       }
 
       const longString = "a".repeat(200)
@@ -174,6 +176,7 @@ describe("TDD Plugin", () => {
         tool: "test-tool",
         sessionID: "session-123",
         callID: "call-456",
+        args: "",
       }
 
       const objectOutput = { result: "success", data: [1, 2, 3] }

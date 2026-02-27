@@ -290,7 +290,7 @@ export const dict = {
   "dialog.mcp.empty": "No hay MCPs configurados",
 
   "dialog.lsp.empty": "LSPs detectados automáticamente por tipo de archivo",
-  "dialog.plugins.empty": "Plugins configurados en opencode.json",
+  "dialog.plugins.empty": "Plugins configurados en costrict.json",
 
   "mcp.status.connected": "conectado",
   "mcp.status.failed": "fallido",
@@ -431,7 +431,7 @@ export const dict = {
   "toast.session.listFailed.title": "Fallo al cargar sesiones para {{project}}",
 
   "toast.update.title": "Actualización disponible",
-  "toast.update.description": "Una nueva versión de OpenCode ({{version}}) está disponible para instalar.",
+  "toast.update.description": "Una nueva versión de CoStrict ({{version}}) está disponible para instalar.",
   "toast.update.action.installRestart": "Instalar y reiniciar",
   "toast.update.action.notYet": "Todavía no",
 
@@ -442,7 +442,7 @@ export const dict = {
   "error.page.action.checking": "Comprobando...",
   "error.page.action.checkUpdates": "Buscar actualizaciones",
   "error.page.action.updateTo": "Actualizar a {{version}}",
-  "error.page.report.prefix": "Por favor reporta este error al equipo de OpenCode",
+  "error.page.report.prefix": "Por favor reporta este error al equipo de CoStrict",
   "error.page.report.discord": "en Discord",
   "error.page.version": "Versión: {{version}}",
 
@@ -460,8 +460,8 @@ export const dict = {
   "error.chain.responseBody": "Cuerpo de la respuesta:\n{{body}}",
   "error.chain.didYouMean": "¿Quisiste decir: {{suggestions}}",
   "error.chain.modelNotFound": "Modelo no encontrado: {{provider}}/{{model}}",
-  "error.chain.checkConfig": "Comprueba los nombres de proveedor/modelo en tu configuración (opencode.json)",
-  "error.chain.mcpFailed": 'El servidor MCP "{{name}}" falló. Nota, OpenCode no soporta autenticación MCP todavía.',
+  "error.chain.checkConfig": "Comprueba los nombres de proveedor/modelo en tu configuración (costrict.json)",
+  "error.chain.mcpFailed": 'El servidor MCP "{{name}}" falló. Nota, CoStrict no soporta autenticación MCP todavía.',
   "error.chain.providerAuthFailed": "Autenticación de proveedor fallida ({{provider}}): {{message}}",
   "error.chain.providerInitFailed":
     'Fallo al inicializar proveedor "{{provider}}". Comprueba credenciales y configuración.',
@@ -588,7 +588,7 @@ export const dict = {
   "sidebar.project.viewAllSessions": "Ver todas las sesiones",
   "sidebar.project.clearNotifications": "Borrar notificaciones",
 
-  "app.name.desktop": "OpenCode Desktop",
+  "app.name.desktop": "CoStrict Desktop",
 
   "settings.section.desktop": "Escritorio",
   "settings.section.server": "Servidor",
@@ -606,11 +606,11 @@ export const dict = {
   "settings.general.section.display": "Pantalla",
 
   "settings.general.row.language.title": "Idioma",
-  "settings.general.row.language.description": "Cambiar el idioma de visualización para OpenCode",
+  "settings.general.row.language.description": "Cambiar el idioma de visualización para CoStrict",
   "settings.general.row.appearance.title": "Apariencia",
-  "settings.general.row.appearance.description": "Personaliza cómo se ve OpenCode en tu dispositivo",
+  "settings.general.row.appearance.description": "Personaliza cómo se ve CoStrict en tu dispositivo",
   "settings.general.row.theme.title": "Tema",
-  "settings.general.row.theme.description": "Personaliza el tema de OpenCode.",
+  "settings.general.row.theme.description": "Personaliza el tema de CoStrict.",
   "settings.general.row.font.title": "Fuente",
   "settings.general.row.font.description": "Personaliza la fuente monoespaciada usada en bloques de código",
 
@@ -630,13 +630,13 @@ export const dict = {
     'Mostrar ventanas emergentes de "Novedades" después de las actualizaciones',
 
   "settings.updates.row.startup.title": "Buscar actualizaciones al iniciar",
-  "settings.updates.row.startup.description": "Buscar actualizaciones automáticamente cuando se inicia OpenCode",
+  "settings.updates.row.startup.description": "Buscar actualizaciones automáticamente cuando se inicia CoStrict",
   "settings.updates.row.check.title": "Buscar actualizaciones",
   "settings.updates.row.check.description": "Buscar actualizaciones manualmente e instalarlas si hay alguna",
   "settings.updates.action.checkNow": "Buscar ahora",
   "settings.updates.action.checking": "Buscando...",
   "settings.updates.toast.latest.title": "Estás al día",
-  "settings.updates.toast.latest.description": "Estás usando la última versión de OpenCode.",
+  "settings.updates.toast.latest.description": "Estás usando la última versión de CoStrict.",
   "font.option.ibmPlexMono": "IBM Plex Mono",
   "font.option.cascadiaCode": "Cascadia Code",
   "font.option.firaCode": "Fira Code",

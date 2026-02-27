@@ -291,7 +291,7 @@ export const dict = {
   "dialog.mcp.empty": "Nema konfigurisnih MCP-ova",
 
   "dialog.lsp.empty": "LSP-ovi se automatski otkrivaju prema tipu datoteke",
-  "dialog.plugins.empty": "Plugini su konfigurisani u opencode.json",
+  "dialog.plugins.empty": "Plugini su konfigurisani u costrict.json",
 
   "mcp.status.connected": "povezano",
   "mcp.status.failed": "neuspjelo",
@@ -431,7 +431,7 @@ export const dict = {
   "toast.session.listFailed.title": "Neuspjelo učitavanje sesija za {{project}}",
 
   "toast.update.title": "Dostupno ažuriranje",
-  "toast.update.description": "Nova verzija OpenCode-a ({{version}}) je dostupna za instalaciju.",
+  "toast.update.description": "Nova verzija CoStrict-a ({{version}}) je dostupna za instalaciju.",
   "toast.update.action.installRestart": "Instaliraj i restartuj",
   "toast.update.action.notYet": "Ne još",
 
@@ -442,7 +442,7 @@ export const dict = {
   "error.page.action.checking": "Provjera...",
   "error.page.action.checkUpdates": "Provjeri ažuriranja",
   "error.page.action.updateTo": "Ažuriraj na {{version}}",
-  "error.page.report.prefix": "Molimo prijavi ovu grešku OpenCode timu",
+  "error.page.report.prefix": "Molimo prijavi ovu grešku CoStrict timu",
   "error.page.report.discord": "na Discordu",
   "error.page.version": "Verzija: {{version}}",
 
@@ -460,8 +460,8 @@ export const dict = {
   "error.chain.responseBody": "Tijelo odgovora:\n{{body}}",
   "error.chain.didYouMean": "Da li si mislio: {{suggestions}}",
   "error.chain.modelNotFound": "Model nije pronađen: {{provider}}/{{model}}",
-  "error.chain.checkConfig": "Provjeri konfiguraciju (opencode.json) provider/model names",
-  "error.chain.mcpFailed": 'MCP server "{{name}}" nije uspio. Napomena: OpenCode još ne podržava MCP autentifikaciju.',
+  "error.chain.checkConfig": "Provjeri konfiguraciju (costrict.json) provider/model names",
+  "error.chain.mcpFailed": 'MCP server "{{name}}" nije uspio. Napomena: CoStrict još ne podržava MCP autentifikaciju.',
   "error.chain.providerAuthFailed": "Autentifikacija provajdera nije uspjela ({{provider}}): {{message}}",
   "error.chain.providerInitFailed":
     'Neuspjelo inicijalizovanje provajdera "{{provider}}". Provjeri kredencijale i konfiguraciju.',
@@ -585,7 +585,7 @@ export const dict = {
   "sidebar.project.viewAllSessions": "Prikaži sve sesije",
   "sidebar.project.clearNotifications": "Očisti obavijesti",
 
-  "app.name.desktop": "OpenCode Desktop",
+  "app.name.desktop": "CoStrict Desktop",
 
   "settings.section.desktop": "Desktop",
   "settings.section.server": "Server",
@@ -603,11 +603,11 @@ export const dict = {
   "settings.general.section.display": "Prikaz",
 
   "settings.general.row.language.title": "Jezik",
-  "settings.general.row.language.description": "Promijeni jezik prikaza u OpenCode-u",
+  "settings.general.row.language.description": "Promijeni jezik prikaza u CoStrict-u",
   "settings.general.row.appearance.title": "Izgled",
-  "settings.general.row.appearance.description": "Prilagodi kako OpenCode izgleda na tvom uređaju",
+  "settings.general.row.appearance.description": "Prilagodi kako CoStrict izgleda na tvom uređaju",
   "settings.general.row.theme.title": "Tema",
-  "settings.general.row.theme.description": "Prilagodi temu OpenCode-a.",
+  "settings.general.row.theme.description": "Prilagodi temu CoStrict-a.",
   "settings.general.row.font.title": "Font",
   "settings.general.row.font.description": "Prilagodi monospace font koji se koristi u blokovima koda",
 
@@ -626,13 +626,13 @@ export const dict = {
   "settings.general.row.releaseNotes.description": 'Prikaži iskačuće prozore "Šta je novo" nakon ažuriranja',
 
   "settings.updates.row.startup.title": "Provjeri ažuriranja pri pokretanju",
-  "settings.updates.row.startup.description": "Automatski provjerava ažuriranja kada se OpenCode pokrene",
+  "settings.updates.row.startup.description": "Automatski provjerava ažuriranja kada se CoStrict pokrene",
   "settings.updates.row.check.title": "Provjeri ažuriranja",
   "settings.updates.row.check.description": "Ručno provjeri ažuriranja i instaliraj ako su dostupna",
   "settings.updates.action.checkNow": "Provjeri sada",
   "settings.updates.action.checking": "Provjera...",
   "settings.updates.toast.latest.title": "Sve je ažurno",
-  "settings.updates.toast.latest.description": "Koristiš najnoviju verziju OpenCode-a.",
+  "settings.updates.toast.latest.description": "Koristiš najnoviju verziju CoStrict-a.",
   "font.option.ibmPlexMono": "IBM Plex Mono",
   "font.option.cascadiaCode": "Cascadia Code",
   "font.option.firaCode": "Fira Code",

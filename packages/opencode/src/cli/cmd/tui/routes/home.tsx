@@ -3,7 +3,7 @@ import { createMemo, Match, onMount, Show, Switch } from "solid-js"
 import { useTheme } from "@tui/context/theme"
 import { useKeybind } from "@tui/context/keybind"
 import { Logo } from "../component/logo"
-import { Tips } from "../component/tips"
+import { SessionNavTips } from "../component/session-nav-tips"
 import { Locale } from "@/util/locale"
 import { useSync } from "../context/sync"
 import { Toast } from "../ui/toast"
@@ -123,7 +123,7 @@ export function Home() {
         </box>
         <box height={4} minHeight={0} width="100%" maxWidth={75} alignItems="center" paddingTop={3} flexShrink={1}>
           <Show when={showTips()}>
-            <Tips />
+            <SessionNavTips />
           </Show>
         </box>
         <box flexGrow={1} minHeight={0} />

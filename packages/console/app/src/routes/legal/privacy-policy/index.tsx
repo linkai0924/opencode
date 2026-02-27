@@ -1,11 +1,12 @@
 import "../../brand/index.css"
 import "./index.css"
-import { Title, Meta } from "@solidjs/meta"
+import { Title, Meta, Link } from "@solidjs/meta"
 import { Header } from "~/component/header"
 import { Footer } from "~/component/footer"
 import { Legal } from "~/component/legal"
 import { LocaleLinks } from "~/component/locale-links"
 import { useLanguage } from "~/context/language"
+import { config } from "~/config"
 
 export default function PrivacyPolicy() {
   const language = useLanguage()

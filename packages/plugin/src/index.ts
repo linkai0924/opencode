@@ -231,4 +231,23 @@ export interface Hooks {
    * Modify tool definitions (description and parameters) sent to LLM
    */
   "tool.definition"?: (input: { toolID: string }, output: { description: string; parameters: any }) => Promise<void>
+  /**
+   * Called when user intervention is required.
+   * Triggers in three scenarios:
+   * 1. Permission request (permission.ask)
+   * 2. Question asked (question.asked)
+   * 3. Session idle (session.idle)
+   *
+   * - `type`: Type of notification ("permission" | "question" | "idle")
+   * - `sessionID`: Session ID that requires intervention
+   * - `data`: Type-specific data (permission info, question info, or idle context)
+   */
+  "intervention.required"?: (
+    input: {
+      type: "permission" | "question" | "idle"
+      sessionID: string
+      data: any
+    },
+    output: { handled: boolean },
+  ) => Promise<void>
 }

@@ -1707,9 +1707,9 @@ function BlockTool(props: {
 }
 
 function Bash(props: ToolProps<typeof BashTool>) {
+  const ctx = use()
   const { theme } = useTheme()
   const sync = useSync()
-  const ctx = use()
   const isRunning = createMemo(() => props.part.state.status === "running")
   const output = createMemo(() => stripAnsi(props.metadata.output?.trim() ?? ""))
   const [expanded, setExpanded] = createSignal(false)

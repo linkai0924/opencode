@@ -9,6 +9,7 @@ const COSTRICT_FINISH_REASON = {
 
 export namespace CostrictError {
   const RETRY_MESSAGE = "Service unavailable"
+  const RATE_LIMIT_MESSAGE = "Too Many Requests"
 
   const RULES = [
     {
@@ -37,6 +38,19 @@ export namespace CostrictError {
         new MessageV2.APIError({
           message: RETRY_MESSAGE,
           statusCode: 503,
+          isRetryable: true,
+          responseBody: message,
+        }).toObject(),
+    },
+    {
+      match: (message: string) => {
+        const text = message.toLowerCase()
+        return text.includes("too many requests") || text.includes("rate limit") || text.includes("official limit")
+      },
+      make: (message: string) =>
+        new MessageV2.APIError({
+          message: RATE_LIMIT_MESSAGE,
+          statusCode: 429,
           isRetryable: true,
           responseBody: message,
         }).toObject(),
@@ -72,6 +86,9 @@ export namespace CostrictError {
       const status = error.data.statusCode
       if (status === 503) {
         return RETRY_MESSAGE
+      }
+      if (status === 429) {
+        return RATE_LIMIT_MESSAGE
       }
     }
   }

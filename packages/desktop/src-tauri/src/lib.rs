@@ -339,7 +339,6 @@ fn check_macos_app(app_name: &str) -> bool {
             return true;
         }
     }
-
     // Also check if command exists in PATH
     Command::new("which")
         .arg(app_name)

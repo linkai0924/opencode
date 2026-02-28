@@ -8,6 +8,31 @@ interface InterventionData {
 }
 
 const mainSessions = new Set<string>()
+const RECENT_NOTIFICATIONS = new Map<string, number>()
+const NOTIFICATION_COOLDOWN = 2000
+
+function getNotificationKey(data: InterventionData): string {
+  return `${data.type}:${data.sessionID}`
+}
+
+function shouldSkipNotification(key: string): boolean {
+  const now = Date.now()
+  const lastSent = RECENT_NOTIFICATIONS.get(key)
+
+  if (lastSent && now - lastSent < NOTIFICATION_COOLDOWN) {
+    return true
+  }
+
+  RECENT_NOTIFICATIONS.set(key, now)
+
+  for (const [k, t] of RECENT_NOTIFICATIONS.entries()) {
+    if (now - t > NOTIFICATION_COOLDOWN) {
+      RECENT_NOTIFICATIONS.delete(k)
+    }
+  }
+
+  return false
+}
 
 export async function handleSessionCreated(input: { event: any }): Promise<void> {
   if (input.event.type === "session.created") {
@@ -73,6 +98,11 @@ async function triggerNotification(data: InterventionData) {
       return
     }
   } catch {
+  }
+
+  const key = getNotificationKey(data)
+  if (shouldSkipNotification(key)) {
+    return
   }
 
   try {

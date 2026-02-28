@@ -33,7 +33,7 @@ export namespace CostrictError {
         }).toObject(),
     },
     {
-      match: (message: string) => /try again/i.test(message),
+      match: (message: string) => /try again|retry/i.test(message),
       make: (message: string) =>
         new MessageV2.APIError({
           message: RETRY_MESSAGE,

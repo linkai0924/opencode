@@ -283,6 +283,7 @@ export const TuiRoutes = lazy(() =>
             messages_last: "session.last",
             agent_cycle: "agent.cycle",
             yolo_toggle: "yolo.toggle",
+            notification_toggle: "notification.toggle",
           }[command],
         })
         return c.json(true)

@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeEach } from "bun:test"
+import { describe, expect, test, beforeEach, afterEach } from "bun:test"
 import {
   handleNotificationEvent,
   handleSessionCreated,
@@ -6,6 +6,7 @@ import {
   _test_getMainSessions,
   _test_clearMainSessions,
 } from "../../../../src/plugin/tdd/handlers/notification-handler"
+import { NotificationMode } from "../../../../src/permission/notification"
 
 describe("Notification Handler - intervention.required event", () => {
   beforeEach(() => {

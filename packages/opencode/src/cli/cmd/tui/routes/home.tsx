@@ -65,6 +65,16 @@ export function Home() {
         dialog.clear()
       },
     },
+    {
+      title: kv.get("notification_mode", true) ? "Disable notifications" : "Enable notifications",
+      value: "session.notification.toggle",
+      keybind: "notification_mode",
+      category: "Session",
+      onSelect: async (dialog) => {
+        await sdk.client.tui.executeCommand({ command: "notification_toggle" })
+        dialog.clear()
+      },
+    },
   ])
 
   const Hint = (

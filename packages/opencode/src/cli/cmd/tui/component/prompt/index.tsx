@@ -78,6 +78,7 @@ export function Prompt(props: PromptProps) {
   const { theme, syntax } = useTheme()
   const kv = useKV()
   const yolo = createMemo(() => kv.get("yolo_mode", false))
+  const notification = createMemo(() => kv.get("notification_mode", true))
 
   function promptModelWarning() {
     toast.show({
@@ -1137,6 +1138,16 @@ export function Prompt(props: PromptProps) {
                   <Show when={yolo()}>
                     <text fg={theme.text}>
                       {keybind.print("yolo_mode")} <span style={{ fg: theme.warning }}>YOLO</span>
+                    </text>
+                  </Show>
+                  <Show when={notification()}>
+                    <text fg={theme.text}>
+                      {keybind.print("notification_mode")} <span style={{ fg: theme.warning }}>🔔</span>
+                    </text>
+                  </Show>
+                  <Show when={!notification()}>
+                    <text fg={theme.text}>
+                      {keybind.print("notification_mode")} <span style={{ fg: theme.textMuted }}>🔕</span>
                     </text>
                   </Show>
                   <text fg={theme.text}>

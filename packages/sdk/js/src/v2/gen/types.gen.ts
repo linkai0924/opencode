@@ -90,6 +90,61 @@ export type EventFileEdited = {
   }
 }
 
+export type EventTuiPromptAppend = {
+  type: "tui.prompt.append"
+  properties: {
+    text: string
+  }
+}
+
+export type EventTuiCommandExecute = {
+  type: "tui.command.execute"
+  properties: {
+    command:
+      | "session.list"
+      | "session.new"
+      | "session.share"
+      | "session.interrupt"
+      | "session.compact"
+      | "session.page.up"
+      | "session.page.down"
+      | "session.line.up"
+      | "session.line.down"
+      | "session.half.page.up"
+      | "session.half.page.down"
+      | "session.first"
+      | "session.last"
+      | "prompt.clear"
+      | "prompt.submit"
+      | "agent.cycle"
+      | "yolo.toggle"
+      | string
+  }
+}
+
+export type EventTuiToastShow = {
+  type: "tui.toast.show"
+  properties: {
+    title?: string
+    message: string
+    variant: "info" | "success" | "warning" | "error"
+    /**
+     * Duration in milliseconds
+     */
+    duration?: number
+  }
+}
+
+export type EventTuiSessionSelect = {
+  type: "tui.session.select"
+  properties: {
+    /**
+     * Session ID to navigate to
+     */
+    sessionID: string
+  }
+}
+
 export type OutputFormatText = {
   type: "text"
 }
@@ -556,6 +611,13 @@ export type EventMessagePartRemoved = {
   }
 }
 
+export type EventYoloToggled = {
+  type: "yolo.toggled"
+  properties: {
+    enabled: boolean
+  }
+}
+
 export type PermissionRequest = {
   id: string
   sessionID: string
@@ -723,68 +785,6 @@ export type EventTodoUpdated = {
   }
 }
 
-export type EventTuiPromptAppend = {
-  type: "tui.prompt.append"
-  properties: {
-    text: string
-  }
-}
-
-export type EventTuiCommandExecute = {
-  type: "tui.command.execute"
-  properties: {
-    command:
-      | "session.list"
-      | "session.new"
-      | "session.share"
-      | "session.interrupt"
-      | "session.compact"
-      | "session.page.up"
-      | "session.page.down"
-      | "session.line.up"
-      | "session.line.down"
-      | "session.half.page.up"
-      | "session.half.page.down"
-      | "session.first"
-      | "session.last"
-      | "prompt.clear"
-      | "prompt.submit"
-      | "agent.cycle"
-      | "yolo.toggle"
-      | string
-  }
-}
-
-export type EventTuiToastShow = {
-  type: "tui.toast.show"
-  properties: {
-    title?: string
-    message: string
-    variant: "info" | "success" | "warning" | "error"
-    /**
-     * Duration in milliseconds
-     */
-    duration?: number
-  }
-}
-
-export type EventTuiSessionSelect = {
-  type: "tui.session.select"
-  properties: {
-    /**
-     * Session ID to navigate to
-     */
-    sessionID: string
-  }
-}
-
-export type EventYoloToggled = {
-  type: "yolo.toggled"
-  properties: {
-    enabled: boolean
-  }
-}
-
 export type EventMcpToolsChanged = {
   type: "mcp.tools.changed"
   properties: {
@@ -797,6 +797,13 @@ export type EventMcpBrowserOpenFailed = {
   properties: {
     mcpName: string
     url: string
+  }
+}
+
+export type EventNotificationToggled = {
+  type: "notification.toggled"
+  properties: {
+    enabled: boolean
   }
 }
 
@@ -889,10 +896,30 @@ export type EventSessionError = {
       | ProviderAuthError
       | UnknownError
       | MessageOutputLengthError
+      | MessageReasoningOnlyError
       | MessageAbortedError
       | StructuredOutputError
       | ContextOverflowError
       | ApiError
+  }
+}
+
+export type EventSessionLlmError = {
+  type: "session.llm.error"
+  properties: {
+    providerID: string
+    modelID: string
+    sessionID: string
+    agent: string
+    requestType: "stream" | "chat" | "completion"
+    attempt?: number
+    error: unknown
+    request?: {
+      body: unknown
+      headers: {
+        [key: string]: unknown
+      }
+    }
   }
 }
 
@@ -967,11 +994,16 @@ export type Event =
   | EventLspClientDiagnostics
   | EventLspUpdated
   | EventFileEdited
+  | EventTuiPromptAppend
+  | EventTuiCommandExecute
+  | EventTuiToastShow
+  | EventTuiSessionSelect
   | EventMessageUpdated
   | EventMessageRemoved
   | EventMessagePartUpdated
   | EventMessagePartDelta
   | EventMessagePartRemoved
+  | EventYoloToggled
   | EventPermissionAsked
   | EventPermissionReplied
   | EventSessionStatus
@@ -982,19 +1014,16 @@ export type Event =
   | EventSessionCompacted
   | EventFileWatcherUpdated
   | EventTodoUpdated
-  | EventTuiPromptAppend
-  | EventTuiCommandExecute
-  | EventTuiToastShow
-  | EventTuiSessionSelect
-  | EventYoloToggled
   | EventMcpToolsChanged
   | EventMcpBrowserOpenFailed
+  | EventNotificationToggled
   | EventCommandExecuted
   | EventSessionCreated
   | EventSessionUpdated
   | EventSessionDeleted
   | EventSessionDiff
   | EventSessionError
+  | EventSessionLlmError
   | EventVcsBranchUpdated
   | EventPtyCreated
   | EventPtyUpdated
@@ -1028,10 +1057,6 @@ export type KeybindsConfig = {
    * List available themes
    */
   theme_list?: string
-  /**
-   * Toggle YOLO mode
-   */
-  yolo_mode?: string
   /**
    * Toggle sidebar
    */
@@ -1204,6 +1229,14 @@ export type KeybindsConfig = {
    * Previous agent
    */
   agent_cycle_reverse?: string
+  /**
+   * Toggle YOLO mode
+   */
+  yolo_mode?: string
+  /**
+   * Toggle notifications
+   */
+  notification_mode?: string
   /**
    * Cycle model variants
    */
@@ -1610,6 +1643,10 @@ export type ProviderConfig = {
      * Timeout in milliseconds for requests to this provider. Default is 300000 (5 minutes). Set to false to disable timeout.
      */
     timeout?: number | false
+    /**
+     * Enable thinking mode for costrict provider. Default: true
+     */
+    enableThinking?: boolean
     [key: string]: unknown | string | boolean | number | false | undefined
   }
 }
@@ -1751,7 +1788,25 @@ export type Config = {
     ignore?: Array<string>
   }
   plugin?: Array<string>
-  snapshot?: boolean
+  /**
+   * Snapshot configuration for project state tracking
+   */
+  snapshot?:
+    | boolean
+    | {
+        /**
+         * Enable snapshot functionality
+         */
+        enabled?: boolean
+        /**
+         * Minimum free disk space required (e.g., '1GB' or 1073741824 bytes)
+         */
+        minFreeSpace?: string | number
+        /**
+         * Interval in seconds between disk space checks (default: 60)
+         */
+        checkInterval?: number
+      }
   /**
    * Control sharing behavior:'manual' allows manual sharing via commands, 'auto' enables automatic sharing, 'disabled' disables all sharing
    */
@@ -1797,7 +1852,7 @@ export type Config = {
     [key: string]: AgentConfig | undefined
   }
   /**
-   * Agent configuration, see https://opencode.ai/docs/agents
+   * Agent configuration, see https://costrict.ai/docs/agent
    */
   agent?: {
     plan?: AgentConfig
@@ -1893,6 +1948,10 @@ export type Config = {
      */
     batch_tool?: boolean
     /**
+     * Enable checkpoint functionality for creating snapshots of project state
+     */
+    checkpoint?: boolean
+    /**
      * Enable OpenTelemetry spans for AI SDK calls (using the 'experimental_telemetry' flag)
      */
     openTelemetry?: boolean
@@ -1908,6 +1967,15 @@ export type Config = {
      * Timeout in milliseconds for model context protocol (MCP) requests
      */
     mcp_timeout?: number
+  }
+  /**
+   * Question tool behavior configuration
+   */
+  question?: {
+    /**
+     * Automatically select the first option for each question (default: false). Useful for CI/CD and automated scripts.
+     */
+    autoSelectFirstOption?: boolean
   }
 }
 
@@ -2263,10 +2331,11 @@ export type Command = {
   description?: string
   agent?: string
   model?: string
-  source?: "command" | "mcp" | "skill"
+  mcp?: boolean
   template: string
   subtask?: boolean
   hints: Array<string>
+  source?: string
 }
 
 export type Agent = {

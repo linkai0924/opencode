@@ -3005,7 +3005,7 @@ export class Instance extends HeyApiClient {
   /**
    * Dispose instance
    *
-   * Clean up and dispose the current OpenCode instance, releasing all resources.
+   * Clean up and dispose the current CoStrict instance, releasing all resources.
    */
   public dispose<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -3026,7 +3026,7 @@ export class Path extends HeyApiClient {
   /**
    * Get paths
    *
-   * Retrieve the current working directory and related path information for the OpenCode instance.
+   * Retrieve the current working directory and related path information for the CoStrict instance.
    */
   public get<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -3068,7 +3068,7 @@ export class Command extends HeyApiClient {
   /**
    * List commands
    *
-   * Get a list of all available commands in the OpenCode system.
+   * Get a list of all available commands in the CoStrict system.
    */
   public list<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -3132,7 +3132,7 @@ export class App extends HeyApiClient {
   /**
    * List agents
    *
-   * Get a list of all available AI agents in the OpenCode system.
+   * Get a list of all available AI agents in the CoStrict system.
    */
   public agents<ThrowOnError extends boolean = false>(
     parameters?: {

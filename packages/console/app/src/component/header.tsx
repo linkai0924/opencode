@@ -123,9 +123,9 @@ export function Header(props: { zen?: boolean; hideGetStarted?: boolean }) {
   return (
     <section data-component="top">
       <div onContextMenu={handleLogoContextMenu}>
-        <A href="/">
-          <img data-slot="logo light" src={logoLight} alt="costrict logo light" width="189" height="34" />
-          <img data-slot="logo dark" src={logoDark} alt="costrict logo dark" width="189" height="34" />
+        <A href={language.route("/")}>
+          <img data-slot="logo light" src={logoLight} alt="CoStrict" width="189" height="34" />
+          <img data-slot="logo dark" src={logoDark} alt="CoStrict" width="189" height="34" />
         </A>
       </div>
 

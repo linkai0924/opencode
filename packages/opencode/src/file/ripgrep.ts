@@ -6,6 +6,7 @@ import z from "zod"
 import { NamedError } from "@opencode-ai/util/error"
 import { lazy } from "../util/lazy"
 import { $ } from "bun"
+import { Filesystem } from "../util/filesystem"
 
 import { ZipReader, BlobReader, BlobWriter } from "@zip.js/zip.js"
 import { Log } from "@/util/log"
@@ -126,12 +127,15 @@ export namespace Ripgrep {
   )
 
   const state = lazy(async () => {
-    let filepath = Bun.which("rg")
-    if (filepath) return { filepath }
-    filepath = path.join(Global.Path.bin, "rg" + (process.platform === "win32" ? ".exe" : ""))
+    const system = Bun.which("rg")
+    if (system) {
+      const stat = await fs.stat(system).catch(() => undefined)
+      if (stat?.isFile()) return { filepath: system }
+      log.warn("bun.which returned invalid rg path", { filepath: system })
+    }
+    const filepath = path.join(Global.Path.bin, "rg" + (process.platform === "win32" ? ".exe" : ""))
 
-    const file = Bun.file(filepath)
-    if (!(await file.exists())) {
+    if (!(await Filesystem.exists(filepath))) {
       const platformKey = `${process.arch}-${process.platform}` as keyof typeof PLATFORM
       const config = PLATFORM[platformKey]
       if (!config) throw new UnsupportedPlatformError({ platform: platformKey })
@@ -141,7 +145,7 @@ export namespace Ripgrep {
       const url = `https://github.com/BurntSushi/ripgrep/releases/download/${version}/${filename}`
 
       /*costrict change*/
-      const buffer = await downloadWithFallback(url, {
+      const arrayBuffer = await downloadWithFallback(url, {
         version,
         filename,
         platform: config.platform,
@@ -151,7 +155,7 @@ export namespace Ripgrep {
       /*costrict change*/
 
       const archivePath = path.join(Global.Path.bin, filename)
-      await Bun.write(archivePath, buffer)
+      await Filesystem.write(archivePath, Buffer.from(arrayBuffer))
       if (config.extension === "tar.gz") {
         const args = ["tar", "-xzf", archivePath, "--strip-components=1"]
 
@@ -171,7 +175,7 @@ export namespace Ripgrep {
           })
       }
       if (config.extension === "zip") {
-        const zipFileReader = new ZipReader(new BlobReader(new Blob([await Bun.file(archivePath).arrayBuffer()])))
+        const zipFileReader = new ZipReader(new BlobReader(new Blob([arrayBuffer])))
         const entries = await zipFileReader.getEntries()
         let rgEntry: any
         for (const entry of entries) {
@@ -195,7 +199,7 @@ export namespace Ripgrep {
             stderr: "Failed to extract rg.exe from zip archive",
           })
         }
-        await Bun.write(filepath, await rgBlob.arrayBuffer())
+        await Filesystem.write(filepath, Buffer.from(await rgBlob.arrayBuffer()))
         await zipFileReader.close()
       }
       await fs.unlink(archivePath)

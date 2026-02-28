@@ -1,6 +1,7 @@
 import { Log } from "../util/log"
 import path from "path"
-import { pathToFileURL } from "url"
+import { pathToFileURL, fileURLToPath } from "url"
+import { createRequire } from "module"
 import os from "os"
 import z from "zod"
 import { Filesystem } from "../util/filesystem"
@@ -24,14 +25,16 @@ import { LSPServer } from "../lsp/server"
 import { BunProc } from "@/bun"
 import { Installation } from "@/installation"
 import { ConfigMarkdown } from "./markdown"
+import { BUILTIN_AGENTS } from "../costrict/agent/builtin"
 import { constants, existsSync } from "fs"
 import { Bus } from "@/bus"
 import { GlobalBus } from "@/bus/global"
 import { Event } from "../server/event"
+import { Glob } from "../util/glob"
 import { PackageRegistry } from "@/bun/registry"
 import { proxied } from "@/util/proxied"
 import { iife } from "@/util/iife"
-import { BUILTIN_AGENTS } from "@/costrict/agent/builtin"
+import { Control } from "@/control"
 
 export namespace Config {
   const ModelId = z.string().meta({ $ref: "https://models.dev/model-schema.json#/$defs/Model" })
@@ -54,7 +57,7 @@ export namespace Config {
   const managedConfigDir = process.env.OPENCODE_TEST_MANAGED_CONFIG_DIR || getManagedConfigDir()
 
   // Custom merge function that concatenates array fields instead of replacing them
-  function mergeConfigConcatArrays(target: Info, source: Info): Info {
+  function merge(target: Info, source: Info): Info {
     const merged = mergeDeep(target, source)
     if (target.plugin && source.plugin) {
       merged.plugin = Array.from(new Set([...target.plugin, ...source.plugin]))
@@ -91,9 +94,12 @@ export namespace Config {
           const remoteConfig = wellknown.config ?? {}
           // Add $schema to prevent load() from trying to write back to a non-existent file
           if (!remoteConfig.$schema) remoteConfig.$schema = "https://costrict.ai/config.json"
-          result = mergeConfigConcatArrays(
+          result = merge(
             result,
-            await load(JSON.stringify(remoteConfig), `${key}/.well-known/opencode`),
+            await load(JSON.stringify(remoteConfig), {
+              dir: path.dirname(`${key}/.well-known/opencode`),
+              source: `${key}/.well-known/opencode`,
+            }),
           )
           log.debug("loaded remote config from well-known", { url: key })
         } catch (error) {
@@ -104,57 +110,33 @@ export namespace Config {
       }
     }
 
-    // Load OpenCode config first when enabled
-    if (Flag.COSTRICT_ENABLE_OPENCODE_CONFIG) {
-      // Load OpenCode global config
-      result = mergeConfigConcatArrays(result, await opencodeGlobal())
-
-      // Load OpenCode custom config path
-      if (Flag.OPENCODE_CONFIG) {
-        result = mergeConfigConcatArrays(result, await loadFile(Flag.OPENCODE_CONFIG))
-        log.debug("loaded OpenCode custom config", { path: Flag.OPENCODE_CONFIG })
-      }
-
-      // Load OpenCode project config
-      if (!Flag.COSTRICT_DISABLE_PROJECT_CONFIG) {
-        for (const file of ["opencode.jsonc", "opencode.json"]) {
-          const found = await Filesystem.findUp(file, Instance.directory, Instance.worktree)
-          for (const resolved of found.toReversed()) {
-            result = mergeConfigConcatArrays(result, await loadFile(resolved))
-          }
-        }
-      }
-
-      // Load OpenCode inline config content
-      if (Flag.OPENCODE_CONFIG_CONTENT) {
-        result = mergeConfigConcatArrays(result, JSON.parse(Flag.OPENCODE_CONFIG_CONTENT))
-        log.debug("loaded OpenCode custom config from OPENCODE_CONFIG_CONTENT")
-      }
+    const token = await Control.token()
+    if (token) {
     }
 
     // Global user config overrides OpenCode config
-    result = mergeConfigConcatArrays(result, await global())
+    result = merge(result, await global())
 
-    // Custom config path overrides global
-    if (Flag.COSTRICT_CONFIG) {
-      result = mergeConfigConcatArrays(result, await loadFile(Flag.COSTRICT_CONFIG))
-      log.debug("loaded CoStrict custom config", { path: Flag.COSTRICT_CONFIG })
+    // Load OpenCode custom config path
+    if (Flag.OPENCODE_CONFIG) {
+      result = merge(result, await loadFile(Flag.OPENCODE_CONFIG))
+      log.debug("loaded OpenCode custom config", { path: Flag.OPENCODE_CONFIG })
     }
 
-    // Project config has highest precedence (overrides OpenCode and global)
+    // Load OpenCode project config
     if (!Flag.COSTRICT_DISABLE_PROJECT_CONFIG) {
-      for (const file of ["costrict.jsonc", "costrict.json"]) {
+      for (const file of ["opencode.jsonc", "opencode.json"]) {
         const found = await Filesystem.findUp(file, Instance.directory, Instance.worktree)
         for (const resolved of found.toReversed()) {
-          result = mergeConfigConcatArrays(result, await loadFile(resolved))
+          result = merge(result, await loadFile(resolved))
         }
       }
     }
 
-    // Inline config content has highest precedence
-    if (Flag.COSTRICT_CONFIG_CONTENT) {
-      result = mergeConfigConcatArrays(result, JSON.parse(Flag.COSTRICT_CONFIG_CONTENT))
-      log.debug("loaded CoStrict custom config from COSTRICT_CONFIG_CONTENT")
+    // Load OpenCode inline config content
+    if (Flag.OPENCODE_CONFIG_CONTENT) {
+      result = merge(result, JSON.parse(Flag.OPENCODE_CONFIG_CONTENT))
+      log.debug("loaded OpenCode custom config from OPENCODE_CONFIG_CONTENT")
     }
 
     result.agent = result.agent || {}
@@ -208,11 +190,11 @@ export namespace Config {
       log.debug("loading config from OPENCODE_CONFIG_DIR", { path: Flag.OPENCODE_CONFIG_DIR })
     }
 
-    const deps = []
     if (Flag.COSTRICT_CONFIG_DIR) {
       directories.push(Flag.COSTRICT_CONFIG_DIR)
       log.debug("loading config from COSTRICT_CONFIG_DIR", { path: Flag.COSTRICT_CONFIG_DIR })
     }
+    const deps = []
 
     for (const dir of unique(directories)) {
       // Load OpenCode config files first (lower priority)
@@ -221,8 +203,8 @@ export namespace Config {
         (dir.endsWith(".opencode") || dir.endsWith("opencode") || dir === Flag.OPENCODE_CONFIG_DIR)
       ) {
         for (const file of ["opencode.jsonc", "opencode.json"]) {
-          log.debug(`loading OpenCode config from ${path.join(dir, file)}`)
-          result = mergeConfigConcatArrays(result, await loadFile(path.join(dir, file)))
+          log.debug(`loading config from ${path.join(dir, file)}`)
+          result = merge(result, await loadFile(path.join(dir, file)))
           // to satisfy the type checker
           result.agent ??= {}
           result.mode ??= {}
@@ -234,7 +216,7 @@ export namespace Config {
       if (dir.endsWith(".costrict") || dir === Flag.COSTRICT_CONFIG_DIR) {
         for (const file of ["costrict.jsonc", "costrict.json"]) {
           log.debug(`loading CoStrict config from ${path.join(dir, file)}`)
-          result = mergeConfigConcatArrays(result, await loadFile(path.join(dir, file)))
+          result = merge(result, await loadFile(path.join(dir, file)))
           // to satisfy the type checker
           result.agent ??= {}
           result.mode ??= {}
@@ -242,16 +224,12 @@ export namespace Config {
         }
       }
 
-      // Only install dependencies when explicitly enabled via environment variable
-      // Default behavior is to skip installation
-      if (Flag.COSTRICT_ENABLE_INSTALL_DEPENDENCIES || Flag.OPENCODE_ENABLE_INSTALL_DEPENDENCIES) {
-        deps.push(
-          iife(async () => {
-            const shouldInstall = await needsInstall(dir)
-            if (shouldInstall) await installDependencies(dir)
-          }),
-        )
-      }
+      deps.push(
+        iife(async () => {
+          const shouldInstall = await needsInstall(dir)
+          if (shouldInstall) await installDependencies(dir)
+        }),
+      )
 
       result.command = mergeDeep(result.command ?? {}, await loadCommand(dir))
       result.agent = mergeDeep(result.agent, await loadAgent(dir))
@@ -260,8 +238,14 @@ export namespace Config {
     }
 
     // Inline config content overrides all non-managed config sources.
-    if (Flag.OPENCODE_CONFIG_CONTENT) {
-      result = mergeConfigConcatArrays(result, JSON.parse(Flag.OPENCODE_CONFIG_CONTENT))
+    if (process.env.OPENCODE_CONFIG_CONTENT) {
+      result = merge(
+        result,
+        await load(process.env.OPENCODE_CONFIG_CONTENT, {
+          dir: Instance.directory,
+          source: "OPENCODE_CONFIG_CONTENT",
+        }),
+      )
       log.debug("loaded custom config from OPENCODE_CONFIG_CONTENT")
     }
 
@@ -271,7 +255,7 @@ export namespace Config {
     // This way it only loads config file and not skills/plugins/commands
     if (existsSync(managedConfigDir)) {
       for (const file of ["opencode.jsonc", "opencode.json"]) {
-        result = mergeConfigConcatArrays(result, await loadFile(path.join(managedConfigDir, file)))
+        result = merge(result, await loadFile(path.join(managedConfigDir, file)))
       }
     }
 
@@ -338,19 +322,19 @@ export namespace Config {
     const pkg = path.join(dir, "package.json")
     const targetVersion = Installation.isLocal() ? "*" : Installation.VERSION
 
-    const json = await Bun.file(pkg)
-      .json()
-      .catch(() => ({}))
+    const json = await Filesystem.readJson<{ dependencies?: Record<string, string> }>(pkg).catch(() => ({
+      dependencies: {},
+    }))
     json.dependencies = {
       ...json.dependencies,
       "@opencode-ai/plugin": targetVersion,
     }
-    await Bun.write(pkg, JSON.stringify(json, null, 2))
-    await new Promise((resolve) => setTimeout(resolve, 3000))
+    await Filesystem.writeJson(pkg, json)
 
     const gitignore = path.join(dir, ".gitignore")
-    const hasGitIgnore = await Bun.file(gitignore).exists()
-    if (!hasGitIgnore) await Bun.write(gitignore, ["node_modules", "package.json", "bun.lock", ".gitignore"].join("\n"))
+    const hasGitIgnore = await Filesystem.exists(gitignore)
+    if (!hasGitIgnore)
+      await Filesystem.write(gitignore, ["node_modules", "package.json", "bun.lock", ".gitignore"].join("\n"))
 
     // Install any additional dependencies defined in the package.json
     // This allows local plugins and custom tools to use external packages
@@ -361,7 +345,9 @@ export namespace Config {
         ...(proxied() ? ["--no-cache"] : []),
       ],
       { cwd: dir },
-    ).catch(() => {})
+    ).catch((err) => {
+      log.warn("failed to install dependencies", { dir, error: err })
+    })
   }
 
   async function isWritable(dir: string) {
@@ -386,11 +372,10 @@ export namespace Config {
     if (!existsSync(nodeModules)) return true
 
     const pkg = path.join(dir, "package.json")
-    const pkgFile = Bun.file(pkg)
-    const pkgExists = await pkgFile.exists()
+    const pkgExists = await Filesystem.exists(pkg)
     if (!pkgExists) return true
 
-    const parsed = await pkgFile.json().catch(() => null)
+    const parsed = await Filesystem.readJson<{ dependencies?: Record<string, string> }>(pkg).catch(() => null)
     const dependencies = parsed?.dependencies ?? {}
     const depVersion = dependencies["@opencode-ai/plugin"]
     if (!depVersion) return true
@@ -410,10 +395,11 @@ export namespace Config {
   }
 
   function rel(item: string, patterns: string[]) {
+    const normalizedItem = item.replaceAll("\\", "/")
     for (const pattern of patterns) {
-      const index = item.indexOf(pattern)
+      const index = normalizedItem.indexOf(pattern)
       if (index === -1) continue
-      return item.slice(index + pattern.length)
+      return normalizedItem.slice(index + pattern.length)
     }
   }
 
@@ -422,14 +408,13 @@ export namespace Config {
     return ext.length ? file.slice(0, -ext.length) : file
   }
 
-  const COMMAND_GLOB = new Bun.Glob("{command,commands}/**/*.md")
   async function loadCommand(dir: string) {
     const result: Record<string, Command> = {}
-    for await (const item of COMMAND_GLOB.scan({
-      absolute: true,
-      followSymlinks: true,
-      dot: true,
+    for (const item of await Glob.scan("{command,commands}/**/*.md", {
       cwd: dir,
+      absolute: true,
+      dot: true,
+      symlink: true,
     })) {
       const md = await ConfigMarkdown.parse(item).catch(async (err) => {
         const message = ConfigMarkdown.FrontmatterError.isInstance(err)
@@ -461,7 +446,6 @@ export namespace Config {
     return result
   }
 
-  const AGENT_GLOB = new Bun.Glob("{agent,agents}/**/*.{md,txt}")
   async function loadAgent(dir: string) {
     const result: Record<string, Agent> = {}
 
@@ -485,12 +469,11 @@ export namespace Config {
       }
     }
 
-    // Load user-defined agents from config directories
-    for await (const item of AGENT_GLOB.scan({
-      absolute: true,
-      followSymlinks: true,
-      dot: true,
+    for (const item of await Glob.scan("{agent,agents}/**/*.md", {
       cwd: dir,
+      absolute: true,
+      dot: true,
+      symlink: true,
     })) {
       const md = await ConfigMarkdown.parse(item).catch(async (err) => {
         const message = ConfigMarkdown.FrontmatterError.isInstance(err)
@@ -522,14 +505,13 @@ export namespace Config {
     return result
   }
 
-  const MODE_GLOB = new Bun.Glob("{mode,modes}/*.md")
   async function loadMode(dir: string) {
     const result: Record<string, Agent> = {}
-    for await (const item of MODE_GLOB.scan({
-      absolute: true,
-      followSymlinks: true,
-      dot: true,
+    for (const item of await Glob.scan("{mode,modes}/*.md", {
       cwd: dir,
+      absolute: true,
+      dot: true,
+      symlink: true,
     })) {
       const md = await ConfigMarkdown.parse(item).catch(async (err) => {
         const message = ConfigMarkdown.FrontmatterError.isInstance(err)
@@ -559,15 +541,14 @@ export namespace Config {
     return result
   }
 
-  const PLUGIN_GLOB = new Bun.Glob("{plugin,plugins}/*.{ts,js}")
   async function loadPlugin(dir: string) {
     const plugins: string[] = []
 
-    for await (const item of PLUGIN_GLOB.scan({
-      absolute: true,
-      followSymlinks: true,
-      dot: true,
+    for (const item of await Glob.scan("{plugin,plugins}/*.{ts,js}", {
       cwd: dir,
+      absolute: true,
+      dot: true,
+      symlink: true,
     })) {
       plugins.push(pathToFileURL(item).href)
     }
@@ -1287,6 +1268,12 @@ export namespace Config {
         .object({
           auto: z.boolean().optional().describe("Enable automatic compaction when context is full (default: true)"),
           prune: z.boolean().optional().describe("Enable pruning of old tool outputs (default: true)"),
+          reserved: z
+            .number()
+            .int()
+            .min(0)
+            .optional()
+            .describe("Token buffer for compaction. Leaves enough window to avoid overflow during compaction."),
         })
         .optional(),
       experimental: z
@@ -1354,7 +1341,7 @@ export namespace Config {
           if (provider && model) result.model = `${provider}/${model}`
           result["$schema"] = "https://costrict.ai/config.json"
           result = mergeDeep(result, rest)
-          await Bun.write(path.join(Global.Path.config, "config.json"), JSON.stringify(result, null, 2))
+          await Filesystem.writeJson(path.join(Global.Path.config, "config.json"), result)
           await fs.unlink(legacy)
         })
         .catch(() => {})
@@ -1391,31 +1378,32 @@ export namespace Config {
 
   async function loadFile(filepath: string): Promise<Info> {
     log.info("loading", { path: filepath })
-    let text = await Bun.file(filepath)
-      .text()
-      .catch((err) => {
-        if (err.code === "ENOENT") return
-        throw new JsonError({ path: filepath }, { cause: err })
-      })
+    let text = await Filesystem.readText(filepath).catch((err: any) => {
+      if (err.code === "ENOENT") return
+      throw new JsonError({ path: filepath }, { cause: err })
+    })
     if (!text) return {}
-    return load(text, filepath)
+    return load(text, { path: filepath })
   }
 
-  async function load(text: string, configFilepath: string) {
+  async function load(text: string, options: { path: string } | { dir: string; source: string }) {
     const original = text
+    const configDir = "path" in options ? path.dirname(options.path) : options.dir
+    const source = "path" in options ? options.path : options.source
+    const isFile = "path" in options
+
     text = text.replace(/\{env:([^}]+)\}/g, (_, varName) => {
       return process.env[varName] || ""
     })
 
     const fileMatches = text.match(/\{file:[^}]+\}/g)
     if (fileMatches) {
-      const configDir = path.dirname(configFilepath)
       const lines = text.split("\n")
 
       for (const match of fileMatches) {
         const lineIndex = lines.findIndex((line) => line.includes(match))
         if (lineIndex !== -1 && lines[lineIndex].trim().startsWith("//")) {
-          continue // Skip if line is commented
+          continue
         }
         let filePath = match.replace(/^\{file:/, "").replace(/\}$/, "")
         if (filePath.startsWith("~/")) {
@@ -1430,16 +1418,15 @@ export namespace Config {
               if (error.code === "ENOENT") {
                 throw new InvalidError(
                   {
-                    path: configFilepath,
+                    path: source,
                     message: errMsg + ` ${resolvedPath} does not exist`,
                   },
                   { cause: error },
                 )
               }
-              throw new InvalidError({ path: configFilepath, message: errMsg }, { cause: error })
+              throw new InvalidError({ path: source, message: errMsg }, { cause: error })
             })
         ).trim()
-        // escape newlines/quotes, strip outer quotes
         text = text.replace(match, () => JSON.stringify(fileContent).slice(1, -1))
       }
     }
@@ -1463,33 +1450,41 @@ export namespace Config {
         .join("\n")
 
       throw new JsonError({
-        path: configFilepath,
+        path: source,
         message: `\n--- JSONC Input ---\n${text}\n--- Errors ---\n${errorDetails}\n--- End ---`,
       })
     }
 
     const parsed = Info.safeParse(data)
     if (parsed.success) {
-      if (!parsed.data.$schema) {
+      if (!parsed.data.$schema && isFile) {
         parsed.data.$schema = "https://costrict.ai/config.json"
-        // Write the $schema to the original text to preserve variables like {env:VAR}
         const updated = original.replace(/^\s*\{/, '{\n  "$schema": "https://costrict.ai/config.json",')
-        await Bun.write(configFilepath, updated).catch(() => {})
+        await Bun.write(options.path, updated).catch(() => {})
       }
       const data = parsed.data
-      if (data.plugin) {
+      if (data.plugin && isFile) {
         for (let i = 0; i < data.plugin.length; i++) {
           const plugin = data.plugin[i]
           try {
-            data.plugin[i] = import.meta.resolve!(plugin, configFilepath)
-          } catch (err) {}
+            data.plugin[i] = import.meta.resolve!(plugin, options.path)
+          } catch (e) {
+            try {
+              // import.meta.resolve sometimes fails with newly created node_modules
+              const require = createRequire(options.path)
+              const resolvedPath = require.resolve(plugin)
+              data.plugin[i] = pathToFileURL(resolvedPath).href
+            } catch {
+              // Ignore, plugin might be a generic string identifier like "mcp-server"
+            }
+          }
         }
       }
       return data
     }
 
     throw new InvalidError({
-      path: configFilepath,
+      path: source,
       issues: parsed.error.issues,
     })
   }
@@ -1530,7 +1525,7 @@ export namespace Config {
   export async function update(config: Info) {
     const filepath = path.join(Instance.directory, "config.json")
     const existing = await loadFile(filepath)
-    await Bun.write(filepath, JSON.stringify(mergeDeep(existing, config), null, 2))
+    await Filesystem.writeJson(filepath, mergeDeep(existing, config))
     await Instance.dispose()
   }
 
@@ -1601,24 +1596,22 @@ export namespace Config {
 
   export async function updateGlobal(config: Info) {
     const filepath = globalConfigFile()
-    const before = await Bun.file(filepath)
-      .text()
-      .catch((err) => {
-        if (err.code === "ENOENT") return "{}"
-        throw new JsonError({ path: filepath }, { cause: err })
-      })
+    const before = await Filesystem.readText(filepath).catch((err: any) => {
+      if (err.code === "ENOENT") return "{}"
+      throw new JsonError({ path: filepath }, { cause: err })
+    })
 
     const next = await (async () => {
       if (!filepath.endsWith(".jsonc")) {
         const existing = parseConfig(before, filepath)
         const merged = mergeDeep(existing, config)
-        await Bun.write(filepath, JSON.stringify(merged, null, 2))
+        await Filesystem.writeJson(filepath, merged)
         return merged
       }
 
       const updated = patchJsonc(before, config)
       const merged = parseConfig(updated, filepath)
-      await Bun.write(filepath, updated)
+      await Filesystem.write(filepath, updated)
       return merged
     })()
 

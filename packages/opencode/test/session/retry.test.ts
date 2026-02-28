@@ -160,23 +160,14 @@ describe("session.retry.retryable", () => {
     const retryable = SessionRetry.retryable(error)
     expect(retryable).toBeUndefined()
   })
+  
+  test("does not retry context overflow errors", () => {
+    const error = new MessageV2.ContextOverflowError({
+      message: "Input exceeds context window of this model",
+      responseBody: '{"error":{"code":"context_length_exceeded"}}',
+    }).toObject() as ReturnType<NamedError["toObject"]>
 
-  test("retries on costrict official limit errors", () => {
-    const message = "The number of reguests to the model or the number of tokens has reached the official limit."
-    const error = MessageV2.fromError(message, { providerID: "costrict" }) as MessageV2.APIError
-
-    expect(error.data.statusCode).toBe(429)
-    expect(error.data.isRetryable).toBe(true)
-    expect(SessionRetry.retryable(error, { providerID: "costrict" })).toBe("Too Many Requests")
-  })
-
-  test("retries on costrict limit wording variants", () => {
-    const message = "Reached official limit."
-    const error = MessageV2.fromError(message, { providerID: "costrict" }) as MessageV2.APIError
-
-    expect(error.data.statusCode).toBe(429)
-    expect(error.data.isRetryable).toBe(true)
-    expect(SessionRetry.retryable(error, { providerID: "costrict" })).toBe("Too Many Requests")
+    expect(SessionRetry.retryable(error)).toBeUndefined()
   })
 })
 

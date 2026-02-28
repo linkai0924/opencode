@@ -16,13 +16,17 @@ export default function App() {
       explicitLinks={true}
       transformUrl={strip}
       root={(props) => (
-        <MetaProvider>
-          <Title>costrict</Title>
-          <Meta name="description" content="CoStrict - The open source coding agent." />
-          <Favicon />
-          <Font />
-          <Suspense>{props.children}</Suspense>
-        </MetaProvider>
+        <LanguageProvider>
+          <I18nProvider>
+            <MetaProvider>
+              <Title>costrict</Title>
+              <Meta name="description" content="CoStrict - The open source coding agent." />
+              <Favicon />
+              <Font />
+              <Suspense>{props.children}</Suspense>
+            </MetaProvider>
+          </I18nProvider>
+        </LanguageProvider>
       )}
     >
       <FileRoutes />

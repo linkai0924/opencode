@@ -69,6 +69,9 @@ export namespace SessionRetry {
       return "Response only contains reasoning content"
     }
 
+    // context overflow errors should not be retried
+    if (MessageV2.ContextOverflowError.isInstance(error)) return undefined
+
     if (MessageV2.APIError.isInstance(error)) {
       // Check for connection error messages (always retry, regardless of isRetryable flag)
       // This handles errors from OpenAI SDK and other clients that throw generic "Connection error."
@@ -78,6 +81,8 @@ export namespace SessionRetry {
       }
 
       if (!error.data.isRetryable) return undefined
+      if (error.data.responseBody?.includes("FreeUsageLimitError"))
+        return `Free usage exceeded, add credits https://opencode.ai/zen`
       return error.data.message.includes("Overloaded") ? "Provider is overloaded" : error.data.message
     }
 

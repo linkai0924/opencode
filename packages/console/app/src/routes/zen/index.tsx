@@ -36,8 +36,8 @@ export default function Home() {
   return (
     <main data-page="zen">
       {/*<HttpHeader name="Cache-Control" value="public, max-age=1, s-maxage=3600, stale-while-revalidate=86400" />*/}
-      <Title>CoStrict Zen | A curated set of reliable optimized models for coding agents</Title>
-      <Link rel="canonical" href={`${config.baseUrl}/zen`} />
+      <Title>{i18n.t("zen.title")}</Title>
+      <LocaleLinks path="/zen" />
       <Meta property="og:image" content="/social-share-zen.png" />
       <Meta name="twitter:image" content="/social-share-zen.png" />
       <Meta name="opencode:auth" content={loggedin() ? "true" : "false"} />
@@ -223,7 +223,7 @@ export default function Home() {
                   <span>ex-CEO, Terminal Products</span>
                 </div>
                 <div data-slot="quote">
-                  <span>@OpenCode</span>
+                  <span>@CoStrict</span>
                   {" Zen has been life changing, it's truly a no-brainer."}
                 </div>
               </div>

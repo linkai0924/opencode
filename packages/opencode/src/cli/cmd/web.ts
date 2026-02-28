@@ -33,7 +33,7 @@ export const WebCommand = cmd({
   builder: (yargs) => withNetworkOptions(yargs),
   describe: "start cs server and open web interface",
   handler: async (args) => {
-    if (!Flag.COSTRICT_SERVER_PASSWORD) {
+    if (!Flag.OPENCODE_SERVER_PASSWORD) {
       UI.println(UI.Style.TEXT_WARNING_BOLD + "!  " + "COSTRICT_SERVER_PASSWORD is not set; server is unsecured.")
     }
     const opts = await resolveNetworkOptions(args)

@@ -48,8 +48,8 @@ export default function Home() {
   return (
     <main data-page="costrict">
       {/*<HttpHeader name="Cache-Control" value="public, max-age=1, s-maxage=3600, stale-while-revalidate=86400" />*/}
-      <Title>CoStrict | The open source AI coding agent</Title>
-      <Link rel="canonical" href={config.baseUrl} />
+      <Title>{i18n.t("home.title")}</Title>
+      <LocaleLinks path="/" />
       <Meta property="og:image" content="/social-share.png" />
       <Meta name="twitter:image" content="/social-share.png" />
       <div data-component="container">

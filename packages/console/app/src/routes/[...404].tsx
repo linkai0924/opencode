@@ -11,13 +11,13 @@ export default function NotFound() {
   const language = useLanguage()
   return (
     <main data-page="not-found">
-      <Title>Not Found | costrict</Title>
+      <Title>{i18n.t("notFound.title")}</Title>
       <HttpStatusCode code={404} />
       <div data-component="content">
         <section data-component="top">
-          <a href="/" data-slot="logo-link">
-            <img data-slot="logo light" src={logoLight} alt="costrict logo light" />
-            <img data-slot="logo dark" src={logoDark} alt="costrict logo dark" />
+          <a href={language.route("/")} data-slot="logo-link">
+            <img data-slot="logo light" src={logoLight} alt="opencode logo light" />
+            <img data-slot="logo dark" src={logoDark} alt="opencode logo dark" />
           </a>
           <h1 data-slot="title">{i18n.t("notFound.heading")}</h1>
         </section>
@@ -30,7 +30,7 @@ export default function NotFound() {
             <a href={language.route("/docs")}>{i18n.t("notFound.docs")}</a>
           </div>
           <div data-slot="action">
-            <a href="https://github.com/zgsm-ai/costrict-cli">GitHub</a>
+            <a href="https://github.com/zgsm-ai/costrict-cli">{i18n.t("notFound.github")}</a>
           </div>
           <div data-slot="action">
             <a href={language.route("/discord")}>{i18n.t("notFound.discord")}</a>

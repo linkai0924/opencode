@@ -12,9 +12,9 @@ export default function PrivacyPolicy() {
   const language = useLanguage()
   return (
     <main data-page="legal">
-      <Title>CoStrict | Privacy Policy</Title>
-      <Link rel="canonical" href={`${config.baseUrl}/legal/privacy-policy`} />
-      <Meta name="description" content="CoStrict privacy policy" />
+      <Title>CoStrtict | Privacy Policy</Title>
+      <LocaleLinks path="/legal/privacy-policy" />
+      <Meta name="description" content="CoStrtict privacy policy" />
       <div data-component="container">
         <Header />
 
@@ -35,8 +35,8 @@ export default function PrivacyPolicy() {
               </p>
 
               <p>
-                Remember that your use of OpenCode is at all times subject to our Terms of Use,{" "}
-                <a href={language.route("/legal/terms-of-service")}>https://opencode.ai/legal/terms-of-service</a>,
+                Remember that your use of CoStrict is at all times subject to our Terms of Use,{" "}
+                <a href={language.route("/legal/terms-of-service")}>https://costrict.ai/legal/terms-of-service</a>,
                 which incorporates this Privacy Policy. Any terms we use in this Policy without defining them have the
                 definitions given to them in the Terms of Use.
               </p>

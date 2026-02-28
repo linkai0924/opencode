@@ -88,13 +88,13 @@ export const PrCommand = cmd({
 
         UI.println(`Successfully checked out PR #${prNumber} as branch '${localBranchName}'`)
         UI.println()
-        UI.println("Starting opencode...")
+        UI.println("Starting CoStrict...")
         UI.println()
 
         // Launch cs TUI with session ID if available
         const { spawn } = await import("child_process")
         const opencodeArgs = sessionId ? ["-s", sessionId] : []
-        const opencodeProcess = spawn("opencode", opencodeArgs, {
+        const opencodeProcess = spawn("cs", opencodeArgs, {
           stdio: "inherit",
           cwd: process.cwd(),
         })

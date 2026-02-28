@@ -13,7 +13,7 @@ export default function TermsOfService() {
   return (
     <main data-page="legal">
       <Title>CoStrict | Terms of Service</Title>
-      <Link rel="canonical" href={`${config.baseUrl}/legal/terms-of-service`} />
+      <LocaleLinks path="/legal/terms-of-service" />
       <Meta name="description" content="CoStrict terms of service" />
       <div data-component="container">
         <Header />
@@ -39,7 +39,7 @@ export default function TermsOfService() {
                 <strong>ANOMALY INNOVATIONS, INC.</strong> ("CoStrict," "we" and "us"). Your use of the Services in any
                 way means that you agree to all of these Terms, and these Terms will remain in effect while you use the
                 Services. These Terms include the provisions in this document as well as those in the Privacy Policy{" "}
-                <a href={language.route("/legal/privacy-policy")}>https://opencode.ai/legal/privacy-policy</a>.{" "}
+                <a href={language.route("/legal/privacy-policy")}>https://costrict.ai/legal/privacy-policy</a>.{" "}
                 <strong>
                   Your use of or participation in certain Services may also be subject to additional policies, rules
                   and/or conditions ("Additional Terms"), which are incorporated herein by reference, and you understand
@@ -263,7 +263,7 @@ export default function TermsOfService() {
               <p>
                 Certain of our Services, including Zen, may be subject to payments now or in the future (the "Paid
                 Services"). Please see our Paid Services page{" "}
-                <a href={language.route("/zen")}>https://opencode.ai/zen</a> for a description of the current Paid
+                <a href={language.route("/zen")}>https://costrict.ai/zen</a> for a description of the current Paid
                 Services. Please note that any payment terms presented to you in the process of using or signing up for
                 a Paid Service are deemed part of these Terms.
               </p>
@@ -319,7 +319,7 @@ export default function TermsOfService() {
               <h2 id="what-if-i-want-to-stop">What if I want to stop using the Services?</h2>
               <p>
                 You're free to do that at any time; please refer to our Privacy Policy{" "}
-                <a href={language.route("/legal/privacy-policy")}>https://opencode.ai/legal/privacy-policy</a>, as well
+                <a href={language.route("/legal/privacy-policy")}>https://costrict.ai/legal/privacy-policy</a>, as well
                 as the licenses above, to understand how we treat information you provide to us after you have stopped
                 using our Services.
               </p>

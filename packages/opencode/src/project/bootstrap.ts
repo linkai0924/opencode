@@ -14,6 +14,7 @@ import { Snapshot } from "../snapshot"
 import { Truncate } from "../tool/truncation"
 import { initializeParentProcessDetection, initializeEncodingCache } from "@/plugin/tdd/tools/shell"
 import { YoloMode } from "../permission/yolo"
+import { NotificationMode } from "../permission/notification"
 
 export async function InstanceBootstrap() {
   Log.Default.info("bootstrapping", { directory: Instance.directory })
@@ -36,6 +37,7 @@ export async function InstanceBootstrap() {
   Snapshot.init()
   Truncate.init()
   await YoloMode.init()
+  await NotificationMode.init()
 
   Bus.subscribe(Command.Event.Executed, async (payload) => {
     if (payload.properties.name === Command.Default.INIT) {

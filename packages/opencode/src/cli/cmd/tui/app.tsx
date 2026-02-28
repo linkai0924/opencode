@@ -705,6 +705,10 @@ function App() {
     kv.set("yolo_mode", evt.properties.enabled)
   })
 
+  sdk.event.on("notification.toggled", (evt) => {
+    kv.set("notification_mode", evt.properties.enabled)
+  })
+
   sdk.event.on(SessionApi.Event.Deleted.type, (evt) => {
     if (route.data.type === "session" && route.data.sessionID === evt.properties.info.id) {
       route.navigate({ type: "home" })

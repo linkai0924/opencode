@@ -555,6 +555,16 @@ export function Session() {
       },
     },
     {
+      title: kv.get("notification_mode", true) ? "Disable notifications" : "Enable notifications",
+      value: "session.notification.toggle",
+      keybind: "notification_mode",
+      category: "Session",
+      onSelect: async (dialog) => {
+        await sdk.client.tui.executeCommand({ command: "notification_toggle" })
+        dialog.clear()
+      },
+    },
+    {
       title: conceal() ? "Disable code concealment" : "Enable code concealment",
       value: "session.toggle.conceal",
       keybind: "messages_toggle_conceal" as any,

@@ -1,4 +1,5 @@
 import { Plugin } from "@/plugin"
+import { NotificationMode } from "@/permission/notification"
 
 interface InterventionData {
   type: "permission" | "question" | "idle"
@@ -67,6 +68,13 @@ export async function handleNotificationEvent(input: { event: any }): Promise<vo
 }
 
 async function triggerNotification(data: InterventionData) {
+  try {
+    if (!NotificationMode.isEnabled()) {
+      return
+    }
+  } catch {
+  }
+
   try {
     await Plugin.trigger(
       "intervention.required",

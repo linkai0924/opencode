@@ -1140,14 +1140,9 @@ export function Prompt(props: PromptProps) {
                       {keybind.print("yolo_mode")} <span style={{ fg: theme.warning }}>YOLO</span>
                     </text>
                   </Show>
-                  <Show when={notification()}>
-                    <text fg={theme.text}>
-                      {keybind.print("notification_mode")} <span style={{ fg: theme.warning }}>🔔</span>
-                    </text>
-                  </Show>
                   <Show when={!notification()}>
                     <text fg={theme.text}>
-                      {keybind.print("notification_mode")} <span style={{ fg: theme.textMuted }}>🔕</span>
+                      {keybind.print("notification_mode")} <span style={{ fg: theme.textMuted }}>SILENT</span>
                     </text>
                   </Show>
                   <text fg={theme.text}>

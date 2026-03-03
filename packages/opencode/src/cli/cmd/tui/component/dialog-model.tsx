@@ -71,7 +71,7 @@ export function DialogModel(props: { providerID?: string }) {
       // Filter providers first if providerID is specified
       filter((provider) => (props.providerID ? provider.id === props.providerID : true)),
       sortBy(
-        (provider) => provider.id !== "opencode",
+        (provider) => provider.id !== "costrict",
         (provider) => provider.name,
       ),
       flatMap((provider) =>

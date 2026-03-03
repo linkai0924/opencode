@@ -400,8 +400,7 @@ function App() {
         name: "models",
       },
       onSelect: () => {
-        const currentModel = local.model.current()
-        dialog.replace(() => <DialogModel providerID={currentModel?.providerID} />)
+        dialog.replace(() => <DialogModel />)
       },
     },
     {

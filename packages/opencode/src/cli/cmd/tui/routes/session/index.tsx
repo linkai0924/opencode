@@ -338,7 +338,7 @@ export function Session() {
       suggested: route.type === "session",
       keybind: "session_share",
       category: "Session",
-      enabled: sync.data.config.share !== "disabled",
+      enabled: sync.data.config.share === "manual" || sync.data.config.share === "auto",
       slash: {
         name: "share",
       },
@@ -1761,7 +1761,7 @@ function Bash(props: ToolProps<typeof BashTool>) {
     return `# ${desc} in ${wd}`
   })
 
-    return (
+  return (
     <Switch>
       <Match when={props.metadata.output !== undefined}>
         <BlockTool
@@ -1773,10 +1773,7 @@ function Bash(props: ToolProps<typeof BashTool>) {
           <box gap={1}>
             <text fg={theme.text}>$ {props.input.command}</text>
             <Show when={output()}>
-              <Show
-                when={overflow() && !expanded()}
-                fallback={<text fg={theme.text}>{output()}</text>}
-              >
+              <Show when={overflow() && !expanded()} fallback={<text fg={theme.text}>{output()}</text>}>
                 <scrollbox
                   maxHeight={limit}
                   scrollbarOptions={{ visible: false }}

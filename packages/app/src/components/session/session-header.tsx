@@ -207,7 +207,7 @@ export function SessionHeader() {
   const hotkey = createMemo(() => command.keybind("file.open"))
 
   const currentSession = createMemo(() => sync.data.session.find((s) => s.id === params.id))
-  const shareEnabled = createMemo(() => sync.data.config.share !== "disabled")
+  const shareEnabled = createMemo(() => sync.data.config.share === "manual" || sync.data.config.share === "auto")
   const showShare = createMemo(() => shareEnabled() && !!currentSession())
   const sessionKey = createMemo(() => `${params.dir}${params.id ? "/" + params.id : ""}`)
   const view = createMemo(() => layout.view(sessionKey))

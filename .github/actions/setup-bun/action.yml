@@ -2,7 +2,11 @@ name: "Setup Bun"
 description: "Setup Bun with caching and install dependencies"
 inputs:
   cross-compile:
-    description: "Pre-cache canary cross-compile binaries for all targets"
+    description: "Pre-cache cross-compile binaries for all targets"
+    required: false
+    default: "false"
+  canary:
+    description: "Use canary version of Bun"
     required: false
     default: "false"
 runs:
@@ -20,7 +24,7 @@ runs:
       id: bun-url
       shell: bash
       run: |
-        if [ "$RUNNER_ARCH" = "X64" ]; then
+        if [ "$RUNNER_ARCH" = "X64" ] && [ "${{ inputs.canary }}" = "true" ]; then
           case "$RUNNER_OS" in
             macOS)   OS=darwin ;;
             Linux)   OS=linux ;;
@@ -35,7 +39,7 @@ runs:
         bun-version-file: ${{ !steps.bun-url.outputs.url && 'package.json' || '' }}
         bun-download-url: ${{ steps.bun-url.outputs.url }}
 
-    - name: Pre-cache canary cross-compile binaries
+    - name: Pre-cache cross-compile binaries
       if: inputs.cross-compile == 'true'
       shell: bash
       run: |

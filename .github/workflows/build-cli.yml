@@ -20,6 +20,9 @@ jobs:
 
       - name: Setup Bun and install dependencies
         uses: ./.github/actions/setup-bun
+        with:
+          cross-compile: "true"
+          canary: false
 
       - name: Install platform-specific dependencies
         run: |
@@ -30,17 +33,17 @@ jobs:
       - name: Build all platforms
         run: |
           cd packages/opencode
-          bun run script/build.ts --skip-install
+          bun run script/build.ts --all --skip-install
 
       - name: Create archives for GitHub release
         run: |
           cd packages/opencode
-          for key in dist/opencode-*/; do
+          for key in dist/@costrict/cs-*/; do
             key=$(basename "$key")
             if [[ "$key" == *"linux"* ]]; then
-              (cd "dist/${key}/bin" && tar -czf "../../${key}.tar.gz" *)
+              (cd "dist/@costrict/${key}/bin" && tar -czf "../../${key}.tar.gz" *)
             else
-              (cd "dist/${key}/bin" && zip -r "../../${key}.zip" *)
+              (cd "dist/@costrict/${key}/bin" && zip -r "../../${key}.zip" *)
             fi
           done
 
@@ -49,10 +52,13 @@ jobs:
         with:
           name: costrict-cli-all-platforms
           path: |
-            packages/opencode/dist/*.tar.gz
-            packages/opencode/dist/*.zip
+            packages/opencode/dist/@costrict/*.tar.gz
+            packages/opencode/dist/@costrict/*.zip
           retention-days: 7
           if-no-files-found: error
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false
 
       - name: Build Summary
         if: always()

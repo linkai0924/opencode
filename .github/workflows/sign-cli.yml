@@ -32,7 +32,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unsigned-opencode-windows-cli
-          path: packages/opencode/dist/opencode-windows-x64/bin/opencode.exe
+          path: packages/opencode/dist/@costrict/cs-windows-x64/bin/cs.exe
           if-no-files-found: error
 
       - name: Submit SignPath signing request
